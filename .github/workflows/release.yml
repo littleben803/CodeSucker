@@ -1,0 +1,152 @@
+name: Package and Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'design/icon/**'
+      - 'licenses/**'
+      - 'packages/app/**'
+      - 'packages/core/**'
+      - 'scripts/gen-icons.mjs'
+      - 'scripts/gen-third-party-notices.mjs'
+      - 'THIRD_PARTY_NOTICES.txt'
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  license:
+    name: License compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit locked dependencies
+        run: npm run audit:runtime && npm run audit:all
+
+      - name: Check third-party licenses
+        run: npm run licenses:check
+
+  package:
+    name: Package ${{ matrix.label }}
+    needs: license
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS x64
+            runner: macos-14
+            script: dist:mac:x64
+            artifact: codesucker-macos-x64
+            path: packages/app/release/CodeSucker-*-mac-x64.dmg
+          - label: macOS arm64
+            runner: macos-14
+            script: dist:mac:arm64
+            artifact: codesucker-macos-arm64
+            path: packages/app/release/CodeSucker-*-mac-arm64.dmg
+          - label: Windows x64
+            runner: windows-2022
+            script: dist:win:x64
+            artifact: codesucker-windows-x64
+            path: packages/app/release/CodeSucker-*-win-x64.exe
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build installer
+        run: npm run ${{ matrix.script }}
+
+      - name: Smoke test Windows application
+        if: matrix.label == 'Windows x64'
+        shell: pwsh
+        run: |
+          $executable = Resolve-Path 'packages/app/release/win-unpacked/CodeSucker.exe'
+          try {
+            $process = Start-Process -FilePath $executable.Path -PassThru
+            Start-Sleep -Seconds 5
+            $process.Refresh()
+            if ($process.HasExited) {
+              throw "CodeSucker exited during the startup smoke test with code $($process.ExitCode)"
+            }
+          } finally {
+            Get-Process CodeSucker -ErrorAction SilentlyContinue | Stop-Process -Force
+          }
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [license, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v8
+        with:
+          pattern: codesucker-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        working-directory: release-assets
+        run: sha256sum CodeSucker-* > SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          release_options=()
+          version_without_build="${GITHUB_REF_NAME%%+*}"
+          if [[ "$version_without_build" == *-* ]]; then
+            release_options+=(--prerelease)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" release-assets/* \
+            --verify-tag \
+            --title "CodeSucker $GITHUB_REF_NAME" \
+            --generate-notes \
+            "${release_options[@]}"
