@@ -8,7 +8,7 @@ import {
   readSource, renderDocx, sortFiles,
 } from '../src/index.ts';
 
-const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-release-matrix-'));
+const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-release-matrix-'));
 
 function writeProjectFile(project: string, relativePath: string, content: string | Buffer) {
   const target = path.join(workspace, project, relativePath);
@@ -17,7 +17,7 @@ function writeProjectFile(project: string, relativePath: string, content: string
 }
 
 const javaLines = ['package demo;', 'public class Application {'];
-for (let index = 0; index < 3_200; index++) javaLines.push(`  private int value${index} = ${index};`);
+for (let index = 0; index < 3_800; index++) javaLines.push(`  private int value${index} = ${index};`);
 javaLines.push('}');
 writeProjectFile('java', 'src/main/java/demo/Application.java', javaLines.join('\n'));
 writeProjectFile('java', 'src/main/kotlin/demo/Helper.kt', 'package demo\nfun helper() = "ok"\n');
@@ -48,12 +48,12 @@ async function validateProject(project: string, title: string) {
   const result = processFiles(files, {
     root,
     title,
-    owner: 'CodeSucker Test',
+    owner: 'CodeDoc Test',
     extensions: DEFAULT_EXTENSIONS,
     excludes: DEFAULT_EXCLUDES,
     sortMode: 'entry',
     clean: defaultCleanOptions(),
-    linesPerPage: 50,
+    linesPerPage: 60,
     maxPages: 60,
   });
   assert.ok(result.selection.pages.length > 0, `${project} 应生成分页`);
@@ -72,8 +72,8 @@ async function validateProject(project: string, title: string) {
 
 const java = await validateProject('java', 'Java Kotlin 验收系统V1.0');
 assert.equal(java.selection.pages.length, 60);
-assert.equal(java.selection.pickedLines, 3_000);
-assert.ok(java.selection.pages.every((page) => page.lines.length === 50));
+assert.equal(java.selection.pickedLines, 3_600);
+assert.ok(java.selection.pages.every((page) => page.lines.length === 60));
 
 const decoded = readSource(path.join(workspace, 'python', 'src/main.py'));
 assert.match(decoded.text, /中文编码读取正常/);

@@ -203,7 +203,7 @@ function assertRoot(root: unknown): string {
 function mutableProjects(configFile: string, now: Date): StoredRecentProject[] {
   const loaded = readRecentProjects(configFile, now);
   if (loaded.source === 'unsupported') {
-    throw new Error('最近项目数据来自更高版本，请升级 CodeSucker 后再修改');
+    throw new Error('最近项目数据来自更高版本，请升级 CodeDoc 后再修改');
   }
   return loaded.projects;
 }

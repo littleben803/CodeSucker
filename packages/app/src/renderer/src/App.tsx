@@ -44,21 +44,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    window.cs.onProgress((progress) => {
+    window.codedoc.onProgress((progress) => {
       const current = useStore.getState();
       if (current.activeJobId === progress.jobId) current.set({ jobProgress: progress });
     });
-    return () => window.cs.offProgress();
+    return () => window.codedoc.offProgress();
   }, []);
 
   const saveConfig = async () => {
     if (!s.root) { toast('请先导入项目'); return; }
-    await window.cs.saveConfig(s.root, {
+    await window.codedoc.saveConfig(s.root, {
       title: s.swName, owner: s.owner, sortMode: s.sortMode,
       order: s.order, excludedRelPaths: s.files.filter((f) => !f.included).map((f) => f.relPath),
-      clean: s.clean, fmtDocx: s.fmtDocx, fmtTxt: s.fmtTxt, outDir: s.outDir,
+      clean: s.clean, fmtPdf: s.fmtPdf, fmtDocx: s.fmtDocx, fmtTxt: s.fmtTxt, outDir: s.outDir,
     });
-    toast('配置已保存到项目（.codesucker.json）');
+    toast('配置已保存到项目（.codedoc.json）');
   };
 
   const rescan = () => {
@@ -75,13 +75,13 @@ export default function App() {
       <div className="titlebar">
         <div className="titlebar-brand">
           <img className="titlebar-logo" src={APP_ICON_URL} alt="" aria-hidden="true" />
-          <div style={{ fontSize: 13, fontWeight: 600 }}>CodeSucker</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)' }}>软著代码抽取器</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>CodeDoc</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)' }}>软著代码整理器</div>
         </div>
         <div className="window-controls">
-          <button className="winbtn" onClick={() => window.cs.win('minimize')}><svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" strokeWidth="1.2" /></svg></button>
-          <button className="winbtn" onClick={() => window.cs.win('maximize')}><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg></button>
-          <button className="winbtn close" onClick={() => window.cs.win('close')}><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="currentColor" strokeWidth="1.2" /></svg></button>
+          <button className="winbtn" onClick={() => window.codedoc.win('minimize')}><svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" strokeWidth="1.2" /></svg></button>
+          <button className="winbtn" onClick={() => window.codedoc.win('maximize')}><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg></button>
+          <button className="winbtn close" onClick={() => window.codedoc.win('close')}><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="currentColor" strokeWidth="1.2" /></svg></button>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export default function App() {
       {/* toast */}
       {s.toast && (
         <div role="status" aria-live="polite" aria-atomic="true"
-          style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, padding: '9px 18px', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.25)', animation: 'cs-fade .15s ease-out', zIndex: 60 }}>{s.toast}</div>
+          style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, padding: '9px 18px', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.25)', animation: 'codedoc-fade .15s ease-out', zIndex: 60 }}>{s.toast}</div>
       )}
     </div>
   );

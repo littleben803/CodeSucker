@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { validateDroppedDirectory } from '../src/main/drop-path.ts';
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-drop-path-'));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-drop-path-'));
 const filePath = path.join(root, 'single.ts');
 fs.writeFileSync(filePath, 'export const ok = true;');
 

@@ -4,8 +4,6 @@ import path from 'node:path';
 const runtimeRoot = path.resolve('packages/app/src');
 const sourceExtensions = new Set(['.ts', '.tsx']);
 const forbiddenRuntimeFragments = [
-  'api.github.com/repos/fanbuz/codesucker',
-  'github.com/fanbuz/codesucker/releases',
   'update:check',
   'checkForUpdates(',
   'shell:openExternal',

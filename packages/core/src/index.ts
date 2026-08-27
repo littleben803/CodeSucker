@@ -7,6 +7,9 @@ export {
 export { annotate, cleanFile, extractAttributions, wrapLine } from './clean.ts';
 export { select } from './select.ts';
 export { renderDocx, renderTxt, renderTxtAsync, type RenderOptions } from './render.ts';
+export {
+  PDF_LAYOUT_VERSION, SOURCE_CODE_LINE_HEIGHT_PT, renderPdfHtml, type PdfTemplateOptions,
+} from './pdf-template.ts';
 export { audit } from './audit.ts';
 export { CONFIG_SCHEMA_VERSION, RULES_VERSION } from './version.ts';
 export { abortError, mapConcurrent, throwIfAborted } from './async.ts';

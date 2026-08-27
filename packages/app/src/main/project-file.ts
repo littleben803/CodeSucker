@@ -52,7 +52,7 @@ export function validateProjectRoot(snapshot: ProjectRootSnapshot, root: unknown
 /** 配置只能写回当前成功扫描且目录身份未变化的项目根目录。 */
 export function resolveProjectConfigFile(snapshot: ProjectRootSnapshot | null, root: unknown): string {
   if (!snapshot) throw new Error('请先扫描项目，再保存项目配置');
-  return path.join(validateProjectRoot(snapshot, root), '.codesucker.json');
+  return path.join(validateProjectRoot(snapshot, root), '.codedoc.json');
 }
 
 /**

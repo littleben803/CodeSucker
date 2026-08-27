@@ -22,14 +22,14 @@ export default function Step3Clean() {
         <div className="step3-controls__scroll" tabIndex={0} aria-label="清洗与排版设置">
           <div>
             <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 7 }}>软件全称 + 版本号 <span style={{ color: 'var(--red)' }}>*</span></div>
-            <input className="cs-input" value={s.swName} placeholder="须与申请表完全一致，如：智慧园区巡检管理系统V1.0"
-              onChange={(e) => s.set({ swName: e.target.value })} />
+            <input className="codedoc-input" value={s.swName} placeholder="须与申请表完全一致，如：智慧园区巡检管理系统V1.0"
+              onChange={(e) => s.set({ swName: e.target.value, processData: null, pdfPreviewKey: null })} />
             <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>将作为每页页眉，与申请表不一致会被退回补正</div>
           </div>
           <div>
             <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 7 }}>著作权人名称</div>
-            <input className="cs-input" value={s.owner} placeholder="如：某某科技有限公司（用于署名冲突扫描）"
-              onChange={(e) => s.set({ owner: e.target.value })} />
+            <input className="codedoc-input" value={s.owner} placeholder="如：某某科技有限公司（用于署名冲突扫描）"
+              onChange={(e) => s.set({ owner: e.target.value, processData: null, pdfPreviewKey: null })} />
             <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>代码中出现与此不一致的 @author / Copyright 会在校验时提示</div>
           </div>
 
@@ -43,7 +43,7 @@ export default function Step3Clean() {
                     {t.sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{t.sub}</div>}
                   </div>
                   <button type="button" role="switch" aria-checked={on} aria-label={t.label}
-                    onClick={() => s.set({ clean: { ...s.clean, [t.key]: !on }, processData: null })}
+                    onClick={() => s.set({ clean: { ...s.clean, [t.key]: !on }, processData: null, pdfPreviewKey: null })}
                     style={{ width: 34, height: 20, padding: 0, border: 0, flex: 'none', borderRadius: 10, background: on ? 'var(--accent)' : 'var(--border)', position: 'relative', cursor: 'pointer', transition: 'background .15s' }}>
                     <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)', transition: 'left .15s' }} />
                   </button>
@@ -57,20 +57,20 @@ export default function Step3Clean() {
               onClick={() => s.set({ layoutOpen: !s.layoutOpen })}>
               <div style={{ fontSize: 13, fontWeight: 500 }}>排版参数</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, color: 'var(--text3)' }}>宋体 · 10.5pt · 每页 50 行</span>
+                <span style={{ fontSize: 11, color: 'var(--text3)' }}>宋体 · 10.5pt · 12pt 行距 · 每页 60 行</span>
                 <span style={{ fontSize: 11, color: 'var(--text3)', transform: `rotate(${s.layoutOpen ? 180 : 0}deg)`, transition: 'transform .15s' }}>▼</span>
               </div>
             </button>
             {s.layoutOpen && (
               <div id="step3-layout-options" style={{ padding: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, borderTop: '1px solid var(--border2)' }}>
-                {[['字体', '宋体'], ['字号', '10.5'], ['行距', '固定值 10.5pt'], ['每页行数', '50']].map(([k, v]) => (
+                {[['字体', '宋体'], ['字号', '10.5pt'], ['行距', '固定值 12pt'], ['每页行数', '60']].map(([k, v]) => (
                   <div key={k}>
                     <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>{k}</div>
                     <div style={{ height: 30, border: '1px solid var(--border)', borderRadius: 7, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12, background: 'var(--panel)' }}>{v}</div>
                   </div>
                 ))}
                 <div style={{ gridColumn: '1 / -1', fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>
-                  V1 版本按申报通用规范固定；分页由分页符显式控制，不依赖排版凑页
+                  官网要求每页不少于 50 行；V1 按每页 60 行排版，并用分页符显式控制
                 </div>
               </div>
             )}

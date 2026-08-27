@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 软著源程序行数快速预判工具（ruanzhu-one-stop 配套）
-用途：统计项目源码总行数，判断是否超过 3000 行（超过才需"前后各30页"截取），
-     并按 50 行/页 估算页数，提交 CodeSucker 前先心里有数。
-注意：本脚本只做粗算；最终页数/行数以 CodeSucker 导出与登记机构要求为准。
+用途：统计项目源码总行数，判断是否超过 3600 行（超过时由 CodeDoc 截取），
+     并按 CodeDoc 的 60 行/页规则估算页数，提交前先心里有数。
+注意：本脚本只做粗算；最终页数/行数以 CodeDoc 导出与登记机构要求为准。
 用法：python line_count.py <项目目录>   （默认当前目录）
 """
 import os
@@ -48,15 +48,15 @@ def main():
         print(f'目录不存在: {root}')
         sys.exit(1)
     total, per_ext, files = count_lines(root)
-    pages = (total + 49) // 50
+    pages = (total + 59) // 60
     print(f'扫描目录 : {os.path.abspath(root)}')
     print(f'源码文件数: {files}')
     print(f'代码总行数: {total:,} 行')
-    print(f'估算页数(50行/页): {pages} 页')
-    if total > 3000:
-        print('判定     : 超过 3000 行 → 需按"前30页+后30页"截取（CodeSucker 自动处理）')
+    print(f'估算页数(60行/页): {pages} 页')
+    if total > 3600:
+        print('判定     : 超过 3600 行 → 取前 1800 行 + 后 1800 行（CodeDoc 自动处理）')
     else:
-        print('判定     : 不足 3000 行 → 按规则提交全部源代码（无需硬凑 60 页）')
+        print('判定     : 不超过 3600 行 → CodeDoc 按完整代码流生成材料')
     print('--- 按后缀分布 ---')
     for ext, n in sorted(per_ext.items(), key=lambda x: -x[1]):
         print(f'  {ext:<8} {n:>8,} 行')

@@ -1,26 +1,30 @@
-# CodeSucker 维护者基线
+# CodeDoc 维护者基线
 
 ## 目标
 
-本文件定义从恢复后的 v0.4.4 继续开发时的最低可复现条件、验证命令和暂不跨越的分发边界。
+本文件定义 CodeDoc v0.4.4 的最低可复现条件、验证命令和暂不跨越的分发边界。
 
-## 基线来源
+## 产品与工程基线
 
 - 产品版本：`0.4.4`
-- 原始提交：`b065a1825f4e32dca4c4b7fd8bccf3e020a77c5c`
-- 恢复提交：`b7900b5127a1a7e854980eb2b52d250c8ac69df5`
-- 来源与交叉校验过程：[`RECOVERY.md`](RECOVERY.md)
+- 产品名称：`CodeDoc`
+- App ID：`com.ideaboxapps.codedoc`
+- npm workspace：`@codedoc/app`、`@codedoc/core`
+- 项目配置：`.codedoc.json`
 
-原始项目的 Apache-2.0 `LICENSE`、`NOTICE`、第三方归属清单和 Git 历史必须继续保留。修改或再分发时应标明变更，不得移除原作者版权信息。
+再分发时必须保留 Apache-2.0 `LICENSE`、`NOTICE` 和适用的第三方许可证，并按许可证要求标明修改。
 
 ## 开发环境
 
 - macOS Apple Silicon 已完成实际运行与 arm64 DMG 验证。
-- CI 基准为 Node.js `22.12.0`；工程声明最低版本为 Node.js `>=22.12.0`。
+- 本地开发、CI 与发布基准统一为 Node.js `24.19.0`（Krypton LTS）；工程仅支持 Node.js `>=24.19.0 <25`。
+- 仓库通过 `.nvmrc` 与 `.node-version` 固定开发版本；进入项目后应先切换到对应 Node.js 版本。
 - 依赖必须通过 `npm ci` 按 `package-lock.json` 安装，不使用未锁定的临时版本作为验收结果。
+- 根目录 `npm run dev` 会先执行 Electron 二进制完整性检查；缺失时按 Electron 锁定版本下载，已安装时直接跳过。
 
 ```bash
 npm ci
+npm run dev
 npm run audit:runtime
 npm run audit:all
 npm run verify
@@ -46,7 +50,7 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 ## 当前网络边界
 
-原始 `fanbuz/codesucker` Release 地址已经不可用。为避免启动时请求失效服务或把用户导向错误下载地址，维护基线已经移除：
+正式发布渠道尚未确定。为避免启动时请求失效服务或把用户导向错误下载地址，维护基线已经移除：
 
 - 启动时 GitHub Release 检查；
 - 设置页手动检查更新和下载入口；
@@ -72,11 +76,10 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 以下事项不得由维护脚本猜测或自动填写：
 
-1. 新的公开维护仓库和 Release 地址。
-2. 新维护者名称及用户可见支持渠道。
-3. 是否继续使用 `CodeSucker` 名称、现有图标和 `com.fanbuz.codesucker` Bundle ID。
-4. Apple Developer Team、Developer ID Application 证书和公证凭据。
-5. 是否继续提供 Windows 版本及其代码签名方案。
+1. 公开维护仓库、Release 地址和用户可见支持渠道。
+2. CodeDoc 新图标及其平台生成资产。
+3. Apple Developer Team、Developer ID Application 证书和公证凭据。
+4. 是否继续提供 Windows 版本及其代码签名方案。
 
 任何密钥、证书、私钥、公证密码或 Apple 凭据都不得提交到仓库。
 

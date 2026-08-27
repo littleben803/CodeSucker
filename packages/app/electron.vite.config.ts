@@ -8,7 +8,7 @@ const fromConfig = (relativePath: string) => fileURLToPath(new URL(relativePath,
 export default defineConfig({
   main: {
     build: {
-      externalizeDeps: { exclude: ['@codesucker/core'] },
+      externalizeDeps: { exclude: ['@codedoc/core'] },
       rollupOptions: {
         input: {
           index: fromConfig('./src/main/index.ts'),

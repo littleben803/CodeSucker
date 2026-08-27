@@ -1,15 +1,15 @@
 /**
  * 冒烟测试：构造一个混合语言的临时项目 → 跑完整流水线 → 校验硬性规范。
- * 运行：npm test -w @codesucker/core（Node 22+，或 npx tsx test/smoke.ts）
+ * 运行：npm test -w @codedoc/core（Node 22+，或 npx tsx test/smoke.ts）
  */
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import assert from 'node:assert';
 import JSZip from 'jszip';
-import { annotate, defaultCleanOptions, DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, processFiles, renderDocx, renderTxt, sortFiles, wrapLine } from '../src/index.ts';
+import { annotate, defaultCleanOptions, DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, processFiles, renderDocx, renderPdfHtml, renderTxt, sortFiles, wrapLine } from '../src/index.ts';
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-'));
 
 // —— 构造测试项目 ——
 const mk = (rel: string, content: string) => {
@@ -30,9 +30,9 @@ mk('src/main.py', [
   '    service.run()',
 ].join('\n'));
 
-// 生成足够多的行触发前后段截取（>3000 行）
+// 生成足够多的行触发前后段截取（>3600 行）
 const bigLines: string[] = ['/** file header */', 'class Big {'];
-for (let i = 0; i < 3300; i++) bigLines.push(`    int field${i} = ${i}; // trailing comment ${i}`);
+for (let i = 0; i < 3900; i++) bigLines.push(`    int field${i} = ${i}; // trailing comment ${i}`);
 bigLines.push('}');
 mk('src/Big.java', bigLines.join('\n'));
 mk('src/tail.go', ['package main', '', 'func tail() {', '\tprintln("end") // done', '}'].join('\n'));
@@ -60,13 +60,13 @@ assert.strictEqual(ordered[0].name, 'main.py', '入口文件应排在最前');
 const config = {
   root: tmp, title: '测试系统V1.0', owner: '某某科技有限公司',
   extensions: DEFAULT_EXTENSIONS, excludes: DEFAULT_EXCLUDES,
-  sortMode: 'entry' as const, clean: opts, linesPerPage: 50, maxPages: 60,
+  sortMode: 'entry' as const, clean: opts, linesPerPage: 60, maxPages: 60,
 };
 const result = processFiles(ordered, config);
 const { pages } = result.selection;
 
 assert.strictEqual(pages.length, 60, `应恰好 60 页，实际 ${pages.length}`);
-assert.ok(pages.every((p) => p.lines.length === 50), '每页应恰好 50 行');
+assert.ok(pages.every((p) => p.lines.length === 60), '每页应恰好 60 行');
 assert.strictEqual(result.selection.splitAfterPage, 30, '前后段分界应在第 30 页后');
 assert.strictEqual(pages[0].lines[0], 'import service', '第 1 页第 1 行应为首文件首行（注释已剥离）');
 const lastPage = pages[59];
@@ -79,29 +79,54 @@ assert.ok(
 
 // —— 渲染 ——
 const outDir = path.join(tmp, 'out');
-const docxPath = await renderDocx(pages, { title: config.title, fontName: 'SimSun', fontSizePt: 10.5, outDir });
-const txtPath = renderTxt(pages, { title: config.title, fontName: 'SimSun', fontSizePt: 10.5, outDir });
+const docxPath = await renderDocx(pages, { title: config.title, owner: config.owner, fontName: 'SimSun', fontSizePt: 10.5, outDir });
+const txtPath = renderTxt(pages, { title: config.title, owner: config.owner, fontName: 'SimSun', fontSizePt: 10.5, outDir });
 assert.ok(fs.statSync(docxPath).size > 10000, 'docx 应生成');
-assert.ok(fs.readFileSync(txtPath, 'utf8').split('\n').length === 3000, 'txt 应为 3000 行');
+assert.ok(fs.readFileSync(txtPath, 'utf8').split('\n').length === 3600, 'txt 应为 3600 行');
 
 // —— DOCX 申报排版结构 ——
 const docxZip = await JSZip.loadAsync(fs.readFileSync(docxPath));
 const documentXml = await docxZip.file('word/document.xml')!.async('string');
 const stylesXml = await docxZip.file('word/styles.xml')!.async('string');
 const headerXml = await docxZip.file('word/header1.xml')!.async('string');
+const footerXml = await docxZip.file('word/footer1.xml')!.async('string');
 
-for (const [name, xml] of [['正文', documentXml], ['默认样式', stylesXml], ['页眉', headerXml]] as const) {
+for (const [name, xml] of [['正文', documentXml], ['默认样式', stylesXml], ['页眉', headerXml], ['页脚', footerXml]] as const) {
   assert.match(xml, /w:rFonts[^>]*w:ascii="SimSun"/, `${name}必须声明西文字体 SimSun`);
   assert.match(xml, /w:rFonts[^>]*w:eastAsia="SimSun"/, `${name}必须声明东亚字体 SimSun`);
 }
 assert.match(stylesXml, /w:sz w:val="21"/, '默认正文样式必须为 10.5pt');
 assert.match(documentXml, /w:sz w:val="21"/, '正文 run 必须为 10.5pt');
-assert.match(documentXml, /w:spacing[^>]*w:line="210"/, '正文固定行距必须为 10.5pt 对应的 210 twips');
+assert.match(documentXml, /w:spacing[^>]*w:line="240"/, '正文固定行距必须为 12pt 对应的 240 twips');
 assert.match(documentXml, /w:spacing[^>]*w:lineRule="exact"/, '正文必须使用固定行距');
 assert.match(documentXml, /w:pageBreakBefore/, '多页文档必须包含显式分页边界');
 assert.match(documentXml, /w:pgSz[^>]*w:w="11906"[^>]*w:h="16838"/, '页面尺寸必须保持 A4');
 assert.match(headerXml, /测试系统V1\.0/, '页眉必须包含软件名称与版本号');
 assert.match(headerXml, /w:fldChar[^>]*w:fldCharType="begin"|PAGE/, '页眉必须包含自动页码域');
+assert.match(headerXml, />第 <\//, 'DOCX 页眉页码必须包含「第」前缀');
+assert.match(headerXml, /> 页<\//, 'DOCX 页眉页码必须包含「页」后缀');
+assert.match(footerXml, /某某科技有限公司/, 'DOCX 页脚必须包含著作权人名称');
+assert.doesNotMatch(footerXml, /著作权人[：:]/, 'DOCX 页脚不得显示著作权人前缀');
+assert.match(footerXml, /w:jc w:val="center"/, 'DOCX 著作权人页脚必须居中');
+
+// —— PDF 打印模板结构 ——
+const pdfHtml = renderPdfHtml(pages, {
+  title: '测试系统 <V1.0>', owner: '某某科技 <有限公司>', fontName: 'SimSun', fontSizePt: 10.5,
+});
+assert.match(pdfHtml, /@page \{ size: A4 portrait; margin: 0; \}/, 'PDF 必须固定为 A4');
+assert.match(pdfHtml, /height: 296mm/, '打印页容器必须避开 Chromium 物理页高舍入边界');
+assert.equal((pdfHtml.match(/<section class="pdf-page/g) ?? []).length, 60, '每个逻辑页必须对应一个打印页容器');
+assert.equal((pdfHtml.match(/class="pdf-page-number"/g) ?? []).length, 60, 'PDF 每个物理页必须包含页码');
+assert.match(pdfHtml, /<span class="pdf-page-number">第 1 页<\/span>/, 'PDF 首页必须显示「第 1 页」');
+assert.match(pdfHtml, /<span class="pdf-page-number">第 60 页<\/span>/, 'PDF 末页必须显示「第 60 页」');
+assert.match(pdfHtml, /line-height: 12pt;/, 'PDF 正文必须使用 12pt 固定行距');
+assert.match(pdfHtml, /height: 12pt;/, 'PDF 每个物理行位必须固定为 12pt');
+assert.equal((pdfHtml.match(/class="code-line"/g) ?? []).length, 3600, 'PDF 模板不得丢失正文行');
+assert.equal((pdfHtml.match(/class="pdf-footer"/g) ?? []).length, 60, 'PDF 每个物理页必须包含著作权人页脚');
+assert.match(pdfHtml, /<footer class="pdf-footer"><span class="pdf-owner">某某科技 &lt;有限公司&gt;<\/span><\/footer>/, 'PDF 页脚必须仅包含安全转义的著作权人名称');
+assert.doesNotMatch(pdfHtml, /著作权人[：:]/, 'PDF 页脚不得显示著作权人前缀');
+assert.match(pdfHtml, /测试系统 &lt;V1\.0&gt;/, '标题必须安全转义');
+assert.doesNotMatch(pdfHtml, /测试系统 <V1\.0>/, '原始标题不得作为 HTML 注入');
 
 console.log('✅ smoke 全部通过');
 console.log('   docx:', docxPath, Math.round(fs.statSync(docxPath).size / 1024) + 'KB');

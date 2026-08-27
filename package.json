@@ -1,25 +1,26 @@
 {
-  "name": "codesucker",
+  "name": "codedoc",
   "version": "0.4.4",
   "private": true,
-  "description": "软著代码抽取器 —— 离线生成符合软件著作权申报规范的源程序文档",
+  "description": "软著代码整理器 —— 离线生成符合软件著作权申报规范的源程序文档",
   "license": "Apache-2.0",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @codesucker/app",
-    "build": "npm run build -w @codesucker/core && npm run build -w @codesucker/app",
-    "test": "npm run test -w @codesucker/core && npm run test -w @codesucker/app",
-    "test:integration": "npm run test:workers -w @codesucker/app",
-    "perf": "npm run build && npm run perf -w @codesucker/app",
+    "predev": "node node_modules/electron/install.js",
+    "dev": "npm run dev -w @codedoc/app",
+    "build": "npm run build -w @codedoc/core && npm run build -w @codedoc/app",
+    "test": "npm run test -w @codedoc/core && npm run test -w @codedoc/app",
+    "test:integration": "npm run test:workers -w @codedoc/app",
+    "perf": "npm run build && npm run perf -w @codedoc/app",
     "icons:generate": "node scripts/gen-icons.mjs",
     "icons:check": "node scripts/gen-icons.mjs --check",
     "licenses:generate": "node scripts/gen-third-party-notices.mjs",
     "licenses:check": "node scripts/gen-third-party-notices.mjs --check",
-    "dist:mac:x64": "npm run dist:mac:x64 -w @codesucker/app",
-    "dist:mac:arm64": "npm run dist:mac:arm64 -w @codesucker/app",
-    "dist:win:x64": "npm run dist:win:x64 -w @codesucker/app",
+    "dist:mac:x64": "npm run dist:mac:x64 -w @codedoc/app",
+    "dist:mac:arm64": "npm run dist:mac:arm64 -w @codedoc/app",
+    "dist:win:x64": "npm run dist:win:x64 -w @codedoc/app",
     "lockfile:check": "node scripts/check-lockfile-registry.mjs",
     "maintenance:check": "node scripts/check-maintenance-baseline.mjs",
     "audit:runtime": "npm audit --omit=dev --audit-level=low",
@@ -29,7 +30,7 @@
     "verify": "npm run version:check && npm run lockfile:check && npm run maintenance:check && npm run icons:check && npm run licenses:check && npm test && npm run build && npm run test:integration"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.19.0 <25"
   },
   "devDependencies": {
     "png2icons": "^2.0.1",

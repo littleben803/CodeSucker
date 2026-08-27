@@ -1,5 +1,5 @@
 import { parentPort } from 'node:worker_threads';
-import { renderDocx } from '@codesucker/core';
+import { renderDocx } from '@codedoc/core';
 import type { RenderWorkerRequest, WorkerEnvelope, WorkerReply } from './protocol.ts';
 
 if (!parentPort) throw new Error('render worker 缺少 parentPort');

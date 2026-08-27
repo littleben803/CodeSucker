@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { defaultCleanOptions, type CleanedFile, type FileCandidate, type FileEntry } from '@codesucker/core';
+import { defaultCleanOptions, type CleanedFile, type FileCandidate, type FileEntry } from '@codedoc/core';
 import { WorkerPool } from '../src/main/worker-pool.ts';
 import type {
   PipelineWorkerRequest, PipelineWorkerResult, RenderWorkerRequest,
@@ -14,7 +14,7 @@ async function main() {
   assert.ok(fs.existsSync(pipelineWorker), '构建产物应包含 pipeline-worker.js');
   assert.ok(fs.existsSync(renderWorker), '构建产物应包含 render-worker.js');
 
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-worker-integration-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-worker-integration-'));
   const sourcePath = path.join(tmp, 'main.ts');
   const source = '// @author Worker Tester\nexport const answer = 42;\n';
   fs.writeFileSync(sourcePath, source, 'utf8');

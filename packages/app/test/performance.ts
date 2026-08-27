@@ -7,7 +7,7 @@ import {
   DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, defaultCleanOptions,
   discover, discoverAsync, processFiles, processFilesAsync, renderDocx, sortFiles,
   type CleanedFile, type FileCandidate, type FileEntry, type ProjectConfig,
-} from '@codesucker/core';
+} from '@codedoc/core';
 import { recommendedWorkerCount, WorkerPool } from '../src/main/worker-pool.ts';
 import type {
   PipelineWorkerRequest, PipelineWorkerResult, RenderWorkerRequest,
@@ -60,11 +60,11 @@ async function main() {
   if (!Number.isInteger(fileCount) || fileCount < 1) throw new Error('PERF_FILES 必须是正整数');
   if (!Number.isInteger(linesPerFile) || linesPerFile < 2) throw new Error('PERF_LINES 必须是大于 1 的整数');
 
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-performance-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-performance-'));
   const sourceRoot = path.join(root, 'src');
   fs.mkdirSync(sourceRoot, { recursive: true });
   const content = Array.from({ length: linesPerFile }, (_, index) =>
-    index === 0 ? '// Copyright 2026 fanbuz' : `export const value${index} = ${index}; // generated`,
+    index === 0 ? '// Copyright 2026 示例著作权人' : `export const value${index} = ${index}; // generated`,
   ).join('\n');
   for (let index = 0; index < fileCount; index++) {
     const dir = path.join(sourceRoot, `module-${Math.floor(index / 100)}`);
@@ -78,12 +78,12 @@ async function main() {
   const config: ProjectConfig = {
     root,
     title: '性能测试系统V1.0',
-    owner: 'fanbuz',
+    owner: '示例著作权人',
     extensions: DEFAULT_EXTENSIONS,
     excludes: DEFAULT_EXCLUDES,
     sortMode: 'entry',
     clean: defaultCleanOptions(),
-    linesPerPage: 50,
+    linesPerPage: 60,
     maxPages: 60,
   };
 

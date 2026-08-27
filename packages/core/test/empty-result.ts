@@ -7,7 +7,7 @@ import {
   type FileEntry, type ProjectConfig,
 } from '../src/index.ts';
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-empty-result-'));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-empty-result-'));
 const clean = defaultCleanOptions();
 const config: ProjectConfig = {
   root,
@@ -16,7 +16,7 @@ const config: ProjectConfig = {
   excludes: DEFAULT_EXCLUDES,
   sortMode: 'manual',
   clean,
-  linesPerPage: 50,
+  linesPerPage: 60,
   maxPages: 60,
 };
 

@@ -102,7 +102,7 @@ export default function Step1Import() {
 
   const setPinned = async (project: RecentProject) => {
     try {
-      await updateRecent(() => window.cs.setRecentPinned(project.root, !project.pinned));
+      await updateRecent(() => window.codedoc.setRecentPinned(project.root, !project.pinned));
       toast(project.pinned ? '已取消置顶' : '已置顶最近项目');
     } catch (error) {
       await refreshRecent();
@@ -115,7 +115,7 @@ export default function Step1Import() {
   const removeOne = async (project: RecentProject) => {
     if (!window.confirm(`只会从最近项目中移除“${project.name}”的记录，不会删除磁盘上的项目文件。确定移除吗？`)) return;
     try {
-      await updateRecent(() => window.cs.removeRecent(project.root));
+      await updateRecent(() => window.codedoc.removeRecent(project.root));
       toast('已从最近项目移除，项目文件未受影响');
     } catch (error) {
       await refreshRecent();
@@ -130,7 +130,7 @@ export default function Step1Import() {
     if (roots.length === 0) return;
     if (!window.confirm(`只会移除选中的 ${roots.length} 条最近记录，不会删除任何项目文件。确定继续吗？`)) return;
     try {
-      await updateRecent(() => window.cs.removeRecentMany(roots));
+      await updateRecent(() => window.codedoc.removeRecentMany(roots));
       setSelectedRecent(new Set());
       setManagingRecent(false);
       toast(`已移除 ${roots.length} 条最近记录，项目文件未受影响`);
@@ -161,7 +161,7 @@ export default function Step1Import() {
   };
 
   const pick = async () => {
-    const root = await window.cs.pickFolder();
+    const root = await window.codedoc.pickFolder();
     if (root) void scanProject(root, 'open');
   };
 
@@ -169,7 +169,7 @@ export default function Step1Import() {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (!file) return;
-    const result = await window.cs.resolveDroppedPath(file);
+    const result = await window.codedoc.resolveDroppedPath(file);
     if (result.path) void scanProject(result.path, 'open');
     else toast(result.error ?? '无法读取拖入的项目文件夹');
   };
@@ -179,7 +179,7 @@ export default function Step1Import() {
       {s.scanPhase === 'idle' && (
         <div className="dropzone" onClick={pick} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}
           style={{ border: '1.5px dashed var(--accent-line)', borderRadius: 14, background: 'var(--accent-soft)', height: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer', transition: 'border-color .15s' }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--panel)', boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'cs-float 2.6s ease-in-out infinite' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--panel)', boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'codedoc-float 2.6s ease-in-out infinite' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2.5 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="var(--accent)" strokeWidth="1.6" /><path d="M12 15.5v-5M9.8 12.6 12 10.4l2.2 2.2" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <div style={{ fontSize: 16, fontWeight: 600 }}>拖入项目文件夹，或点击选择</div>
@@ -192,17 +192,17 @@ export default function Step1Import() {
 
       {s.scanPhase === 'scanning' && (
         <div style={{ border: '1.5px solid var(--border)', borderRadius: 14, background: 'var(--panel)', height: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <svg width="30" height="30" viewBox="0 0 30 30" style={{ animation: 'cs-spin 1s linear infinite' }}><circle cx="15" cy="15" r="12" fill="none" stroke="var(--border)" strokeWidth="3" /><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" /></svg>
+          <svg width="30" height="30" viewBox="0 0 30 30" style={{ animation: 'codedoc-spin 1s linear infinite' }}><circle cx="15" cy="15" r="12" fill="none" stroke="var(--border)" strokeWidth="3" /><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" /></svg>
           <div style={{ fontSize: 14, fontWeight: 600 }}>
             {progress?.stage === 'discovering' ? '正在发现源代码文件…' : '正在并发扫描项目…'}
           </div>
           <div style={{ width: 360, height: 6, borderRadius: 3, background: 'var(--border2)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%`, transition: 'width .12s', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent)', animation: 'cs-shimmer 1.1s linear infinite' }} />
+              <div style={{ position: 'absolute', inset: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent)', animation: 'codedoc-shimmer 1.1s linear infinite' }} />
             </div>
           </div>
           <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
-            <span style={{ animation: 'cs-blink 1s ease-in-out infinite', display: 'inline-block', marginRight: 6 }}>▸</span>{s.root}
+            <span style={{ animation: 'codedoc-blink 1s ease-in-out infinite', display: 'inline-block', marginRight: 6 }}>▸</span>{s.root}
           </div>
           {progress?.stage === 'scanning' && (
             <div style={{ fontSize: 12, color: 'var(--text2)', fontFamily: 'var(--mono)' }}>
@@ -216,7 +216,7 @@ export default function Step1Import() {
       )}
 
       {s.scanPhase === 'error' && (
-        <div style={{ border: '1.5px solid color-mix(in srgb, var(--red) 35%, transparent)', borderRadius: 14, background: 'var(--red-soft)', height: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, animation: 'cs-fade .18s ease-out' }}>
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--red) 35%, transparent)', borderRadius: 14, background: 'var(--red-soft)', height: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, animation: 'codedoc-fade .18s ease-out' }}>
           <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--red)', boxShadow: 'var(--shadow)' }}>✕</div>
           <div style={{ fontSize: 15, fontWeight: 600 }}>{s.scanError ?? '未发现可用源代码文件'}</div>
           <div style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'center', lineHeight: 1.7 }}>

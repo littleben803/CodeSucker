@@ -4,7 +4,7 @@ import {
   DEFAULT_EXCLUDES,
   normalizeExcludeRules,
   validateExcludeRule,
-} from '@codesucker/core';
+} from '@codedoc/core';
 
 export const SCAN_EXCLUDES_CONFIG_VERSION = 1 as const;
 export const SCAN_EXCLUDES_CONFIG_NAME = 'scan-excludes.json';

@@ -1,7 +1,7 @@
 import { parentPort } from 'node:worker_threads';
 import {
   annotate, cleanFile, readSourceAsync, scanFileCandidate,
-} from '@codesucker/core';
+} from '@codedoc/core';
 import type {
   PipelineWorkerRequest, PipelineWorkerResult, PreviewResult, WorkerEnvelope, WorkerReply,
 } from './protocol.ts';

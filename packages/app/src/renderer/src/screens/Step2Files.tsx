@@ -173,7 +173,7 @@ export default function Step2Files() {
     const knownPaths = new Set(files.map((file) => file.relPath));
     const preferred = s.sortMode === 'mtime' ? s.mtimeOrder : s.entryOrder;
     const order = completeFileOrder(s.sortMode === 'manual' ? s.order : preferred, preferred, knownPaths);
-    s.set({ files, order, processData: null });
+    s.set({ files, order, processData: null, pdfPreviewKey: null });
   };
 
   const toggleFile = (rel: string) => {
@@ -229,7 +229,7 @@ export default function Step2Files() {
   const setSortMode = (mode: 'entry' | 'mtime' | 'manual') => {
     if (mode === 'manual') { s.set({ sortMode: mode }); return; }
     const base = mode === 'entry' ? s.entryOrder : s.mtimeOrder;
-    s.set({ sortMode: mode, order: base.filter((r) => byRel.has(r)), processData: null });
+    s.set({ sortMode: mode, order: base.filter((r) => byRel.has(r)), processData: null, pdfPreviewKey: null });
   };
 
   const onDragOver = (i: number) => (e: React.DragEvent) => {
@@ -239,7 +239,7 @@ export default function Step2Files() {
     const [it] = arr.splice(dragIdx, 1);
     arr.splice(i, 0, it);
     setDragIdx(i);
-    s.set({ order: reorderIncludedPaths(s.order, arr), sortMode: 'manual', processData: null });
+    s.set({ order: reorderIncludedPaths(s.order, arr), sortMode: 'manual', processData: null, pdfPreviewKey: null });
   };
 
   const ring = 2 * Math.PI * 26;

@@ -49,7 +49,7 @@ async function main(): Promise<void> {
 const primary = { workArea: { x: 0, y: 25, width: 1920, height: 1055 } };
 const secondary = { workArea: { x: 1920, y: 0, width: 1600, height: 900 } };
 const screen = new FakeScreen([primary, secondary]);
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-window-state-'));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-window-state-'));
 const stateFile = path.join(root, 'nested', 'window-state.json');
 
 assert.deepEqual(loadWindowState(stateFile, screen), {

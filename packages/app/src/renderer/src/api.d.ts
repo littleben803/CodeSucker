@@ -33,7 +33,7 @@ declare global {
   }
 
   interface Window {
-    cs: {
+    codedoc: {
       platform: NodeJS.Platform;
       win: (action: 'minimize' | 'maximize' | 'close') => void;
       pickFolder: () => Promise<string | null>;
@@ -48,6 +48,7 @@ declare global {
       resetScanExcludes: () => Promise<ScanExcludesState>;
       scan: (root: string, jobId: string, scanSessionId: string) => Promise<unknown>;
       process: (payload: unknown, jobId: string) => Promise<unknown>;
+      previewPdf: (documentKey: string, scanSessionId: string) => Promise<{ documentKey: string; data: Uint8Array }>;
       export: (payload: unknown, jobId: string) => Promise<unknown>;
       cancel: (jobId: string) => Promise<boolean>;
       onProgress: (callback: (progress: JobProgress) => void) => void;

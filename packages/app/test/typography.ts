@@ -8,6 +8,10 @@ const rendererRoot = join(appRoot, 'src/renderer/src');
 const themeCss = readFileSync(join(rendererRoot, 'theme.css'), 'utf8');
 const preloadSource = readFileSync(join(appRoot, 'src/preload/index.ts'), 'utf8');
 const rendererEntry = readFileSync(join(rendererRoot, 'main.tsx'), 'utf8');
+const step3CleanSource = readFileSync(join(rendererRoot, 'screens/Step3Clean.tsx'), 'utf8');
+const step4PreviewSource = readFileSync(join(rendererRoot, 'screens/Step4Preview.tsx'), 'utf8');
+const pdfTemplateSource = readFileSync(join(appRoot, '../core/src/pdf-template.ts'), 'utf8');
+const pipelineSource = readFileSync(join(appRoot, 'src/main/pipeline.ts'), 'utf8');
 
 assert.match(
   themeCss,
@@ -19,12 +23,19 @@ assert.match(
   /:root\[data-platform="win32"\]\{[\s\S]*?--font-mono:"Cascadia Mono",Consolas,"Microsoft YaHei UI",monospace;/,
   'Windows 等宽字体必须优先 Cascadia Mono，并在中文字体前回退到 Consolas',
 );
-assert.match(themeCss, /--font-document:SimSun,"Songti SC",serif;/, '申报文档必须使用独立字体 token');
-assert.match(themeCss, /\.step4-paper__header\{[^}]*font-family:var\(--font-document\)/, 'A4 页眉必须使用文档字体域');
-assert.match(themeCss, /\.step4-paper__code\{[^}]*font-family:var\(--font-document\)/, 'A4 正文必须使用文档字体域');
-assert.equal((themeCss.match(/SimSun/g) ?? []).length, 1, 'SimSun 只能声明在文档字体 token 中');
+assert.match(pipelineSource, /fontName: 'SimSun', fontSizePt: 10\.5/, 'PDF 申报文档必须使用宋体 10.5pt');
+assert.match(pipelineSource, /linesPerPage: 60/, '产品分页规则必须按每页 60 行执行');
+assert.match(pdfTemplateSource, /"Songti SC", "STSong", serif/, 'PDF 模板必须提供 macOS 中文字体回退');
+assert.match(pdfTemplateSource, /font-size: \$\{fontSize\}pt/, 'PDF 正文必须由固定字号驱动');
+assert.match(pdfTemplateSource, /SOURCE_CODE_LINE_HEIGHT_PT = 12/, 'PDF 正文必须使用 12pt 固定行距');
+assert.match(step3CleanSource, /12pt 行距 · 每页 60 行/, '排版参数摘要必须显示 12pt 行距和每页 60 行');
+assert.match(
+  step4PreviewSource,
+  /<iframe key=\{`\$\{p\.documentKey\}:\$\{s\.page\}`\}/,
+  '底部分页切换时必须重建 Chromium PDF Viewer，确保目标页参数生效',
+);
 assert.match(preloadSource, /platform: process\.platform/, 'preload 必须暴露只读平台信息');
-assert.match(rendererEntry, /document\.documentElement\.dataset\.platform = window\.cs\.platform/, 'renderer 根节点必须标记平台');
+assert.match(rendererEntry, /document\.documentElement\.dataset\.platform = window\.codedoc\.platform/, 'renderer 根节点必须标记平台');
 
 function collectUiSourcePaths(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -52,7 +63,6 @@ for (const match of componentSource.matchAll(/font-size\s*=\s*["']([0-9]+(?:\.[0
 }
 
 for (const line of themeCss.split('\n')) {
-  if (line.startsWith('.step4-paper__header') || line.startsWith('.step4-paper__code')) continue;
   for (const match of line.matchAll(/font-size:([0-9]+(?:\.[0-9]+)?)px/g)) {
     assert.ok(Number(match[1]) >= 11, `普通 CSS UI 字号不得小于 11px：${line}`);
   }

@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="packages/app/build/icon-256.png" width="110" alt="CodeSucker" />
+<img src="packages/app/build/icon-256.png" width="110" alt="CodeDoc" />
 
-# CodeSucker · 软著代码抽取器
+# CodeDoc · 软著代码整理器
 
-**把本地代码项目整理成便于软件著作权申报的源程序文档**
+**一键生成软著代码审核材料**
 
 全程离线 · 代码不出本机 · 规范内置 · 导出前自动校验
 
@@ -12,14 +12,6 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)](#下载)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#参与贡献)
-
-<br/>
-
-<img src="docs/screenshots/codesucker-v0.4.1-file-tree.png" alt="CodeSucker v0.4.1 — 项目文件目录树、关键字实时筛选、文件排序与类型统计" width="920" />
-
-<br/>
-
-<img src="docs/screenshots/codesucker-v0.4.1-page-preview.png" alt="CodeSucker v0.4.1 — 源程序分页预览、完整首尾标签、前后段分界与页码导航" width="920" />
 
 </div>
 
@@ -29,18 +21,18 @@
 
 申请软件著作权登记时，需要提交**源程序鉴别材料**：前后各连续 30 页、每页不少于 50 行、页眉标注软件全称+版本号……格式细节繁多，一处不合就被退回补正。手工整理一次要花几个小时，而市面上的工具要么只做简单拼接、要么依赖在线服务（代码泄露风险）。
 
-CodeSucker 把常见的软件著作权源程序材料规则整理成一套本地流水线：导入项目 → 五步向导 → 导出文档，并在导出前自动检查页数、行数、页眉和署名等风险，帮助减少手工整理错误与补正概率。
+CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流水线：导入项目 → 五步向导 → 导出文档，并在导出前自动检查页数、行数、页眉和署名等风险，帮助减少手工整理错误与补正概率。
 
 > [!IMPORTANT]
-> **当前维护状态**
+> **当前发布状态**
 >
-> 原始公开仓库已无法访问。本仓库已从可核验的 v0.4.4 提交恢复源码和历史，目前处于维护迁移阶段。恢复来源见 [docs/RECOVERY.md](docs/RECOVERY.md)，开发与分发边界见 [docs/MAINTAINER_BASELINE.md](docs/MAINTAINER_BASELINE.md)。
+> CodeDoc 当前处于正式发布准备阶段。开发与分发边界见 [docs/MAINTAINER_BASELINE.md](docs/MAINTAINER_BASELINE.md)。
 
 当前桌面安全边界及维护要求见 [docs/SECURITY.md](docs/SECURITY.md)。
 
 ## 下载
 
-当前维护基线尚未建立新的官方 Release 下载渠道。请勿从原仓库链接或未知第三方来源下载安装包。
+当前尚未建立官方 Release 下载渠道。请勿从未知第三方来源下载安装包。
 
 开发者可以在本地运行 `CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:arm64` 生成 Apple Silicon 验证用 DMG。该产物未使用 Developer ID 签名、未经 Apple 公证，不应作为最终公开分发包。
 
@@ -51,19 +43,19 @@ CodeSucker 把常见的软件著作权源程序材料规则整理成一套本地
 - 📊 **文件类型构成与按后缀导出** — 按文件数/代码行查看完整与已纳入构成，可一键只保留 `.java` 等指定后缀参与清洗和导出
 - 🧹 **状态机代码清洗** — 逐字符识别注释与字符串边界（`"https://..."` 里的 `//` 不会被误删），支持 Java/Kotlin/Python/JS/TS/Go/Rust/C/C++/C#/Swift/PHP/Ruby/Vue/HTML/CSS/SQL 等 30+ 后缀；删空行、Tab 转空格、超长行按 78 列硬折断
 - 🔒 **敏感信息脱敏** — API 密钥、密码、内网 IP、手机号自动替换为占位符
-- 📄 **规范化截取分页** — 超 3000 行自动取前 1500 + 后 1500 行；第 1 页必为模块开头、第 60 页必为模块结尾；每 50 行显式分页符，不靠排版"凑页"
-- 📝 **一键导出** — docx（页眉=软件名+版本号、右上角自动页码、宋体 10.5pt 固定行距）+ txt 备查
+- 📄 **规范化截取分页** — 超 3600 行自动取前 1800 + 后 1800 行；第 1 页必为模块开头、第 60 页必为模块结尾；产品按每页 60 行显式分页，不靠排版"凑页"
+- 📝 **一键导出** — PDF / docx（页眉=软件名+版本号、右上角自动页码、宋体 10.5pt、12pt 固定行距）+ txt 备查
 - ✅ **提交前风险校验** — 检查有效内容、每页行数、末页 2/3、页眉一致性、首末页边界和 `@author`/`Copyright` 署名冲突，给出「通过 / 警告 / 退回风险」三级结论
 - 🔐 **产品功能完全离线** — 扫描、清洗、排版和导出均在本机完成；维护迁移期间版本检测已关闭，产品功能不发起网络请求
 - 📌 **最近项目管理** — 常用项目可置顶，失效或不再使用的记录可单项或批量移除；移除记录不会删除磁盘项目
-- 💾 **配置与窗口持久化** — 项目选择与导出配置存入 `.codesucker.json`；应用级规则、最近项目和窗口状态安全保存在本机配置目录
+- 💾 **配置与窗口持久化** — 项目选择与导出配置存入 `.codedoc.json`；应用级规则、最近项目和窗口状态安全保存在本机配置目录
 
 ## 内置整理规则对照
 
-| 规范要求 | CodeSucker 的实现 |
+| 规范要求 | CodeDoc 的实现 |
 |---|---|
-| 前、后各连续 30 页，共 60 页 | 超 3000 行自动截取前 1500 + 后 1500 行 |
-| 每页不少于 50 行 | 内存中按 50 行切块 + 显式分页符，逐页保证 |
+| 前、后各连续 30 页，共 60 页 | 超 3600 行自动截取前 1800 + 后 1800 行 |
+| 每页不少于 50 行 | 产品按 60 行切块 + 显式分页符，逐页保证 |
 | 页眉标注软件全称+版本号 | 导出时写入页眉，未含版本号会在校验中警告 |
 | 页码 1–60 连续 | docx PAGE 域自动编号 |
 | 第 1 页为程序开头、第 60 页为结尾 | 截取策略从首文件首行起、至末文件末行止 |
@@ -78,7 +70,7 @@ CodeSucker 把常见的软件著作权源程序材料规则整理成一套本地
 ### 开发运行
 
 ```bash
-cd /path/to/CodeSucker
+cd /path/to/CodeDoc
 npm ci
 npm run dev        # 启动桌面应用
 npm test           # core 流水线冒烟测试
@@ -90,7 +82,7 @@ npm run verify     # 版本一致性 + 测试 + 完整构建
 
 ### 使用流程
 
-**① 导入项目**（拖入文件夹）→ **② 文件与排序**（勾选纳入、拖拽调序，入口文件置顶）→ **③ 清洗与排版**（填写软件全称+版本号、开关清洗规则、实时前后对比）→ **④ 分页预览**（A4 仿真、60 页缩略导航、前后段分界标记）→ **⑤ 校验与导出**（合规报告 + 生成 docx/txt）
+**① 导入项目**（拖入文件夹）→ **② 文件与排序**（勾选纳入、拖拽调序，入口文件置顶）→ **③ 清洗与排版**（填写软件全称+版本号、开关清洗规则、实时前后对比）→ **④ 分页预览**（PDF 预览、页码导航）→ **⑤ 校验与导出**（风险报告 + 生成 PDF/docx/txt）
 
 ## 架构
 
@@ -116,7 +108,7 @@ scripts/    图标生成等工具脚本
 ## 常见问题
 
 **Q：生成的文档能直接提交吗？**
-生成的 docx 已按应用内置规则排版，可作为源程序鉴别材料的准备稿。提交前仍应查看第 5 步报告、清零「退回风险」，并以登记机构最新要求和申请主体的实际情况为准。本工具不构成法律建议。
+生成的 PDF/docx 已按应用内置规则排版，可作为源程序鉴别材料的准备稿。提交前仍应查看第 5 步报告、清零「退回风险」，并以登记机构最新要求和申请主体的实际情况为准。本工具不构成法律建议。
 
 **Q：macOS 提示无法验证开发者，怎么办？**
 当前生成的 DMG 仅用于开发验证，尚未签名与公证，也没有新的官方公开下载渠道。正式对外分发前需要完成 Developer ID 签名、Apple 公证和安装验证。
@@ -141,7 +133,7 @@ scripts/    图标生成等工具脚本
 
 ## 版本与发布
 
-CodeSucker 使用 Semantic Versioning。根包、桌面应用、core 包和 lockfile 的产品版本由统一脚本同步；项目配置 schema 与合规规则版本独立演进。
+CodeDoc 使用 Semantic Versioning。根包、桌面应用、core 包和 lockfile 的产品版本由统一脚本同步；项目配置 schema 与合规规则版本独立演进。
 
 ```bash
 npm run version:check                    # 检查所有版本字段一致
@@ -157,13 +149,8 @@ npm run verify                           # 发布前完整校验
 
 ## 许可证
 
-[Apache-2.0](LICENSE) © fanbuz
+[Apache-2.0](LICENSE)
 
 本项目允许使用、修改、分发及闭源商用；再分发时须附带 Apache-2.0 许可证、保留适用的版权与 [NOTICE](NOTICE) 声明，并标明对文件所作的修改。
 
 安装包同时附带 [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt)，列出实际分发与打入应用 bundle 的第三方依赖、许可证选择和完整归属文本。
-
-## 延伸阅读与社区
-
-- [我为什么做 CodeSucker：一篇 X 长文](https://x.com/fanbuz_/status/2080468029784379675?s=20)，来自 [@fanbuz_](https://x.com/fanbuz_)
-- [LINUX DO](https://linux.do/)：社区精神——**真诚**、**友善**、**团结**、**专业**，共建你我引以为荣之社区。

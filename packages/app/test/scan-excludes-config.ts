@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, normalizeExcludeRules } from '@codesucker/core';
+import { DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, normalizeExcludeRules } from '@codedoc/core';
 import {
   loadScanExcludeSnapshot, loadScanExcludes, registerScanExcludesIpc, resetScanExcludes,
   saveScanExcludes, SCAN_EXCLUDES_CHANNELS,
 } from '../src/main/scan-excludes-config.ts';
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-scan-excludes-'));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-scan-excludes-'));
 const configFile = path.join(root, 'nested', 'scan-excludes.json');
 const defaults = normalizeExcludeRules(DEFAULT_EXCLUDES);
 
@@ -48,7 +48,7 @@ assert.match(futureVersion.warning ?? '', /更高版本|不受支持/);
 
 saveScanExcludes(configFile, []);
 assert.deepEqual(loadScanExcludes(configFile).rules, [], '空列表表示用户明确不添加应用级排除规则');
-const scanRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-scan-excludes-project-'));
+const scanRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-scan-excludes-project-'));
 fs.mkdirSync(path.join(scanRoot, 'node_modules'), { recursive: true });
 fs.writeFileSync(path.join(scanRoot, 'node_modules', 'included.ts'), 'export const included = true;\n');
 assert.deepEqual(

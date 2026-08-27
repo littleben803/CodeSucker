@@ -12,7 +12,7 @@ export interface ProjectConfig {
   root: string;
   /** 软件全称+版本号，用作页眉，必须与申请表一致 */
   title: string;
-  /** 著作权人名称，用于署名冲突扫描 */
+  /** 著作权人名称，用于文档页脚与署名冲突扫描 */
   owner?: string;
   /** 著作权人成立日期 YYYY-MM-DD，早于该日期的文件 mtime 会被警告 */
   foundedDate?: string;

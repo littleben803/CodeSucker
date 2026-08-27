@@ -1,6 +1,6 @@
-# CodeSucker 版本与发布规范
+# CodeDoc 版本与发布规范
 
-本文是 CodeSucker 产品版本、配置兼容、规则追踪和 Git 发布的唯一标准。README 只保留摘要；发生冲突时以本文和自动校验脚本为准。
+本文是 CodeDoc 产品版本、配置兼容、规则追踪和 Git 发布的唯一标准。README 只保留摘要；发生冲突时以本文和自动校验脚本为准。
 
 ## 版本维度
 
@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 产品版本 | `0.1.0` | 用户看到的应用与安装包版本 | 三个 `package.json`，由脚本同步 |
 | 构建版本 | Git SHA / Actions run number | 定位同一产品版本的具体构建 | CI 环境，不写回源码 |
-| 配置结构版本 | `1` | 迁移 `.codesucker.json` | `CONFIG_SCHEMA_VERSION` |
+| 配置结构版本 | `1` | 迁移 `.codedoc.json` | `CONFIG_SCHEMA_VERSION` |
 | 合规规则版本 | `2026.07.2` | 追踪生成时采用的校验规则口径 | `RULES_VERSION` |
 
 产品版本、配置结构版本和规则版本相互独立，不得用升级产品补丁版本代替配置迁移或规则版本记录。
@@ -27,7 +27,7 @@ Git tag 必须使用 `v<SemVer>`，例如 `v0.1.0`、`v0.2.0-beta.1`。
 
 ### 1.0.0 前的兼容约定
 
-- patch 版本必须保持 `.codesucker.json` 向后兼容
+- patch 版本必须保持 `.codedoc.json` 向后兼容
 - minor 版本可以调整未稳定的内部 API，但应迁移已有项目配置
 - 删除用户可见能力、改变默认清洗结果或改变输出格式时，至少提升 minor 版本
 - 已发布版本的安装包和 tag 不得覆盖或移动
@@ -60,7 +60,7 @@ npm run verify
 
 ## 配置结构版本
 
-新保存的 `.codesucker.json` 必须包含：
+新保存的 `.codedoc.json` 必须包含：
 
 ```json
 {
@@ -124,7 +124,7 @@ tag 校验会拒绝缺少对应版本日期标题的发布。
 4. 整理 `CHANGELOG.md`，把 Unreleased 内容归入该版本和发布日期
 5. 执行 `npm run audit:runtime && npm run audit:all && npm run verify`
 6. 提交 `chore(release): v<version>`
-7. 创建 annotated tag：`git tag -a v<version> -m "CodeSucker v<version>"`
+7. 创建 annotated tag：`git tag -a v<version> -m "CodeDoc v<version>"`
 8. 推送 main 与 tag；CI 再次校验 tag、版本和 CHANGELOG 一致
 9. `Package and Release` 工作流生成 macOS x64、macOS arm64、Windows x64 安装包与 SHA-256 校验文件，并创建 GitHub Release
 

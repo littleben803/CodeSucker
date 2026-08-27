@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import type { CleanOptions } from '@codesucker/core';
+import type { CleanOptions } from '@codedoc/core';
 
 const MAX_IDENTIFIER_LENGTH = 128;
 const MAX_PATH_LENGTH = 4096;
@@ -30,7 +30,13 @@ export interface JobRequest<T> {
 
 export interface ExportPayload extends ProcessPayload {
   outDir: string;
-  formats: { docx: boolean; txt: boolean };
+  formats: { pdf: boolean; docx: boolean; txt: boolean };
+  pdfPreviewKey?: string;
+}
+
+export interface PdfPreviewRequest {
+  documentKey: string;
+  scanSessionId: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -135,15 +141,31 @@ export function parseExportRequest(value: unknown): JobRequest<ExportPayload> {
   if (!isRecord(value) || !isRecord(value.payload)) throw new Error('导出请求无效');
   const payload = processPayload(value.payload, true);
   const formats = value.payload.formats;
-  if (!isRecord(formats) || typeof formats.docx !== 'boolean' || typeof formats.txt !== 'boolean'
-    || (!formats.docx && !formats.txt)) throw new Error('请至少选择一种输出格式');
+  if (!isRecord(formats) || typeof formats.pdf !== 'boolean'
+    || typeof formats.docx !== 'boolean' || typeof formats.txt !== 'boolean'
+    || (!formats.pdf && !formats.docx && !formats.txt)) throw new Error('请至少选择一种输出格式');
+  const pdfPreviewKey = value.payload.pdfPreviewKey;
+  if (formats.pdf && (typeof pdfPreviewKey !== 'string' || !/^[a-f0-9]{64}$/.test(pdfPreviewKey))) {
+    throw new Error('请先完成最终 PDF 预览');
+  }
   return {
     jobId: identifier(value.jobId, 'jobId'),
     payload: {
       ...payload,
       outDir: absolutePath(value.payload.outDir, '输出目录'),
-      formats: { docx: formats.docx, txt: formats.txt },
+      formats: { pdf: formats.pdf, docx: formats.docx, txt: formats.txt },
+      pdfPreviewKey: formats.pdf ? pdfPreviewKey as string : undefined,
     },
+  };
+}
+
+export function parsePdfPreviewRequest(value: unknown): PdfPreviewRequest {
+  if (!isRecord(value) || typeof value.documentKey !== 'string' || !/^[a-f0-9]{64}$/.test(value.documentKey)) {
+    throw new Error('PDF 预览请求无效');
+  }
+  return {
+    documentKey: value.documentKey,
+    scanSessionId: identifier(value.scanSessionId, 'scanSessionId'),
   };
 }
 

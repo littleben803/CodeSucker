@@ -18,7 +18,7 @@ const invocationRoot = process.env.INIT_CWD ?? process.cwd();
 const [javaKotlinRoot, pythonRoot, typescriptRoot] = process.argv.slice(2)
   .map((value) => path.resolve(invocationRoot, value));
 assert.ok(javaKotlinRoot && pythonRoot && typescriptRoot, [
-  '用法：npm run test:real-projects -w @codesucker/core --',
+  '用法：npm run test:real-projects -w @codedoc/core --',
   '<java-kotlin-project> <python-project> <typescript-project>',
 ].join(' '));
 
@@ -26,7 +26,7 @@ for (const root of [javaKotlinRoot, pythonRoot, typescriptRoot]) {
   assert.ok(fs.statSync(root).isDirectory(), `项目目录不存在：${root}`);
 }
 
-const gbkProbe = path.join(pythonRoot, 'codesucker_gbk_probe.py');
+const gbkProbe = path.join(pythonRoot, 'codedoc_gbk_probe.py');
 fs.writeFileSync(gbkProbe, iconv.encode([
   '# -*- coding: gbk -*-',
   '项目名称 = "真实项目中文编码验收"',
@@ -37,7 +37,7 @@ const decodedProbe = readSource(gbkProbe);
 assert.match(decodedProbe.text, /GBK 中文读取正常/);
 assert.ok(!/UTF-8|ASCII/i.test(decodedProbe.encoding), 'GBK 探针不应按 UTF-8 解码');
 
-const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-real-projects-'));
+const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-real-projects-'));
 
 async function validate(spec: ProjectSpec) {
   const files = sortFiles(discover(spec.root, DEFAULT_EXTENSIONS, DEFAULT_EXCLUDES), 'entry');
@@ -55,7 +55,7 @@ async function validate(spec: ProjectSpec) {
     excludes: DEFAULT_EXCLUDES,
     sortMode: 'entry',
     clean: defaultCleanOptions(),
-    linesPerPage: 50,
+    linesPerPage: 60,
     maxPages: 60,
   });
   assert.ok(result.selection.pages.length > 0, `${spec.label} 应生成分页`);
@@ -66,12 +66,12 @@ async function validate(spec: ProjectSpec) {
     `${spec.label} 不应包含阻断项：${failures.map((item) => `${item.name}（${item.detail}）`).join('；')}`,
   );
   assert.ok(result.selection.pages.every((page, index, pages) => (
-    page.lines.length === 50 || (index === pages.length - 1 && page.lines.length > 0)
-  )), `${spec.label} 仅允许末页少于 50 行`);
+    page.lines.length === 60 || (index === pages.length - 1 && page.lines.length > 0)
+  )), `${spec.label} 仅允许末页少于 60 行`);
 
-  if (result.selection.totalLines > 3_000) {
+  if (result.selection.totalLines > 3_600) {
     assert.equal(result.selection.pages.length, 60, `${spec.label} 应生成 60 页`);
-    assert.equal(result.selection.pickedLines, 3_000, `${spec.label} 应选取 3000 行`);
+    assert.equal(result.selection.pickedLines, 3_600, `${spec.label} 应选取 3600 行`);
   } else {
     assert.equal(result.selection.pickedLines, result.selection.totalLines, `${spec.label} 应全量提交`);
   }
@@ -122,8 +122,8 @@ results.push(await validate({
   expectedLanguages: ['TS', 'TSX'],
 }));
 
-assert.ok(results.some((result) => result.totalLines > 3_000), '至少一个真实项目应超过 3000 行');
-assert.ok(results.some((result) => result.totalLines < 3_000), '至少一个真实项目应覆盖不足 60 页的全量提交');
+assert.ok(results.some((result) => result.totalLines > 3_600), '至少一个真实项目应超过 3600 行');
+assert.ok(results.some((result) => result.totalLines < 3_600), '至少一个真实项目应覆盖不足 60 页的全量提交');
 
 console.log('✅ 真实项目端到端验收通过');
 for (const result of results) console.log(JSON.stringify(result));

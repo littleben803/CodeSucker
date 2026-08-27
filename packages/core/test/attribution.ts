@@ -30,7 +30,7 @@ function config(owner: string, removeComments = true): ProjectConfig {
     excludes: [],
     sortMode: 'entry',
     clean: { ...defaultCleanOptions(), removeComments },
-    linesPerPage: 50,
+    linesPerPage: 60,
     maxPages: 60,
   };
 }
@@ -81,12 +81,12 @@ assert.match(multiple.detail, /共 3 处/);
 assert.equal(multiple.evidence?.length, 3);
 
 assert.equal(
-  conflict(run([{ relPath: 'src/owned.ts', text: '// Copyright 2026 fanbuz\nexport {}' }], 'fanbuz')),
+  conflict(run([{ relPath: 'src/owned.ts', text: '// Copyright 2026 示例著作权人\nexport {}' }], '示例著作权人')),
   undefined,
   '与著作权人相同的主体不应误报',
 );
 assert.equal(
-  conflict(run([{ relPath: 'src/plain.go', text: 'package main\nfunc main() {}' }], 'fanbuz')),
+  conflict(run([{ relPath: 'src/plain.go', text: 'package main\nfunc main() {}' }], '示例著作权人')),
   undefined,
   '无署名内容不应误报',
 );
@@ -94,14 +94,14 @@ assert.equal(
   conflict(run([{
     relPath: 'web/example.html',
     text: '<span>演示：* @author 张三</span>\n<script>const sample = "Copyright 2026 Mallory";</script>',
-  }], 'fanbuz')),
+  }], '示例著作权人')),
   undefined,
   'HTML 文案和字符串中的署名示例不应当作源码注释',
 );
 const markupAudit = run([{
   relPath: 'web/index.html',
   text: Array.from({ length: 60 }, (_, i) => `<div data-row="${i}">content</div>`).join('\n'),
-}], 'fanbuz');
+}], '示例著作权人');
 assert.ok(
   !markupAudit.some((item) => item.name.includes('HTML/CSS')),
   'HTML/CSS 应按普通源码处理，不应再生成独立占比审计项',
@@ -109,16 +109,16 @@ assert.ok(
 const inlineComment = conflict(run([{
   relPath: 'src/inline.ts',
   text: 'export const answer = 42; // @author Inline Maintainer',
-}], 'fanbuz'));
+}], '示例著作权人'));
 assert.ok(inlineComment, '行尾注释里的署名仍应被识别');
 assert.equal(inlineComment.location?.line, 1);
 
-const cfg = config('fanbuz');
+const cfg = config('示例著作权人');
 const first = cleanFile(entry('src/first.ts'), Array.from({ length: 30 }, (_, i) => `const first${i} = ${i};`).join('\n'), cfg.clean);
 const middle = cleanFile(entry('src/middle.ts'), '// @author Mallory\n' + Array.from({ length: 30 }, (_, i) => `const middle${i} = ${i};`).join('\n'), cfg.clean);
 const last = cleanFile(entry('src/last.ts'), Array.from({ length: 30 }, (_, i) => `const last${i} = ${i};`).join('\n'), cfg.clean);
-const truncated = select([first, middle, last] satisfies CleanedFile[], 50, 1);
-const truncatedAudit = audit([first, middle, last], truncated, { ...cfg, linesPerPage: 50, maxPages: 1 });
+const truncated = select([first, middle, last] satisfies CleanedFile[], 60, 1);
+const truncatedAudit = audit([first, middle, last], truncated, { ...cfg, linesPerPage: 60, maxPages: 1 });
 assert.deepEqual(truncated.selectedRelPaths, ['src/first.ts', 'src/last.ts']);
 assert.equal(conflict(truncatedAudit), undefined, '没有进入最终前后段的文件不应参与署名审计');
 

@@ -31,13 +31,13 @@ body.dark{
  --shadow:0 1px 2px rgba(0,0,0,.4);
 }
 a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
-@keyframes cs-spin{to{transform:rotate(360deg)}}
-@keyframes cs-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes cs-pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-@keyframes cs-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes cs-shimmer{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
-@keyframes cs-check{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-@keyframes cs-blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes codedoc-spin{to{transform:rotate(360deg)}}
+@keyframes codedoc-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes codedoc-pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes codedoc-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes codedoc-shimmer{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+@keyframes codedoc-check{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes codedoc-blink{0%,100%{opacity:1}50%{opacity:.25}}
 </style>
 </helmet>
 
@@ -48,8 +48,8 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
   <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 16px;background:var(--panel);border-bottom:1px solid var(--border2)">
     <div style="display:flex;align-items:center;gap:9px">
       <div style="width:22px;height:22px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600">&lt;/&gt;</div>
-      <div style="font-size:13px;font-weight:600">CodeSucker</div>
-      <div style="font-size:12px;color:var(--text3)">软著代码抽取器</div>
+      <div style="font-size:13px;font-weight:600">CodeDoc</div>
+      <div style="font-size:12px;color:var(--text3)">软著代码整理器</div>
     </div>
     <div style="display:flex;align-items:center;gap:2px">
       <div style="width:34px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer" style-hover="background:var(--border2)"><svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" stroke-width="1.2"></line></svg></div>
@@ -67,7 +67,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
         <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5 L5 6.5 L8 3.5" stroke="currentColor" stroke-width="1.3" fill="none"></path></svg>
       </button>
       <sc-if value="{{ projMenuOpen }}" hint-placeholder-val="{{ false }}">
-        <div style="position:absolute;top:38px;left:0;width:320px;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;animation:cs-pop .12s ease-out">
+        <div style="position:absolute;top:38px;left:0;width:320px;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;animation:codedoc-pop .12s ease-out">
           <div style="font-size:11px;color:var(--text3);padding:6px 10px 4px">最近项目</div>
           <sc-for list="{{ projMenuItems }}" as="p" hint-placeholder-count="2">
             <div onClick="{{ p.pick }}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:var(--accent-soft)">
@@ -111,10 +111,10 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
     <!-- ============ 屏 1 导入项目 ============ -->
     <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
-      <div style="flex:1;overflow:auto;padding:32px 40px;animation:cs-fade .18s ease-out">
+      <div style="flex:1;overflow:auto;padding:32px 40px;animation:codedoc-fade .18s ease-out">
         <sc-if value="{{ scanIdle }}" hint-placeholder-val="{{ true }}">
           <div onClick="{{ startScan }}" style="border:1.5px dashed var(--accent-line);border-radius:14px;background:var(--accent-soft);height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color .15s" style-hover="border-color:var(--accent)">
-            <div style="width:52px;height:52px;border-radius:14px;background:var(--panel);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;animation:cs-float 2.6s ease-in-out infinite">
+            <div style="width:52px;height:52px;border-radius:14px;background:var(--panel);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;animation:codedoc-float 2.6s ease-in-out infinite">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2.5 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="var(--accent)" stroke-width="1.6"></path><path d="M12 15.5v-5M9.8 12.6 12 10.4l2.2 2.2" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
             <div style="font-size:16px;font-weight:600">拖入项目文件夹，或点击选择</div>
@@ -125,16 +125,16 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
         <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
           <div style="border:1.5px solid var(--border);border-radius:14px;background:var(--panel);height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-            <svg width="30" height="30" viewBox="0 0 30 30" style="animation:cs-spin 1s linear infinite"><circle cx="15" cy="15" r="12" fill="none" stroke="var(--border)" stroke-width="3"></circle><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"></path></svg>
+            <svg width="30" height="30" viewBox="0 0 30 30" style="animation:codedoc-spin 1s linear infinite"><circle cx="15" cy="15" r="12" fill="none" stroke="var(--border)" stroke-width="3"></circle><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"></path></svg>
             <div style="font-size:14px;font-weight:600">正在扫描 1,284 个文件…</div>
-            <div style="width:360px;height:6px;border-radius:3px;background:var(--border2);overflow:hidden"><div style="height:100%;border-radius:3px;background:var(--accent);width:{{ scanPct }}%;transition:width .12s;position:relative;overflow:hidden"><div style="position:absolute;inset:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:cs-shimmer 1.1s linear infinite"></div></div></div>
-            <div style="font-size:11px;color:var(--text3);font-family:var(--mono);max-width:420px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"><span style="animation:cs-blink 1s ease-in-out infinite;display:inline-block;margin-right:6px">▸</span>{{ scanFile }}</div>
+            <div style="width:360px;height:6px;border-radius:3px;background:var(--border2);overflow:hidden"><div style="height:100%;border-radius:3px;background:var(--accent);width:{{ scanPct }}%;transition:width .12s;position:relative;overflow:hidden"><div style="position:absolute;inset:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:codedoc-shimmer 1.1s linear infinite"></div></div></div>
+            <div style="font-size:11px;color:var(--text3);font-family:var(--mono);max-width:420px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"><span style="animation:codedoc-blink 1s ease-in-out infinite;display:inline-block;margin-right:6px">▸</span>{{ scanFile }}</div>
             <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">已识别 Java {{ scanJava }} / Kotlin {{ scanKt }} / XML {{ scanXml }}</div>
           </div>
         </sc-if>
 
         <sc-if value="{{ scanError }}" hint-placeholder-val="{{ false }}">
-          <div style="border:1.5px solid color-mix(in srgb, var(--red) 35%, transparent);border-radius:14px;background:var(--red-soft);height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:cs-fade .18s ease-out">
+          <div style="border:1.5px solid color-mix(in srgb, var(--red) 35%, transparent);border-radius:14px;background:var(--red-soft);height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:codedoc-fade .18s ease-out">
             <div style="width:44px;height:44px;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--red);box-shadow:var(--shadow)">✕</div>
             <div style="font-size:15px;font-weight:600">未发现可用源代码文件</div>
             <div style="font-size:12px;color:var(--text2);text-align:center;line-height:1.7">该文件夹内仅有图片与文档。建议检查：<br>① 是否选错了目录（应选择包含 src/ 的项目根目录）　② 源码是否在压缩包内，需先解压</div>
@@ -165,7 +165,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
     <!-- ============ 屏 2 文件与排序 ============ -->
     <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
-      <div style="flex:1;display:flex;min-height:0;animation:cs-fade .18s ease-out">
+      <div style="flex:1;display:flex;min-height:0;animation:codedoc-fade .18s ease-out">
         <!-- 文件树 -->
         <div style="width:322px;flex:none;border-right:1px solid var(--border2);display:flex;flex-direction:column;background:var(--panel)">
           <div style="padding:12px 14px;border-bottom:1px solid var(--border2);font-size:12px;font-weight:600;color:var(--text2)">项目文件 <span style="color:var(--text3);font-weight:400">· 勾选纳入文档</span></div>
@@ -253,7 +253,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
     <!-- ============ 屏 3 清洗与排版 ============ -->
     <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
-      <div style="flex:1;display:flex;min-height:0;animation:cs-fade .18s ease-out">
+      <div style="flex:1;display:flex;min-height:0;animation:codedoc-fade .18s ease-out">
         <div style="width:420px;flex:none;border-right:1px solid var(--border2);background:var(--panel);overflow:auto;padding:22px 24px;display:flex;flex-direction:column;gap:20px">
           <div>
             <div style="font-size:12.5px;font-weight:600;margin-bottom:7px">软件全称 + 版本号 <span style="color:var(--red)">*</span></div>
@@ -273,14 +273,14 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
           <div style="border:1px solid var(--border2);border-radius:9px;overflow:hidden">
             <div onClick="{{ toggleLayoutPanel }}" style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;cursor:pointer;background:var(--panel2)" style-hover="background:var(--border2)">
               <div style="font-size:13px;font-weight:500">排版参数</div>
-              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3)">宋体 · 10.5pt · 每页 50 行</span><span style="font-size:10px;color:var(--text3);transform:rotate({{ layoutChevron }}deg);transition:transform .15s">▼</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3)">宋体 · 10.5pt · 12pt 行距 · 每页 60 行</span><span style="font-size:10px;color:var(--text3);transform:rotate({{ layoutChevron }}deg);transition:transform .15s">▼</span></div>
             </div>
             <sc-if value="{{ layoutOpen }}" hint-placeholder-val="{{ false }}">
               <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--border2)">
                 <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">字体</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel)">宋体</div></div>
                 <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">字号</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel);font-family:var(--mono)">10.5</div></div>
-                <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">行距</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel)">固定值 10.5pt</div></div>
-                <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">每页行数</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel);font-family:var(--mono)">50</div></div>
+                <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">行距</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel)">固定值 12pt</div></div>
+                <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">每页行数</div><div style="height:30px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;background:var(--panel);font-family:var(--mono)">60</div></div>
               </div>
             </sc-if>
           </div>
@@ -313,9 +313,9 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
     <!-- ============ 屏 4 分页预览 ============ -->
     <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
-      <div style="flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg);animation:cs-fade .18s ease-out">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg);animation:codedoc-fade .18s ease-out">
         <div style="flex:none;display:flex;justify-content:flex-end;padding:12px 20px 0">
-          <div style="font-size:11.5px;color:var(--text2);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 12px;box-shadow:var(--shadow);font-family:var(--mono)">共 60 页 · 3,000 行 · 前段止于 PatrolService.kt · 后段起于 ReportExporter.kt</div>
+          <div style="font-size:11.5px;color:var(--text2);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 12px;box-shadow:var(--shadow);font-family:var(--mono)">共 60 页 · 3,600 行 · 前段止于 PatrolService.kt · 后段起于 ReportExporter.kt</div>
         </div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:22px;min-height:0;padding:8px 0">
           <button onClick="{{ prevPage }}" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--panel);color:var(--text2);font-size:15px;cursor:pointer;box-shadow:var(--shadow)" style-hover="color:var(--accent);border-color:var(--accent-line)">‹</button>
@@ -359,7 +359,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
     <!-- ============ 屏 5 校验与导出 ============ -->
     <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
-      <div style="flex:1;display:flex;min-height:0;animation:cs-fade .18s ease-out">
+      <div style="flex:1;display:flex;min-height:0;animation:codedoc-fade .18s ease-out">
         <div style="flex:1;min-width:0;overflow:auto;padding:22px 26px">
           <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:11px;background:{{ bannerBg }};border:1px solid {{ bannerBorder }};margin-bottom:14px">
             <span style="font-size:17px">{{ bannerIcon }}</span>
@@ -367,7 +367,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
             <sc-for list="{{ rules }}" as="r" hint-placeholder-count="4">
-              <div style="background:var(--panel);border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);overflow:hidden;animation:cs-fade .35s ease-out both;animation-delay:{{ r.delay }}">
+              <div style="background:var(--panel);border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);overflow:hidden;animation:codedoc-fade .35s ease-out both;animation-delay:{{ r.delay }}">
                 <div onClick="{{ r.expand }}" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:{{ r.cursor }}">
                   <div style="width:24px;height:24px;flex:none;border-radius:50%;background:{{ r.iconBg }};color:{{ r.iconColor }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ r.icon }}</div>
                   <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ r.name }}</div><div style="font-size:11.5px;color:var(--text2);margin-top:2px">{{ r.detail }}</div></div>
@@ -405,39 +405,39 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
           <sc-if value="{{ hasRisk }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:7px;padding:9px 11px;border-radius:8px;background:var(--red-soft);font-size:11.5px;color:var(--red);line-height:1.5"><span>⚠</span><span>存在 1 项退回风险，建议先处理再导出</span></div>
           </sc-if>
-          <button onClick="{{ doExport }}" style="height:44px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);display:flex;align-items:center;justify-content:center;gap:9px;opacity:{{ exportBtnOpacity }}" style-hover="filter:brightness(1.08)"><sc-if value="{{ exporting }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 30 30" style="animation:cs-spin .8s linear infinite"><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="4"></circle><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"></path></svg></sc-if>{{ exportBtnLabel }}</button>
+          <button onClick="{{ doExport }}" style="height:44px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);display:flex;align-items:center;justify-content:center;gap:9px;opacity:{{ exportBtnOpacity }}" style-hover="filter:brightness(1.08)"><sc-if value="{{ exporting }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 30 30" style="animation:codedoc-spin .8s linear infinite"><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="4"></circle><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"></path></svg></sc-if>{{ exportBtnLabel }}</button>
         </div>
       </div>
     </sc-if>
 
     <!-- ============ 设置页 ============ -->
     <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
-      <div style="flex:1;overflow:auto;animation:cs-fade .18s ease-out">
+      <div style="flex:1;overflow:auto;animation:codedoc-fade .18s ease-out">
         <div style="max-width:920px;margin:0 auto;padding:26px 32px 36px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
           <button onClick="{{ closeSettings }}" style="width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text2);cursor:pointer;font-size:13px" style-hover="color:var(--text)">←</button>
           <div style="font-size:16px;font-weight:600">设置</div>
         </div>
 
-        <!-- App 身份 + 更新 hero -->
+        <!-- App 身份 -->
         <div style="display:flex;align-items:center;gap:20px;background:linear-gradient(120deg,var(--accent-soft),var(--panel));border:1px solid var(--accent-line);border-radius:16px;padding:22px 24px;margin-bottom:16px">
           <div style="width:56px;height:56px;flex:none;border-radius:15px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:600;box-shadow:0 6px 18px color-mix(in srgb, var(--accent) 40%, transparent)">&lt;/&gt;</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:700">CodeSucker · 软著代码抽取器</div>
+            <div style="font-size:16px;font-weight:700">CodeDoc · 软著代码整理器</div>
             <div style="font-size:12.5px;color:var(--text2);margin-top:3px;display:flex;align-items:center;gap:8px">
-              <span style="font-family:var(--mono)">当前 v1.2.0</span>
+              <span style="font-family:var(--mono)">当前 v0.4.4</span>
               <span style="width:1px;height:11px;background:var(--border)"></span>
-              <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#e5484d;animation:cs-blink 1.3s ease-in-out infinite"></span>检测到新版本 v1.3.0</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:600">正式发布准备中</span>
             </div>
           </div>
-          <button onClick="{{ noop }}" style="height:38px;padding:0 20px;border:none;border-radius:9px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent)" style-hover="filter:brightness(1.08)">下载更新</button>
+          <div style="height:38px;padding:0 16px;border:1px solid var(--accent-line);border-radius:9px;color:var(--accent);font-size:12px;font-weight:600;display:flex;align-items:center">本地优先</div>
         </div>
 
         <!-- 两栏布局 -->
         <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start">
           <div style="display:flex;flex-direction:column;gap:16px">
             <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow)">
-              <div style="font-size:13.5px;font-weight:600;margin-bottom:12px">v1.3.0 更新日志</div>
+              <div style="font-size:13.5px;font-weight:600;margin-bottom:12px">CodeDoc 核心能力</div>
               <div style="display:flex;flex-direction:column;gap:11px">
                 <sc-for list="{{ changelog }}" as="c" hint-placeholder-count="3">
                   <div style="display:flex;gap:11px;align-items:flex-start">
@@ -465,7 +465,7 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
                 <div style="width:34px;height:34px;flex:none;border-radius:9px;background:var(--panel);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)"><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="var(--green)" stroke-width="1.4"></rect><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="var(--green)" stroke-width="1.4"></path></svg></div>
                 <div><div style="font-size:13.5px;font-weight:600">隐私说明</div><div style="font-size:11px;color:var(--green);font-weight:600;margin-top:1px">✓ 零网络请求 · 全程离线</div></div>
               </div>
-              <div style="font-size:12px;color:var(--text2);margin-top:12px;line-height:1.9">CodeSucker 在本机完成全部处理：扫描、清洗、脱敏、排版、导出均不产生任何网络请求。您的源代码<span style="color:var(--text);font-weight:600">永远不会离开这台电脑</span>。更新检查仅在您手动点击时访问版本号文件，不上传任何数据。</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:12px;line-height:1.9">CodeDoc 在本机完成全部处理：扫描、清洗、脱敏、排版、导出均不产生任何网络请求。您的源代码<span style="color:var(--text);font-weight:600">永远不会离开这台电脑</span>。</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
                 <div style="background:var(--panel);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:18px;font-weight:700;font-family:var(--mono);color:var(--green)">0</div><div style="font-size:10.5px;color:var(--text3);margin-top:1px">出站网络请求</div></div>
                 <div style="background:var(--panel);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:18px;font-weight:700;font-family:var(--mono);color:var(--green)">100%</div><div style="font-size:10.5px;color:var(--text3);margin-top:1px">本地处理</div></div>
@@ -489,16 +489,16 @@ a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
 
   <!-- 保存 toast -->
   <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
-    <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:12.5px;padding:9px 18px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:cs-fade .15s ease-out;z-index:60">{{ toastText }}</div>
+    <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:12.5px;padding:9px 18px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:codedoc-fade .15s ease-out;z-index:60">{{ toastText }}</div>
   </sc-if>
 
   <!-- 导出成功弹窗 -->
   <sc-if value="{{ exportModal }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;background:rgba(10,10,16,.45);display:flex;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(2px)">
-      <div style="width:400px;background:var(--panel);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.35);padding:28px;text-align:center;animation:cs-pop .18s ease-out">
-        <div style="width:52px;height:52px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;animation:cs-check .45s cubic-bezier(.34,1.56,.64,1) both .1s">✓</div>
+      <div style="width:400px;background:var(--panel);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.35);padding:28px;text-align:center;animation:codedoc-pop .18s ease-out">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;animation:codedoc-check .45s cubic-bezier(.34,1.56,.64,1) both .1s">✓</div>
         <div style="font-size:16px;font-weight:600">已生成申报文档</div>
-        <div style="font-size:12.5px;color:var(--text2);margin-top:8px;font-family:var(--mono);word-break:break-all;line-height:1.6;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px">源程序_智慧园区巡检管理系统V1.0.docx<br><span style="color:var(--text3)">60 页 · 3,000 行 · 214 KB</span></div>
+        <div style="font-size:12.5px;color:var(--text2);margin-top:8px;font-family:var(--mono);word-break:break-all;line-height:1.6;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px">源程序_智慧园区巡检管理系统V1.0.docx<br><span style="color:var(--text3)">60 页 · 3,600 行 · 214 KB</span></div>
         <div style="display:flex;gap:8px;margin-top:18px">
           <button onClick="{{ openFolder }}" style="flex:1;height:38px;border:none;border-radius:9px;background:var(--accent);color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit" style-hover="filter:brightness(1.08)">打开所在文件夹</button>
           <button onClick="{{ closeExport }}" style="flex:1;height:38px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font-size:13px;cursor:pointer;font-family:inherit" style-hover="background:var(--panel2)">再次生成</button>
@@ -828,7 +828,7 @@ class Component extends DCLogic {
     // screen 5
     const fixed = s.authorFixed;
     const rules = [
-      { st: 'pass', name: '每页行数均 ≥ 50 行', detail: '共 60 页，每页恰好 50 行' },
+      { st: 'pass', name: '每页行数均 ≥ 60 行', detail: '共 60 页，每页恰好 60 行' },
       { st: 'pass', name: '页眉与软件名称一致', detail: '页眉「智慧园区巡检管理系统V1.0」与申请表一致' },
       { st: 'warn', name: '末页仅 40 行，不足页面 2/3', detail: '建议补充或调整截取点，避免末页过短被认定为凑页' },
       fixed
@@ -863,7 +863,6 @@ class Component extends DCLogic {
       },
       openSettings: () => this.setState({ view: 'settings', projMenuOpen: false }),
       closeSettings: () => this.setState({ view: 'wizard' }),
-      noop: () => this._toast('正在后台下载 v1.3.0…'),
       steps,
       // view flags
       isStep1: s.view === 'wizard' && s.step === 1,

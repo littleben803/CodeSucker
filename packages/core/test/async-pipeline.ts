@@ -8,7 +8,7 @@ import {
   type FileCandidate, type PipelineProgress, type ProjectConfig,
 } from '../src/index.ts';
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-async-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-async-'));
 const write = (relPath: string, content: string) => {
   const file = path.join(tmp, relPath);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -17,7 +17,7 @@ const write = (relPath: string, content: string) => {
 
 for (let i = 0; i < 24; i++) {
   write(`src/module-${String(i).padStart(2, '0')}.ts`, [
-    `// Copyright 2026 fanbuz`,
+    `// Copyright 2026 示例著作权人`,
     `export const value${i} = ${i};`,
     `export const url${i} = "https://example.com/${i}";`,
   ].join('\n'));
@@ -40,12 +40,12 @@ assert.equal(progress.at(-1)?.completed, asyncResult.files.length);
 const cfg: ProjectConfig = {
   root: tmp,
   title: '异步测试系统V1.0',
-  owner: 'fanbuz',
+  owner: '示例著作权人',
   extensions: DEFAULT_EXTENSIONS,
   excludes: DEFAULT_EXCLUDES,
   sortMode: 'entry',
   clean: defaultCleanOptions(),
-  linesPerPage: 50,
+  linesPerPage: 60,
   maxPages: 60,
 };
 const syncProcessed = processFiles(sortFiles(syncFiles, 'entry'), cfg);

@@ -4,15 +4,15 @@ import * as path from 'node:path';
 import {
   CONFIG_SCHEMA_VERSION, DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, RULES_VERSION,
   discoverAsync, processFilesAsync, renderTxtAsync, sortFiles,
-} from '@codesucker/core';
+} from '@codedoc/core';
 import type {
   CleanedFile, CleanOptions, FileCandidate, FileEntry, PipelineProgress, ProjectConfig,
-} from '@codesucker/core';
+} from '@codedoc/core';
 import { JobController, type JobHandle, type JobKind } from './job-controller';
 import { assertExportableSelection } from './export-guard';
 import { validateDroppedDirectory } from './drop-path';
 import {
-  boundedConfigRecord, parseExportRequest, parseJobId, parseProcessRequest, parseScanRequest,
+  boundedConfigRecord, parseExportRequest, parseJobId, parsePdfPreviewRequest, parseProcessRequest, parseScanRequest,
   type ExportPayload, type JobRequest, type ProcessPayload, type ScanRequest,
 } from './ipc-validation';
 import {
@@ -27,6 +27,7 @@ import {
 import {
   registerRecentProjectsIpc, touchRecentProject, type RecentProjectPatch,
 } from './recent-projects';
+import { PdfRenderer, pdfDocumentKey, writePdfAtomic, type PdfDocument } from './pdf-renderer';
 import type {
   PipelineWorkerRequest, PipelineWorkerResult, PreviewResult, RenderWorkerRequest,
 } from './workers/protocol';
@@ -40,6 +41,24 @@ interface ScanSnapshot {
 const scanSessions = new ScanSessionGuard<ScanSnapshot>();
 let lastExportFile: string | null = null;
 const jobs = new JobController();
+const pdfRenderer = new PdfRenderer();
+
+interface PdfDocumentSnapshot extends PdfDocument {
+  key: string;
+  root: string;
+  scanSessionId: string;
+}
+
+const pdfDocuments = new Map<string, PdfDocumentSnapshot>();
+
+function rememberPdfDocument(snapshot: PdfDocumentSnapshot): void {
+  pdfDocuments.set(snapshot.key, snapshot);
+  while (pdfDocuments.size > 3) pdfDocuments.delete(pdfDocuments.keys().next().value as string);
+}
+
+function pdfDocumentFor(pages: PdfDocument['pages'], title: string, owner?: string): PdfDocument {
+  return { pages, options: { title, owner: owner?.trim() ?? '', fontName: 'SimSun', fontSizePt: 10.5 } };
+}
 
 interface PipelineResources {
   workerCount: number;
@@ -66,7 +85,9 @@ export async function shutdownPipeline(): Promise<void> {
   lastExportFile = null;
   const current = resources;
   resources = null;
-  if (current) await Promise.all([current.pipeline.close(), current.render.close()]);
+  pdfDocuments.clear();
+  if (current) await Promise.all([current.pipeline.close(), current.render.close(), pdfRenderer.close()]);
+  else await pdfRenderer.close();
 }
 
 const recentFile = () => path.join(app.getPath('userData'), 'recent.json');
@@ -126,12 +147,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function loadProjectConfig(root: string): { config: Record<string, unknown> | null; warning: string | null } {
-  const configFile = path.join(root, '.codesucker.json');
+  const configFile = path.join(root, '.codedoc.json');
   if (!fs.existsSync(configFile)) return { config: null, warning: null };
 
   try {
     const parsed: unknown = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    if (!isRecord(parsed)) return { config: null, warning: '项目配置格式无效，已忽略 .codesucker.json' };
+    if (!isRecord(parsed)) return { config: null, warning: '项目配置格式无效，已忽略 .codedoc.json' };
 
     const schema = parsed.schemaVersion;
     if (schema === undefined) {
@@ -143,12 +164,12 @@ function loadProjectConfig(root: string): { config: Record<string, unknown> | nu
     if ((schema as number) > CONFIG_SCHEMA_VERSION) {
       return {
         config: null,
-        warning: `项目配置来自更新版本（schema ${schema}），当前仅支持 ${CONFIG_SCHEMA_VERSION}，请升级 CodeSucker`,
+        warning: `项目配置来自更新版本（schema ${schema}），当前仅支持 ${CONFIG_SCHEMA_VERSION}，请升级 CodeDoc`,
       };
     }
     return { config: parsed, warning: null };
   } catch {
-    return { config: null, warning: '项目配置无法解析，已忽略 .codesucker.json' };
+    return { config: null, warning: '项目配置无法解析，已忽略 .codedoc.json' };
   }
 }
 
@@ -166,7 +187,7 @@ function buildConfig(payload: ProcessPayload): ProjectConfig {
     excludes: DEFAULT_EXCLUDES,
     sortMode: 'manual',
     clean: payload.clean,
-    linesPerPage: 50,
+    linesPerPage: 60,
     maxPages: 60,
   };
 }
@@ -214,6 +235,8 @@ async function scanWithWorkers(
   const normalizedRoot = path.resolve(request.root);
   scanSessions.begin(request.scanSessionId, normalizedRoot);
   lastExportFile = null;
+  pdfDocuments.clear();
+  pdfRenderer.clearCache();
   const workerResources = getResources();
   const report = createProgressReporter(job, sender, workerResources.workerCount);
   // 每次扫描只读取一次规则快照，运行中的设置修改留到下次扫描生效。
@@ -352,6 +375,14 @@ export function registerPipelineIpc(isTrustedSender: (sender: WebContents) => bo
             })),
           }, ...result.auditItems]
         : result.auditItems;
+      const pdfDocument = pdfDocumentFor(result.selection.pages, request.payload.title, request.payload.owner);
+      const documentKey = pdfDocumentKey(pdfDocument);
+      rememberPdfDocument({
+        ...pdfDocument,
+        key: documentKey,
+        root: request.payload.root,
+        scanSessionId: request.payload.scanSessionId,
+      });
       return {
         jobId: job.id,
         scanSessionId: request.payload.scanSessionId,
@@ -372,10 +403,20 @@ export function registerPipelineIpc(isTrustedSender: (sender: WebContents) => bo
           masked: file.maskedCount,
         })),
         preview,
+        documentKey,
       };
     } finally {
       jobs.finish(job.id);
     }
+  });
+
+  trustedIpc.handle('project:previewPdf', async (_event, input) => {
+    const request = parsePdfPreviewRequest(input);
+    const document = pdfDocuments.get(request.documentKey);
+    if (!document || document.scanSessionId !== request.scanSessionId) throw new Error('PDF 预览已失效，请重新生成分页');
+    requireCurrentScan(document.root, document.scanSessionId);
+    const data = await pdfRenderer.render(document.key, document);
+    return { documentKey: document.key, data: new Uint8Array(data) };
   });
 
   trustedIpc.handle('project:export', async (event, input) => {
@@ -392,14 +433,22 @@ export function registerPipelineIpc(isTrustedSender: (sender: WebContents) => bo
       assertExportableSelection(result.selection);
       const renderOptions = {
         title: request.payload.title,
+        owner: request.payload.owner,
         fontName: 'SimSun',
         fontSizePt: 10.5,
         outDir: request.payload.outDir,
       };
-      const formatCount = Number(request.payload.formats.docx) + Number(request.payload.formats.txt);
+      const pdfDocument = pdfDocumentFor(pages, request.payload.title, request.payload.owner);
+      const documentKey = pdfDocumentKey(pdfDocument);
+      if (request.payload.formats.pdf && request.payload.pdfPreviewKey !== documentKey) {
+        throw new Error('源码或排版已发生变化，请返回上一步重新确认 PDF 预览');
+      }
+      const formatCount = Number(request.payload.formats.pdf)
+        + Number(request.payload.formats.docx) + Number(request.payload.formats.txt);
       let rendered = 0;
       report({ stage: 'rendering', completed: 0, total: formatCount });
       const output: {
+        pdf?: string;
         docx?: string;
         txt?: string;
         size: number;
@@ -417,22 +466,31 @@ export function registerPipelineIpc(isTrustedSender: (sender: WebContents) => bo
         errors: result.errors,
       };
 
+      if (request.payload.formats.pdf) {
+        const pdf = await pdfRenderer.render(documentKey, pdfDocument);
+        job.assertCurrent();
+        output.pdf = await writePdfAtomic(pdf, renderOptions.outDir, renderOptions.title);
+        job.assertCurrent();
+        output.size = (await fs.promises.stat(output.pdf)).size;
+        report({ stage: 'rendering', completed: ++rendered, total: formatCount });
+      }
+
       if (request.payload.formats.docx) {
         output.docx = await workerResources.render.run({ pages, options: renderOptions }, job.signal);
         job.assertCurrent();
-        output.size = (await fs.promises.stat(output.docx)).size;
+        if (!output.pdf) output.size = (await fs.promises.stat(output.docx)).size;
         report({ stage: 'rendering', completed: ++rendered, total: formatCount });
       }
       if (request.payload.formats.txt) {
         output.txt = await renderTxtAsync(pages, renderOptions);
         job.assertCurrent();
-        if (!output.docx) output.size = (await fs.promises.stat(output.txt)).size;
+        if (!output.pdf && !output.docx) output.size = (await fs.promises.stat(output.txt)).size;
         report({ stage: 'rendering', completed: ++rendered, total: formatCount });
       }
 
       job.assertCurrent();
       requireCurrentScan(request.payload.root, request.payload.scanSessionId);
-      const exportedFile = output.docx ?? output.txt;
+      const exportedFile = output.pdf ?? output.docx ?? output.txt;
       if (!exportedFile) throw new Error('请至少选择一种输出格式');
       lastExportFile = fs.realpathSync.native(exportedFile);
       touchRecent({

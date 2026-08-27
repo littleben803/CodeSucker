@@ -30,6 +30,7 @@ export interface ProcessData {
     after: Array<{ text: string; masked: boolean }>;
     removedComments: number; removedBlanks: number; masked: number;
   };
+  documentKey: string;
 }
 export interface RecentProject {
   name: string;
@@ -63,7 +64,7 @@ interface ScanResult {
     title?: string; owner?: string; sortMode?: 'entry' | 'mtime' | 'manual';
     order?: string[]; excludedRelPaths?: string[];
     clean?: CleanToggles;
-    fmtDocx?: boolean; fmtTxt?: boolean; outDir?: string;
+    fmtPdf?: boolean; fmtDocx?: boolean; fmtTxt?: boolean; outDir?: string;
   };
 }
 
@@ -103,11 +104,13 @@ interface State {
   processData: ProcessData | null;
   processing: boolean;
   page: number;
+  fmtPdf: boolean;
   fmtDocx: boolean;
   fmtTxt: boolean;
   outDir: string;
   exporting: boolean;
-  exportResult: null | { scanSessionId: string; docx?: string; txt?: string; size: number; pages: number; lines: number; appVersion: string; rulesVersion: string; errors: FileTaskError[] };
+  pdfPreviewKey: string | null;
+  exportResult: null | { scanSessionId: string; pdf?: string; docx?: string; txt?: string; size: number; pages: number; lines: number; appVersion: string; rulesVersion: string; errors: FileTaskError[] };
   toast: string | null;
   set: (p: Partial<State>) => void;
 }
@@ -141,10 +144,12 @@ export const useStore = create<State>((set) => ({
   processData: null,
   processing: false,
   page: 1,
-  fmtDocx: true,
+  fmtPdf: true,
+  fmtDocx: false,
   fmtTxt: false,
   outDir: '',
   exporting: false,
+  pdfPreviewKey: null,
   exportResult: null,
   toast: null,
   set: (p) => set(p),
@@ -170,7 +175,7 @@ export async function updateRecent(
 
 export async function refreshRecent(): Promise<RecentProject[] | null> {
   try {
-    return await updateRecent(() => window.cs.recentList());
+    return await updateRecent(() => window.codedoc.recentList());
   } catch {
     return null;
   }
@@ -246,6 +251,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
     exporting: false,
     processData: null,
     exportResult: null,
+    pdfPreviewKey: null,
     page: 1,
     step: 1,
     maxUnlockedStep: 1,
@@ -255,7 +261,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
   });
 
   try {
-    const result = (await window.cs.scan(root, jobId, scanSessionId)) as ScanResult;
+    const result = (await window.codedoc.scan(root, jobId, scanSessionId)) as ScanResult;
     const current = useStore.getState();
     if (current.activeJobId !== jobId || result.scanSessionId !== scanSessionId) return;
     if (result.files.length === 0) {
@@ -278,6 +284,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
     let swName: string;
     let owner: string;
     let clean: CleanToggles;
+    let fmtPdf: boolean;
     let fmtDocx: boolean;
     let fmtTxt: boolean;
     let outDir: string;
@@ -290,6 +297,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
       swName = previous.swName;
       owner = previous.owner;
       clean = previous.clean;
+      fmtPdf = previous.fmtPdf;
       fmtDocx = previous.fmtDocx;
       fmtTxt = previous.fmtTxt;
       outDir = previous.outDir;
@@ -306,8 +314,11 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
       swName = config?.title ?? '';
       owner = config?.owner ?? '';
       clean = config?.clean ?? DEFAULT_CLEAN;
-      fmtDocx = config?.fmtDocx ?? true;
-      fmtTxt = config?.fmtTxt ?? false;
+      // 旧配置没有 fmtPdf：升级后统一迁移为 PDF-only，避免继续默认 DOCX。
+      const legacyFormats = config?.fmtPdf === undefined;
+      fmtPdf = legacyFormats ? true : config.fmtPdf!;
+      fmtDocx = legacyFormats ? false : (config?.fmtDocx ?? false);
+      fmtTxt = legacyFormats ? false : (config?.fmtTxt ?? false);
       outDir = config?.outDir ?? '';
     }
 
@@ -331,6 +342,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
       swName,
       owner,
       clean,
+      fmtPdf,
       fmtDocx,
       fmtTxt,
       outDir,
@@ -341,7 +353,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
     if (result.errors.length > 0) toast(`${result.errors.length} 个文件扫描失败，已跳过`);
     else if (intent === 'rescan') toast('重新扫描完成，旧处理结果已失效');
     else if (result.savedConfigWarning) toast(result.savedConfigWarning);
-    else if (result.savedConfig) toast('已恢复项目配置（.codesucker.json）');
+    else if (result.savedConfig) toast('已恢复项目配置（.codedoc.json）');
   } catch (error) {
     const current = useStore.getState();
     if (current.activeJobId !== jobId) return;
@@ -364,7 +376,7 @@ export async function cancelActiveScan(): Promise<void> {
   const jobId = current.activeJobId;
   if (!jobId || current.scanPhase !== 'scanning') return;
   const intent = current.scanIntent;
-  await window.cs.cancel(jobId);
+  await window.codedoc.cancel(jobId);
   const latest = useStore.getState();
   if (latest.activeJobId !== jobId) return;
   latest.set({
@@ -380,9 +392,9 @@ export async function runProcess() {
   if (!s.root || !s.scanSessionId) return;
   const scanSessionId = s.scanSessionId;
   const jobId = createJobId('process');
-  s.set({ processing: true, activeJobId: jobId, jobProgress: null });
+  s.set({ processing: true, activeJobId: jobId, jobProgress: null, pdfPreviewKey: null });
   try {
-    const data = (await window.cs.process({
+    const data = (await window.codedoc.process({
       root: s.root,
       scanSessionId,
       orderedRelPaths: orderedIncluded(s).map((f) => f.relPath),

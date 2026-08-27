@@ -8,7 +8,7 @@ import {
   setRecentProjectPinned, touchRecentProject,
 } from '../src/main/recent-projects.ts';
 
-const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-recent-projects-'));
+const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-recent-projects-'));
 const configFile = path.join(sandbox, 'config', 'recent.json');
 const project = (name: string) => {
   const root = path.join(sandbox, name);
@@ -96,7 +96,7 @@ if (process.platform !== 'win32' && (typeof process.geteuid !== 'function' || pr
   fs.chmodSync(unreadableRoot, 0o700);
 }
 
-const marker = path.join(openedAgain, '.codesucker.json');
+const marker = path.join(openedAgain, '.codedoc.json');
 fs.writeFileSync(marker, '{}');
 active = await removeRecentProject(activeConfig, openedAgain, at(32));
 assert.equal(active.some((item) => item.root === openedAgain), false);

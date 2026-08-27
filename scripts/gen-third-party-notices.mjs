@@ -149,9 +149,9 @@ const sections = entries.map((entry) => [
 ].join('\n'));
 
 const output = [
-  'CodeSucker Third-Party Notices',
+  'CodeDoc Third-Party Notices',
   '',
-  'CodeSucker itself is licensed under Apache-2.0; see LICENSE and NOTICE.',
+  'CodeDoc itself is licensed under Apache-2.0; see LICENSE and NOTICE.',
   'This file covers npm dependencies distributed in app.asar or bundled into application JavaScript.',
   'Electron and Chromium also ship their upstream LICENSE.electron.txt and LICENSES.chromium.html files.',
   `Generated package count: ${entries.length}`,

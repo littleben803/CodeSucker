@@ -61,7 +61,7 @@ assert.throws(
   '任一非法规则都应拒绝整组配置',
 );
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-excludes-'));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-excludes-'));
 const write = (relPath: string) => {
   const filePath = path.join(root, relPath);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });

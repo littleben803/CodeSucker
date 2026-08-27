@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import {
-  boundedConfigRecord, parseExportRequest, parseJobId, parseProcessRequest, parseScanRequest,
+  boundedConfigRecord, parseExportRequest, parseJobId, parsePdfPreviewRequest, parseProcessRequest, parseScanRequest,
 } from '../src/main/ipc-validation.ts';
 
-const root = path.resolve('/tmp/codesucker-ipc-project');
+const root = path.resolve('/tmp/codedoc-ipc-project');
 const clean = {
   removeComments: true,
   removeBlankLines: true,
@@ -28,8 +28,14 @@ assert.deepEqual(parseScanRequest({ jobId: 'scan-123', scanSessionId: 'session-1
 assert.equal(parseProcessRequest({ jobId: 'process-123', payload }).payload.title, payload.title);
 assert.equal(parseExportRequest({
   jobId: 'export-123',
-  payload: { ...payload, outDir: path.join(root, 'out'), formats: { docx: true, txt: false } },
+  payload: { ...payload, outDir: path.join(root, 'out'), formats: { pdf: false, docx: true, txt: false } },
 }).payload.formats.docx, true);
+const pdfPreviewKey = 'a'.repeat(64);
+assert.equal(parseExportRequest({
+  jobId: 'export-pdf',
+  payload: { ...payload, outDir: path.join(root, 'out'), formats: { pdf: true, docx: false, txt: false }, pdfPreviewKey },
+}).payload.pdfPreviewKey, pdfPreviewKey);
+assert.equal(parsePdfPreviewRequest({ documentKey: pdfPreviewKey, scanSessionId: 'session-123' }).documentKey, pdfPreviewKey);
 assert.equal(parseJobId('scan-123'), 'scan-123');
 
 for (const invalid of [null, {}, { jobId: '../bad', scanSessionId: 'session', root }]) {
@@ -42,12 +48,17 @@ assert.equal(parseProcessRequest({ jobId: 'process-1', payload: { ...payload, ti
 assert.throws(() => parseProcessRequest({ jobId: 'process-1', payload: { ...payload, clean: { ...clean, tabWidth: 8 } } }), /清洗参数/);
 assert.throws(() => parseExportRequest({
   jobId: 'export-1', payload: {
-    ...payload, title: '', outDir: path.join(root, 'out'), formats: { docx: true, txt: false },
+    ...payload, title: '', outDir: path.join(root, 'out'), formats: { pdf: false, docx: true, txt: false },
   },
 }), /不能为空/);
 assert.throws(() => parseExportRequest({
-  jobId: 'export-1', payload: { ...payload, outDir: path.join(root, 'out'), formats: { docx: false, txt: false } },
+  jobId: 'export-1', payload: { ...payload, outDir: path.join(root, 'out'), formats: { pdf: false, docx: false, txt: false } },
 }), /至少选择/);
+assert.throws(() => parseExportRequest({
+  jobId: 'export-1', payload: {
+    ...payload, outDir: path.join(root, 'out'), formats: { pdf: true, docx: false, txt: false },
+  },
+}), /先完成最终 PDF 预览/);
 assert.throws(() => boundedConfigRecord({ value: 'x'.repeat(1024 * 1024) }), /过大/);
 const circular: Record<string, unknown> = {};
 circular.self = circular;

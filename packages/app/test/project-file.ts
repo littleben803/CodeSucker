@@ -6,7 +6,7 @@ import {
   captureProjectRoot, resolveProjectConfigFile, resolveProjectFile, resolveRecentExportFile, validateProjectRoot,
 } from '../src/main/project-file.ts';
 
-const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'codesucker-project-file-'));
+const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-project-file-'));
 const root = path.join(sandbox, 'project');
 const outside = path.join(sandbox, 'outside.ts');
 fs.mkdirSync(path.join(root, 'src'), { recursive: true });
@@ -30,7 +30,7 @@ assert.throws(() => resolveProjectFile(rootSnapshot, root, 'src/folder'), /普�
 assert.throws(() => resolveProjectFile(rootSnapshot, root, ''), /相对路径/);
 assert.throws(() => resolveProjectFile(null, root, 'src/main.ts'), /重新扫描/);
 assert.throws(() => resolveProjectFile(rootSnapshot, sandbox, 'outside.ts'), /扫描结果/);
-assert.equal(resolveProjectConfigFile(rootSnapshot, root), path.join(fs.realpathSync(root), '.codesucker.json'));
+assert.equal(resolveProjectConfigFile(rootSnapshot, root), path.join(fs.realpathSync(root), '.codedoc.json'));
 assert.throws(() => resolveProjectConfigFile(null, root), /先扫描项目/);
 assert.throws(() => resolveProjectConfigFile(rootSnapshot, sandbox), /扫描结果/);
 assert.equal(resolveRecentExportFile(fs.realpathSync(outside)), fs.realpathSync(outside));

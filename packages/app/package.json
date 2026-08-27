@@ -1,14 +1,13 @@
 {
-  "name": "@codesucker/app",
+  "name": "@codedoc/app",
   "version": "0.4.4",
   "private": true,
   "description": "离线生成符合软件著作权申报规范的源程序文档",
-  "author": "fanbuz",
   "license": "Apache-2.0",
   "main": "out/main/index.js",
   "build": {
-    "appId": "com.fanbuz.codesucker",
-    "productName": "CodeSucker",
+    "appId": "com.ideaboxapps.codedoc",
+    "productName": "CodeDoc",
     "directories": {
       "buildResources": "build",
       "output": "release"
@@ -73,7 +72,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@codesucker/core": "*",
+    "@codedoc/core": "*",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^5.2.0",

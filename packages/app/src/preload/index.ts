@@ -29,6 +29,8 @@ const api = {
   resetScanExcludes: () => ipcRenderer.invoke('settings:scanExcludes:reset'),
   scan: (root: string, jobId: string, scanSessionId: string) => ipcRenderer.invoke('project:scan', { root, jobId, scanSessionId }),
   process: (payload: unknown, jobId: string) => ipcRenderer.invoke('project:process', { payload, jobId }),
+  previewPdf: (documentKey: string, scanSessionId: string): Promise<{ documentKey: string; data: Uint8Array }> =>
+    ipcRenderer.invoke('project:previewPdf', { documentKey, scanSessionId }),
   export: (payload: unknown, jobId: string) => ipcRenderer.invoke('project:export', { payload, jobId }),
   cancel: (jobId: string) => ipcRenderer.invoke('project:cancel', jobId),
   onProgress: (callback: (progress: ProgressEvent) => void) => {
@@ -40,6 +42,6 @@ const api = {
   revealLatestExport: (): Promise<void> => ipcRenderer.invoke('project:revealLatestExport'),
 };
 
-contextBridge.exposeInMainWorld('cs', api);
+contextBridge.exposeInMainWorld('codedoc', api);
 
-export type CsApi = typeof api;
+export type CodeDocApi = typeof api;

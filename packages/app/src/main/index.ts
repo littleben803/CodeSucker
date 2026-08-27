@@ -9,7 +9,7 @@ import { windowChromeOptions } from './window-chrome';
 
 let win: BrowserWindow | null = null;
 
-app.setName('CodeSucker');
+app.setName('CodeDoc');
 app.enableSandbox();
 
 function isTrustedRenderer(sender: WebContents): boolean {
