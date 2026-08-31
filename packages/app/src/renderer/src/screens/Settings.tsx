@@ -1,17 +1,76 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
   canResetScanExcludeRules, getScanExcludeRuleErrors, normalizeScanExcludeRule, normalizeScanExcludeRules,
   sameScanExcludeRules, validateScanExcludeRule,
 } from '../scan-exclude-rules';
 import { getBuiltInScanExcludeRuleHelp } from '../scan-exclude-rule-help';
-import { toast, useStore } from '../store';
+import { toast } from '../store';
 
-function BuiltInRuleIcon() {
+interface SettingsCardHeaderProps {
+  icon: ReactNode;
+  title: string;
+  titleId?: string;
+  subtitle?: ReactNode;
+  action?: ReactNode;
+  actionInline?: boolean;
+}
+
+function SettingsCardHeader({ icon, title, titleId, subtitle, action, actionInline = false }: SettingsCardHeaderProps) {
+  return (
+    <div className="settings-card__header">
+      <div className="settings-card__header-main">
+        <span className="settings-card__header-icon" aria-hidden="true">{icon}</span>
+        <h2 id={titleId} className="settings-card__header-title">{title}</h2>
+        {action && <div className={`settings-card__header-action${actionInline ? ' settings-card__header-action--inline' : ''}`}>{action}</div>}
+      </div>
+      {subtitle && <div className="settings-card__header-subtitle">{subtitle}</div>}
+    </div>
+  );
+}
+
+function UpdateIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none">
+      <path d="M13.3 5.9A5.5 5.5 0 1 0 13 10.8" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+      <path d="M10.8 3.6h2.7v2.7" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PrivacyIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.35" />
+      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" strokeWidth="1.35" />
+    </svg>
+  );
+}
+
+function AboutIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.35" />
+      <path d="M8 7.1v3.6" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+      <circle cx="8" cy="4.8" r=".75" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ScanExcludeIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="M8 1.8 13 3.7v3.7c0 3.1-1.9 5.7-5 6.8-3.1-1.1-5-3.7-5-6.8V3.7L8 1.8Z" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
       <path d="m5.7 7.9 1.5 1.5 3.2-3.3" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BuiltInRuleIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="m2.4 5 5.6-3 5.6 3v6L8 14l-5.6-3V5Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+      <path d="m2.7 5 5.3 3 5.3-3M8 8v6M5.3 3.5l5.4 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -34,7 +93,6 @@ function DeleteRuleIcon() {
 }
 
 export default function Settings() {
-  const s = useStore();
   const [rules, setRules] = useState<string[]>([]);
   const [savedRules, setSavedRules] = useState<string[]>([]);
   const [ruleSource, setRuleSource] = useState<'default' | 'user'>('default');
@@ -134,182 +192,172 @@ export default function Settings() {
   return (
     <div className="settings-page">
       <div className="settings-shell">
-        <header className="settings-heading">
-          <button className="btn-ghost settings-heading__back" onClick={() => s.set({ view: 'wizard' })} aria-label="返回工作区">←</button>
-          <h1>设置</h1>
-        </header>
-
         <div className="settings-content">
-          <section className="update-card" aria-label="版本维护状态">
-            <div className="update-card__content">
-              <div className="update-card__eyebrow">MAINTENANCE · 维护状态</div>
-              <div className="update-card__title">更新渠道迁移中</div>
-              <div className="update-card__detail">当前 v{__APP_VERSION__} · 自动版本检测已关闭，待新维护仓库确定后恢复</div>
-            </div>
-          </section>
-
           <div className="settings-grid">
-          <div className="settings-stack">
-            <section className="settings-card settings-card--scan-rules">
-              <div className="settings-rule-heading">
-                <div>
-                  <div className="settings-rule-title-line">
-                    <div id="scan-exclude-rules" className="settings-card__title">扫描排除规则</div>
+            <div className="settings-stack">
+              <section className="settings-card settings-card--scan-rules" aria-labelledby="scan-exclude-rules">
+                <SettingsCardHeader
+                  icon={<ScanExcludeIcon />}
+                  title="扫描排除规则"
+                  titleId="scan-exclude-rules"
+                  subtitle="命中的内容不会参与扫描、选择和导出。规则适用于所有项目，并从下次扫描开始生效。"
+                  actionInline
+                  action={(
                     <button ref={ruleHelpButtonRef} type="button" className="settings-rule-help-button"
                       aria-label="查看扫描排除规则的匹配说明" aria-haspopup="dialog"
                       aria-expanded={ruleHelpOpen} onClick={() => setRuleHelpOpen(true)}>?</button>
-                  </div>
-                  <div className="settings-card__description settings-rule-description">
-                    <span>命中的内容不会参与扫描、选择和导出。规则适用于所有项目，并从下次扫描开始生效。</span>
-                  </div>
-                </div>
-              </div>
+                  )}
+                />
 
-              {ruleWarning && <div className="settings-rule-warning" role="status">{ruleWarning}</div>}
+                <div className="settings-card__content settings-card__content--scan-rules">
+                  {ruleWarning && <div className="settings-rule-warning" role="status">{ruleWarning}</div>}
 
-              {ruleLoading ? (
-                <div className="settings-rule-loading" aria-live="polite">正在读取规则…</div>
-              ) : ruleLoadError ? (
-                <div className="settings-rule-error" role="alert">
-                  <span>{ruleLoadError}</span>
-                  <button type="button" onClick={() => void loadRules()}>重试</button>
-                </div>
-              ) : (
-                <>
-                  <div className="settings-rule-list" role="list" aria-labelledby="scan-exclude-rules">
-                    {rules.length === 0 && (
-                      <div className="settings-rule-empty">
-                        <strong>暂未设置排除规则</strong>
-                        <span>扫描时仍会遵循项目自身的 .gitignore</span>
-                      </div>
-                    )}
-                    {rules.map((rule, index) => {
-                      const builtInHelp = getBuiltInScanExcludeRuleHelp(rule);
-                      const isEditing = focusedRuleIndex === index;
-                      const detailId = `scan-exclude-rule-detail-${index}`;
-                      return (
-                        <div className={`settings-rule-row${ruleErrors[index] ? ' has-error' : ''}${builtInHelp ? ' has-builtin-help' : ''}${isEditing ? ' is-editing' : ''}`}
-                          role="listitem" key={index}>
-                          <span
-                            className={`settings-rule-row__kind settings-rule-row__kind--${builtInHelp ? 'builtin' : 'custom'}`}
-                            role="img"
-                            aria-label={builtInHelp ? '内置规则' : '自定义规则'}
-                            title={builtInHelp ? '内置规则' : '自定义规则'}
-                          >
-                            {builtInHelp ? <BuiltInRuleIcon /> : <CustomRuleIcon />}
-                          </span>
-                          <div className="settings-rule-row__field">
-                            <div className="settings-rule-row__value">
-                              <input
-                                value={rule}
-                                size={builtInHelp && !isEditing ? Math.min(Math.max(rule.length + 1, 9), 26) : undefined}
-                                aria-label={`${builtInHelp ? '内置' : '自定义'}排除规则${builtInHelp ? `，${builtInHelp.detail}` : ''}`}
-                                aria-describedby={builtInHelp && !isEditing ? detailId : undefined}
-                                aria-invalid={Boolean(ruleErrors[index])}
-                                onFocus={() => setFocusedRuleIndex(index)}
-                                onChange={(event) => setRules((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                                onBlur={() => {
-                                  if (!ruleErrors[index]) setRules((current) => current.map((item, itemIndex) => itemIndex === index ? normalizeScanExcludeRule(item) : item));
-                                  setFocusedRuleIndex((current) => current === index ? null : current);
-                                }}
-                              />
+                  {ruleLoading ? (
+                    <div className="settings-rule-loading" aria-live="polite">正在读取规则…</div>
+                  ) : ruleLoadError ? (
+                    <div className="settings-rule-error" role="alert">
+                      <span>{ruleLoadError}</span>
+                      <button type="button" onClick={() => void loadRules()}>重试</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="settings-rule-list" role="list" aria-labelledby="scan-exclude-rules">
+                        {rules.length === 0 && (
+                          <div className="settings-rule-empty">
+                            <strong>暂未设置排除规则</strong>
+                            <span>扫描时仍会遵循项目自身的 .gitignore</span>
+                          </div>
+                        )}
+                        {rules.map((rule, index) => {
+                          const builtInHelp = getBuiltInScanExcludeRuleHelp(rule);
+                          const isEditing = focusedRuleIndex === index;
+                          const detailId = `scan-exclude-rule-detail-${index}`;
+                          return (
+                            <div className={`settings-rule-row${ruleErrors[index] ? ' has-error' : ''}${builtInHelp ? ' has-builtin-help' : ''}${isEditing ? ' is-editing' : ''}`}
+                              role="listitem" key={index}>
+                              <span
+                                className={`settings-rule-row__kind settings-rule-row__kind--${builtInHelp ? 'builtin' : 'custom'}`}
+                                role="img"
+                                aria-label={builtInHelp ? '内置规则' : '自定义规则'}
+                                title={builtInHelp ? '内置规则' : '自定义规则'}
+                              >
+                                {builtInHelp ? <BuiltInRuleIcon /> : <CustomRuleIcon />}
+                              </span>
+                              <div className="settings-rule-row__field">
+                                <div className="settings-rule-row__value">
+                                  <input
+                                    value={rule}
+                                    size={builtInHelp && !isEditing ? Math.min(Math.max(rule.length + 1, 9), 26) : undefined}
+                                    aria-label={`${builtInHelp ? '内置' : '自定义'}排除规则${builtInHelp ? `，${builtInHelp.detail}` : ''}`}
+                                    aria-describedby={builtInHelp && !isEditing ? detailId : undefined}
+                                    aria-invalid={Boolean(ruleErrors[index])}
+                                    onFocus={() => setFocusedRuleIndex(index)}
+                                    onChange={(event) => setRules((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
+                                    onBlur={() => {
+                                      if (!ruleErrors[index]) setRules((current) => current.map((item, itemIndex) => itemIndex === index ? normalizeScanExcludeRule(item) : item));
+                                      setFocusedRuleIndex((current) => current === index ? null : current);
+                                    }}
+                                  />
+                                  {builtInHelp && !isEditing && (
+                                    <span id={detailId} className="settings-rule-row__detail">{builtInHelp.detail}</span>
+                                  )}
+                                </div>
+                                {ruleErrors[index] && <span role="alert">{ruleErrors[index]}</span>}
+                              </div>
+                              <button type="button" className="settings-rule-row__delete"
+                                aria-label={`删除规则 ${rule || index + 1}`}
+                                title="删除"
+                                onClick={() => {
+                                  setFocusedRuleIndex(null);
+                                  setRules((current) => current.filter((_, itemIndex) => itemIndex !== index));
+                                }}>
+                                <DeleteRuleIcon />
+                              </button>
                               {builtInHelp && !isEditing && (
-                                <span id={detailId} className="settings-rule-row__detail">{builtInHelp.detail}</span>
+                                <div className="settings-rule-row__help" role="tooltip">
+                                  <strong>为什么默认排除</strong>
+                                  <span>{builtInHelp.reason}</span>
+                                </div>
                               )}
                             </div>
-                            {ruleErrors[index] && <span role="alert">{ruleErrors[index]}</span>}
-                          </div>
-                          <button type="button" className="settings-rule-row__delete"
-                            aria-label={`删除规则 ${rule || index + 1}`}
-                            title="删除"
-                            onClick={() => {
-                              setFocusedRuleIndex(null);
-                              setRules((current) => current.filter((_, itemIndex) => itemIndex !== index));
-                            }}>
-                            <DeleteRuleIcon />
-                          </button>
-                          {builtInHelp && !isEditing && (
-                            <div className="settings-rule-row__help" role="tooltip">
-                              <strong>为什么默认排除</strong>
-                              <span>{builtInHelp.reason}</span>
-                            </div>
-                          )}
+                          );
+                        })}
+                      </div>
+
+                      <form className={`settings-rule-add${newRuleError ? ' has-error' : ''}`} onSubmit={handleAddRule}>
+                        <div className="settings-rule-add__field">
+                          <label className="settings-rule-add__label" htmlFor="new-scan-exclude-rule">添加文件夹名称或路径匹配规则</label>
+                          <input id="new-scan-exclude-rule" value={newRule} placeholder="例如 node_modules、*.min.js 或 packages/*/dist" aria-label="新增排除规则"
+                            aria-invalid={Boolean(newRuleError)}
+                            onChange={(event) => { setNewRule(event.target.value); setNewRuleError(null); }} />
+                          {newRuleError && <span role="alert">{newRuleError}</span>}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <button type="submit" className="btn-ghost">新增</button>
+                      </form>
 
-                  <form className={`settings-rule-add${newRuleError ? ' has-error' : ''}`} onSubmit={handleAddRule}>
-                    <div className="settings-rule-add__field">
-                      <label className="settings-rule-add__label" htmlFor="new-scan-exclude-rule">添加文件夹名称或路径匹配规则</label>
-                      <input id="new-scan-exclude-rule" value={newRule} placeholder="例如 node_modules、*.min.js 或 packages/*/dist" aria-label="新增排除规则"
-                        aria-invalid={Boolean(newRuleError)}
-                        onChange={(event) => { setNewRule(event.target.value); setNewRuleError(null); }} />
-                      {newRuleError && <span role="alert">{newRuleError}</span>}
-                    </div>
-                    <button type="submit" className="btn-ghost">新增</button>
-                  </form>
+                      <div className="settings-rule-syntax">
+                        <span>不含通配符时按文件夹处理；含通配符时按文件或文件夹路径匹配。 <code>*</code> 匹配当前层级，<code>**</code> 可跨目录层级，<code>?</code> 匹配一个字符。</span>
+                      </div>
 
-                  <div className="settings-rule-syntax">
-                    <span>不含通配符时按文件夹处理；含通配符时按文件或文件夹路径匹配。 <code>*</code> 匹配当前层级，<code>**</code> 可跨目录层级，<code>?</code> 匹配一个字符。</span>
-                  </div>
-
-                  <div className="settings-rule-footer">
-                    <div className="settings-rule-footer__status" aria-live="polite">
-                      {rulesDirty ? '有未保存更改' : '已保存'} · 仅从下次扫描开始生效
-                    </div>
-                    <div className="settings-rule-footer__actions">
-                      <button type="button" className="btn-ghost"
-                        disabled={ruleSaving || !canResetScanExcludeRules(ruleSource, rulesDirty, ruleWarning)}
-                        onClick={() => void handleResetRules()}>恢复默认</button>
-                      <button type="button" className="btn-primary" disabled={ruleSaving || rulesInvalid || !rulesDirty}
-                        onClick={() => void handleSaveRules()}>{ruleSaving ? '处理中…' : '保存规则'}</button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </section>
-
-          </div>
-
-          <aside className="settings-info-stack" aria-label="应用信息">
-            <section className="settings-card settings-card--privacy">
-              <div className="settings-card__title settings-card__title--with-icon">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="var(--green)" strokeWidth="1.4" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="var(--green)" strokeWidth="1.4" /></svg>
-                隐私说明
-              </div>
-              <div className="settings-card__body">
-                CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<span>永远不会离开这台电脑</span>。当前维护基线已关闭版本检测，产品功能不发起网络请求。
-              </div>
-            </section>
-
-            <section className="about-card" aria-labelledby="about-codedoc">
-              <div className="about-card__header">
-                <div style={{ minWidth: 0 }}>
-                  <div className="about-card__eyebrow">ABOUT · 关于</div>
-                  <div id="about-codedoc" className="about-card__title">CodeDoc Generator</div>
+                      <div className="settings-rule-footer">
+                        <div className="settings-rule-footer__status" aria-live="polite">
+                          {rulesDirty ? '有未保存更改' : '已保存'} · 仅从下次扫描开始生效
+                        </div>
+                        <div className="settings-rule-footer__actions">
+                          <button type="button" className="btn-ghost"
+                            disabled={ruleSaving || !canResetScanExcludeRules(ruleSource, rulesDirty, ruleWarning)}
+                            onClick={() => void handleResetRules()}>恢复默认</button>
+                          <button type="button" className="btn-primary" disabled={ruleSaving || rulesInvalid || !rulesDirty}
+                            onClick={() => void handleSaveRules()}>{ruleSaving ? '处理中…' : '保存规则'}</button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <span className="about-card__version">v{__APP_VERSION__}</span>
-              </div>
+              </section>
+            </div>
 
-              <p className="about-card__summary">
-                一款免费、离线的软著代码整理工具。希望把繁琐的申报准备，变成一段安心而清晰的本地流程。
-              </p>
-
-              <div className="about-card__meta">
-                <span className="about-card__free"><span aria-hidden="true" />免费软件</span>
-                <span>Apache-2.0 许可</span>
-              </div>
-
-              <div className="about-card__footer">
-                <div className="about-card__byline">
-                  <strong>软著代码整理器</strong>
+            <aside className="settings-info-stack" aria-label="应用设置与信息">
+              <section className="settings-card" aria-labelledby="software-update-title">
+                <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title" />
+                <div className="settings-card__content settings-card__content--compact">
+                  <div className="settings-update-state">
+                    <strong>更新渠道迁移中</strong>
+                    <span>当前 v{__APP_VERSION__} · 自动版本检测已关闭，待新维护仓库确定后恢复</span>
+                  </div>
                 </div>
-                <span>一键生成软著代码审核材料</span>
-              </div>
-            </section>
+              </section>
 
-          </aside>
+              <section className="settings-card" aria-labelledby="privacy-settings-title">
+                <SettingsCardHeader icon={<PrivacyIcon />} title="隐私说明" titleId="privacy-settings-title" />
+                <div className="settings-card__content settings-card__content--compact settings-privacy-copy">
+                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>。当前维护基线已关闭版本检测，产品功能不发起网络请求。
+                </div>
+              </section>
+
+              <section className="settings-card settings-card--about" aria-labelledby="about-codedoc">
+                <SettingsCardHeader icon={<AboutIcon />} title="关于" titleId="about-codedoc"
+                  action={<span className="about-card__version">v{__APP_VERSION__}</span>} />
+                <div className="settings-card__content settings-card__content--about">
+                  <div className="about-card__product-name">CodeDoc Generator</div>
+                  <p className="about-card__summary">
+                    一款免费、离线的软著代码整理工具。让繁琐的申报工作尽可能简化，变成一段舒心而清晰的本地流程。
+                  </p>
+
+                  <div className="about-card__meta">
+                    <span className="about-card__free"><span aria-hidden="true" />免费软件</span>
+                    <span>Apache-2.0 许可</span>
+                  </div>
+
+                  <div className="about-card__footer">
+                    <div className="about-card__byline">
+                      <strong>软著代码整理器</strong>
+                    </div>
+                    <span>一键生成软著代码审核材料</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
           </div>
         </div>
       </div>

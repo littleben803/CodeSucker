@@ -40,6 +40,26 @@ async function main() {
 
   const preview = await pipelinePool.run({ type: 'preview', entry: scanned, clean: defaultCleanOptions() });
   assert.ok(preview && 'before' in preview && preview.before.length > 0);
+
+  const previewSourcePath = path.join(tmp, 'preview.ts');
+  const previewSource = Array.from({ length: 16 }, (_, index) => `export const preview${index + 1} = ${index + 1};`).join('\n');
+  fs.writeFileSync(previewSourcePath, previewSource, 'utf8');
+  const previewCandidate: FileCandidate = {
+    path: previewSourcePath,
+    relPath: 'preview.ts',
+    name: 'preview.ts',
+    ext: 'ts',
+    lang: 'TS',
+    sizeBytes: Buffer.byteLength(previewSource),
+    mtimeMs: fs.statSync(previewSourcePath).mtimeMs,
+    entryScore: 1,
+  };
+  const previewEntry = await pipelinePool.run({ type: 'scan', candidate: previewCandidate }) as FileEntry;
+  const completePreview = await pipelinePool.run({ type: 'preview', entry: previewEntry, clean: defaultCleanOptions() });
+  assert.ok(completePreview && 'before' in completePreview);
+  assert.equal(completePreview.before.length, 14, '清洗前预览应保留前 14 个原始行');
+  assert.equal(completePreview.after.length, 14, '清洗后预览不得再次截断为 10 行');
+  assert.equal(completePreview.after.at(-1)?.text, 'export const preview14 = 14;');
   await pipelinePool.close();
 
   const renderPool = new WorkerPool<RenderWorkerRequest, string>(renderWorker, 1);

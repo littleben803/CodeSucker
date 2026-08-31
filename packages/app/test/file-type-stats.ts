@@ -60,7 +60,7 @@ const collapsedHidden = aggregateStats(
 assert.deepEqual(
   scopeTotals(collapsedHidden, 'included'),
   { files: 0, rawLines: 0, bytes: 0 },
-  '已纳入口径下的折叠汇总不得包含被排除的隐藏类型',
+  '已选择口径下的折叠汇总不得包含被排除的隐藏类型',
 );
 assert.deepEqual(scopeTotals(collapsedHidden, 'all'), { files: 1, rawLines: 70, bytes: 70 });
 
@@ -94,7 +94,7 @@ assert.deepEqual(
 assert.deepEqual(
   reorderIncludedPaths(manualOrder, ['src/App.java', 'src/Service.java']),
   ['src/App.java', 'src/app.xml', 'src/Service.java'],
-  '筛选状态下拖拽时应保留隐藏路径并只重排已纳入文件',
+  '筛选状态下拖拽时应保留隐藏路径并只重排已选择文件',
 );
 const restoredSelection = setExtensionIncluded(exportSelection, 'xml', true);
 assert.deepEqual(

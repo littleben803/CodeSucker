@@ -22,6 +22,7 @@ export default function Step5Export() {
     if (s.exporting || !s.root || !s.scanSessionId) return;
     if (!hasExportableContent) { toast('没有可导出的代码内容，请调整文件选择或清洗规则'); return; }
     if (!s.swName.trim()) { toast('请先在「清洗与排版」填写软件全称+版本号'); s.set({ step: 3 }); return; }
+    if (!s.owner.trim()) { toast('请先在「清洗与排版」填写著作权人名称'); s.set({ step: 3 }); return; }
     if (!s.fmtPdf && !s.fmtDocx && !s.fmtTxt) { toast('请至少选择一种输出格式'); return; }
     if (s.fmtPdf && !s.pdfPreviewKey) { toast('请先返回上一步确认最终 PDF 预览'); s.set({ step: 4 }); return; }
     const jobId = createJobId('export');
@@ -35,7 +36,7 @@ export default function Step5Export() {
         scanSessionId,
         orderedRelPaths: orderedIncluded(s).map((f) => f.relPath),
         title: s.swName,
-        owner: s.owner || undefined,
+        owner: s.owner,
         clean: cleanOptions(s.clean),
         outDir: s.outDir || `${s.root}/软著申报`,
         formats: { pdf: s.fmtPdf, docx: s.fmtDocx, txt: s.fmtTxt },
@@ -83,6 +84,7 @@ export default function Step5Export() {
     `${location.file}${location.line ? `:${location.line}` : ''}`;
 
   const r = s.exportResult;
+  const displayedOutDir = s.outDir || `${s.root ?? ''}/软著申报`;
   const exportProgress = s.jobProgress?.jobKind === 'export' ? s.jobProgress : null;
   const exportLabel = exportProgress?.stage === 'cleaning' && exportProgress.total > 0
     ? `正在清洗 ${exportProgress.completed}/${exportProgress.total}`
@@ -95,69 +97,71 @@ export default function Step5Export() {
           : '正在准备';
 
   return (
-    <div style={{ flex: 1, display: 'flex', minHeight: 0, animation: 'codedoc-fade .18s ease-out' }}>
-      <div style={{ flex: 1, minWidth: 0, overflow: 'auto', padding: '22px 26px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 11, background: hasRisk ? 'var(--red-soft)' : 'var(--green-soft)', border: `1px solid color-mix(in srgb, ${hasRisk ? 'var(--red)' : 'var(--green)'} 30%, transparent)`, marginBottom: 14 }}>
-          <span style={{ fontSize: 17 }}>{hasRisk ? '⛔' : '✅'}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{passN} 项通过 · {warnN} 项警告 · {failN} 项退回风险</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 1 }}>{hasRisk ? '存在退回风险，导出前建议全部处理' : '主要风险已清零，可以放心导出'}</div>
+    <div className="step5-export">
+      <section className="step5-audit-panel" aria-label="检验结果">
+        <div className="step5-audit-scroll">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 11, background: hasRisk ? 'var(--red-soft)' : 'var(--green-soft)', border: `1px solid color-mix(in srgb, ${hasRisk ? 'var(--red)' : 'var(--green)'} 30%, transparent)`, marginBottom: 14 }}>
+            <span style={{ fontSize: 17 }}>{hasRisk ? '⛔' : '✅'}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{passN} 项通过 · {warnN} 项警告 · {failN} 项退回风险</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 1 }}>{hasRisk ? '存在退回风险，导出前建议全部处理' : '主要风险已清零，可以放心导出'}</div>
+            </div>
+            {s.processing && <span style={{ fontSize: 11.5, color: 'var(--text3)' }}>正在重新校验…</span>}
           </div>
-          {s.processing && <span style={{ fontSize: 11.5, color: 'var(--text3)' }}>正在重新校验…</span>}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {audit.map((a, i) => {
-            const [bg, fg, icon] = iconFor(a.status);
-            const expandable = !!a.evidence?.length;
-            return (
-              <div className="step5-audit-card" key={i} style={{ animationDelay: `${i * 70}ms` }}>
-                <div className="step5-audit-summary">
-                  <div style={{ width: 24, height: 24, flex: 'none', borderRadius: '50%', background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{icon}</div>
-                  <div className="step5-audit-copy">
-                    <div className="step5-audit-name">{a.name}</div>
-                    <div className="step5-audit-detail">
-                      {a.location && <><button className="step5-file-link" type="button"
-                        title={`在文件管理器中定位 ${locationText(a.location)}`}
-                        aria-label={`在文件管理器中定位 ${locationText(a.location)}`}
-                        onClick={(event) => { event.stopPropagation(); void revealFile(a.location!.file); }}>
-                        {locationText(a.location)}
-                      </button><span> · </span></>}
-                      <span>{a.detail}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {audit.map((a, i) => {
+              const [bg, fg, icon] = iconFor(a.status);
+              const expandable = !!a.evidence?.length;
+              return (
+                <div className="step5-audit-card" key={i} style={{ animationDelay: `${i * 70}ms` }}>
+                  <div className="step5-audit-summary">
+                    <div style={{ width: 24, height: 24, flex: 'none', borderRadius: '50%', background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{icon}</div>
+                    <div className="step5-audit-copy">
+                      <div className="step5-audit-name">{a.name}</div>
+                      <div className="step5-audit-detail">
+                        {a.location && <><button className="step5-file-link" type="button"
+                          title={`在文件管理器中定位 ${locationText(a.location)}`}
+                          aria-label={`在文件管理器中定位 ${locationText(a.location)}`}
+                          onClick={(event) => { event.stopPropagation(); void revealFile(a.location!.file); }}>
+                          {locationText(a.location)}
+                        </button><span> · </span></>}
+                        <span>{a.detail}</span>
+                      </div>
                     </div>
+                    {expandable && (
+                      <button type="button" className="step5-audit-toggle"
+                        aria-expanded={expanded === i} aria-controls={`step5-evidence-${i}`}
+                        onClick={() => setExpanded(expanded === i ? null : i)}>
+                        {expanded === i ? '收起 ▲' : '展开定位 ▼'}
+                      </button>
+                    )}
                   </div>
-                  {expandable && (
-                    <button type="button" className="step5-audit-toggle"
-                      aria-expanded={expanded === i} aria-controls={`step5-evidence-${i}`}
-                      onClick={() => setExpanded(expanded === i ? null : i)}>
-                      {expanded === i ? '收起 ▲' : '展开定位 ▼'}
-                    </button>
+                  {expanded === i && a.evidence && (
+                    <div id={`step5-evidence-${i}`} className="step5-evidence-panel">
+                      <div className="step5-evidence-list">
+                        {a.evidence.map((evidence, j) => (
+                          <div className="step5-evidence-row" key={`${evidence.location.file}:${evidence.location.line ?? ''}:${j}`}>
+                            <button className="step5-file-link" type="button"
+                              title={`在文件管理器中定位 ${locationText(evidence.location)}`}
+                              aria-label={`在文件管理器中定位 ${locationText(evidence.location)}`}
+                              onClick={() => { void revealFile(evidence.location.file); }}>
+                              {locationText(evidence.location)}
+                            </button>
+                            <span> · {evidence.detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                {expanded === i && a.evidence && (
-                  <div id={`step5-evidence-${i}`} className="step5-evidence-panel">
-                    <div className="step5-evidence-list">
-                      {a.evidence.map((evidence, j) => (
-                        <div className="step5-evidence-row" key={`${evidence.location.file}:${evidence.location.line ?? ''}:${j}`}>
-                          <button className="step5-file-link" type="button"
-                            title={`在文件管理器中定位 ${locationText(evidence.location)}`}
-                            aria-label={`在文件管理器中定位 ${locationText(evidence.location)}`}
-                            onClick={() => { void revealFile(evidence.location.file); }}>
-                            {locationText(evidence.location)}
-                          </button>
-                          <span> · {evidence.detail}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* 导出面板 */}
-      <div style={{ width: 284, flex: 'none', borderLeft: '1px solid var(--border2)', background: 'var(--panel)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <aside className="step5-surface-card step5-export-panel" aria-label="导出设置">
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>导出</div>
         <div>
           <div style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 7 }}>输出格式</div>
@@ -178,7 +182,8 @@ export default function Step5Export() {
         <div>
           <div style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 7 }}>输出路径</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px', background: 'var(--panel2)', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text2)' }}>
-            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.outDir || `${s.root ?? ''}/软著申报`}</span>
+            <span title={displayedOutDir} aria-label={`完整输出路径：${displayedOutDir}`}
+              style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayedOutDir}</span>
             <span style={{ color: 'var(--accent)', cursor: 'pointer', fontSize: 11, flex: 'none' }}
               onClick={async () => { const d = await window.codedoc.pickOutDir(); if (d) s.set({ outDir: d }); }}>更改</span>
           </div>
@@ -195,7 +200,7 @@ export default function Step5Export() {
           {s.exporting && <svg width="15" height="15" viewBox="0 0 30 30" style={{ animation: 'codedoc-spin .8s linear infinite' }}><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(255,255,255,.3)" strokeWidth="4" /><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" /></svg>}
           {s.exporting ? `${exportLabel} · 点击取消` : '生成申报文档'}
         </button>
-      </div>
+      </aside>
 
       {/* 导出成功弹窗 */}
       {r && (

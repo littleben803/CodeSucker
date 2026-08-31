@@ -32,6 +32,22 @@ export function audit(
     items.push({ status: 'pass', name: '页眉与软件名称一致', detail: `页眉「${config.title}」将逐页出现，与申请表保持一致即可` });
   }
 
+  // 2. 页脚（著作权人名称）
+  const owner = config.owner?.trim() ?? '';
+  if (!owner) {
+    items.push({
+      status: 'fail',
+      name: '缺少著作权人名称',
+      detail: '页脚为空会影响材料完整性，请在「清洗与排版」页面中填写，并与申请表保持完全一致',
+    });
+  } else {
+    items.push({
+      status: 'pass',
+      name: '页脚与著作权人名称一致',
+      detail: `页脚「${owner}」将逐页居中显示，与申请表保持一致即可`,
+    });
+  }
+
   const hasCodeContent = files.some((file) => file.lines.length > 0)
     && selection.totalLines > 0
     && selection.pickedLines > 0
@@ -44,7 +60,7 @@ export function audit(
       detail: '所选文件在清洗后为 0 行、0 页，请调整文件选择或关闭部分清洗规则后重新校验',
     });
   } else {
-    // 2. 每页行数
+    // 3. 每页行数
     const shortPages = pages.filter((p, i) => i < pages.length - 1 && p.lines.length < lpp);
     if (shortPages.length > 0) {
       items.push({ status: 'fail', name: `${shortPages.length} 页行数不足 ${lpp} 行`, detail: `第 ${shortPages.map((p) => p.no).join('、')} 页行数不足（仅末页允许不满）` });
@@ -52,7 +68,7 @@ export function audit(
       items.push({ status: 'pass', name: `每页行数均 ≥ ${lpp} 行`, detail: `共 ${pages.length} 页，${selection.truncated ? '每页恰好' : '除末页外每页'} ${lpp} 行` });
     }
 
-    // 3. 末页 2/3
+    // 4. 末页 2/3
     const last = pages[pages.length - 1];
     if (last.lines.length < Math.ceil((lpp * 2) / 3)) {
       items.push({ status: 'warn', name: `末页仅 ${last.lines.length} 行，不足页面 2/3`, detail: '建议补充或调整截取点，避免末页过短被认定为凑页' });
@@ -60,7 +76,7 @@ export function audit(
       items.push({ status: 'pass', name: '末页行数满足 2/3 要求', detail: `末页 ${last.lines.length} 行` });
     }
 
-    // 4. 首末页模块边界（由截取策略保证，明示给用户）
+    // 5. 首末页模块边界（由截取策略保证，明示给用户）
     items.push({
       status: 'pass', name: '首页为模块开头、末页为模块结尾',
       detail: `第 1 页起于 ${pages[0].startFile}，第 ${pages.length} 页止于 ${last.endFile}` +
@@ -68,7 +84,7 @@ export function audit(
     });
   }
 
-  // 5. 空行残留
+  // 6. 空行残留
   if (config.clean.removeBlankLines) {
     let blankCount = 0;
     for (const p of pages) for (const l of p.lines) if (l.trim() === '') blankCount++;
@@ -77,7 +93,7 @@ export function audit(
     }
   }
 
-  // 6. 署名/版权冲突扫描：证据在清洗前提取，只检查最终分页涉及的文件。
+  // 7. 署名/版权冲突扫描：证据在清洗前提取，只检查最终分页涉及的文件。
   if (config.owner) {
     const selected = new Set(selection.selectedRelPaths);
     const hits = files
@@ -100,7 +116,7 @@ export function audit(
     }
   }
 
-  // 7. 文件时间早于成立日期
+  // 8. 文件时间早于成立日期
   if (config.foundedDate) {
     const founded = new Date(config.foundedDate).getTime();
     const early = files.filter((f) => f.entry.included && f.entry.mtimeMs < founded);

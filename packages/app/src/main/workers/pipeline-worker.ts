@@ -24,7 +24,7 @@ async function execute(payload: PipelineWorkerRequest): Promise<PipelineWorkerRe
       kind: line.kind,
       masked: line.masked,
     })),
-    after: annotated.flatMap((line) => line.out.map((value) => ({ text: value, masked: line.masked }))).slice(0, 10),
+    after: annotated.flatMap((line) => line.out.map((value) => ({ text: value, masked: line.masked }))),
     removedComments: annotated.filter((line) => line.kind === 'comment').length,
     removedBlanks: annotated.filter((line) => line.kind === 'blank' && line.out.length === 0).length,
     masked: annotated.filter((line) => line.masked).length,

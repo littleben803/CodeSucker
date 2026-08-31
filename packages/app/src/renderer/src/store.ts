@@ -100,7 +100,6 @@ interface State {
   swName: string;
   owner: string;
   clean: CleanToggles;
-  layoutOpen: boolean;
   processData: ProcessData | null;
   processing: boolean;
   page: number;
@@ -140,7 +139,6 @@ export const useStore = create<State>((set) => ({
   swName: '',
   owner: '',
   clean: DEFAULT_CLEAN,
-  layoutOpen: false,
   processData: null,
   processing: false,
   page: 1,

@@ -6,12 +6,17 @@ import {
   clampRecentMenuPosition, nextRecentMenuIndex, reconcileRecentSelection,
   selectAllRecent, toggleRecentSelection as toggleSelectedRoot, type RecentMenuNavigationKey,
 } from '../recent-project-state';
+import AppAlert from '../components/AppAlert';
 
 interface RecentContextMenu {
   root: string;
   left: number;
   top: number;
 }
+
+type RecentRemovalConfirmation =
+  | { kind: 'single'; project: RecentProject }
+  | { kind: 'multiple'; roots: string[] };
 
 function unavailableLabel(reason: RecentProject['unavailableReason']): string {
   if (reason === 'missing') return '项目路径不存在';
@@ -39,6 +44,7 @@ export default function Step1Import() {
   const [managingRecent, setManagingRecent] = useState(false);
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(() => new Set());
   const [recentMenu, setRecentMenu] = useState<RecentContextMenu | null>(null);
+  const [removalConfirmation, setRemovalConfirmation] = useState<RecentRemovalConfirmation | null>(null);
   const recentMenuRef = useRef<HTMLDivElement>(null);
   const recentTriggerRefs = useRef(new Map<string, HTMLDivElement>());
   const progress = s.jobProgress?.jobKind === 'scan' ? s.jobProgress : null;
@@ -112,28 +118,48 @@ export default function Step1Import() {
     }
   };
 
-  const removeOne = async (project: RecentProject) => {
-    if (!window.confirm(`只会从最近项目中移除“${project.name}”的记录，不会删除磁盘上的项目文件。确定移除吗？`)) return;
-    try {
-      await updateRecent(() => window.codedoc.removeRecent(project.root));
-      toast('已从最近项目移除，项目文件未受影响');
-    } catch (error) {
-      await refreshRecent();
-      toast(`移除失败：${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      closeRecentMenu(true);
+  const removeOne = (project: RecentProject) => {
+    closeRecentMenu(false);
+    setRemovalConfirmation({ kind: 'single', project });
+  };
+
+  const removeSelected = () => {
+    const roots = [...selectedRecent];
+    if (roots.length === 0) return;
+    setRemovalConfirmation({ kind: 'multiple', roots });
+  };
+
+  const cancelRemoval = () => {
+    const root = removalConfirmation?.kind === 'single'
+      ? removalConfirmation.project.root
+      : null;
+    setRemovalConfirmation(null);
+    if (root) {
+      window.requestAnimationFrame(() => recentTriggerRefs.current.get(root)?.focus());
     }
   };
 
-  const removeSelected = async () => {
-    const roots = [...selectedRecent];
-    if (roots.length === 0) return;
-    if (!window.confirm(`只会移除选中的 ${roots.length} 条最近记录，不会删除任何项目文件。确定继续吗？`)) return;
+  const confirmRemoval = async () => {
+    const confirmation = removalConfirmation;
+    if (!confirmation) return;
+    setRemovalConfirmation(null);
+
+    if (confirmation.kind === 'single') {
+      try {
+        await updateRecent(() => window.codedoc.removeRecent(confirmation.project.root));
+        toast('已从最近项目移除，项目文件未受影响');
+      } catch (error) {
+        await refreshRecent();
+        toast(`移除失败：${error instanceof Error ? error.message : String(error)}`);
+      }
+      return;
+    }
+
     try {
-      await updateRecent(() => window.codedoc.removeRecentMany(roots));
+      await updateRecent(() => window.codedoc.removeRecentMany(confirmation.roots));
       setSelectedRecent(new Set());
       setManagingRecent(false);
-      toast(`已移除 ${roots.length} 条最近记录，项目文件未受影响`);
+      toast(`已移除 ${confirmation.roots.length} 条最近记录，项目文件未受影响`);
     } catch (error) {
       await refreshRecent();
       toast(`批量移除失败：${error instanceof Error ? error.message : String(error)}`);
@@ -244,14 +270,33 @@ export default function Step1Import() {
               <button type="button" onClick={() => setSelectedRecent(selectAllRecent(s.recent))}
                 disabled={selectedRecent.size === s.recent.length}>全选当前列表</button>
               <button type="button" className="is-danger" disabled={selectedRecent.size === 0}
-                onClick={() => { void removeSelected(); }}>批量移除</button>
+                onClick={removeSelected}>批量移除</button>
               <button type="button" onClick={() => { setManagingRecent(false); setSelectedRecent(new Set()); }}>取消</button>
             </div>
           </div>
         )}
-        {s.recent.length === 0 && <div style={{ fontSize: 12, color: 'var(--text3)' }}>暂无最近项目</div>}
-        <div className="step1-recent__list" tabIndex={s.recent.length > 0 ? 0 : undefined}>
-          {s.recent.map((r: RecentProject) => (
+        {s.recent.length === 0 ? (
+          <div className="step1-recent__empty" role="status">
+            <svg className="step1-recent__empty-visual" viewBox="0 0 184 128" aria-hidden="true">
+              <ellipse className="step1-recent__empty-shadow" cx="92" cy="111" rx="50" ry="7" />
+              <circle className="step1-recent__empty-halo" cx="92" cy="61" r="54" />
+              <path className="step1-recent__empty-folder-back" d="M37 42c0-5.5 4.5-10 10-10h25l10 10h55c5.5 0 10 4.5 10 10v40c0 7.7-6.3 14-14 14H51c-7.7 0-14-6.3-14-14V42Z" />
+              <rect className="step1-recent__empty-card" x="48" y="48" width="88" height="52" rx="11" />
+              <rect className="step1-recent__empty-code-tile" x="60" y="59" width="28" height="28" rx="8" />
+              <path className="step1-recent__empty-code" d="m72 67-5 6 5 6m5-12 5 6-5 6" />
+              <path className="step1-recent__empty-line" d="M98 64h25M98 73h20M98 82h14" />
+              <circle className="step1-recent__empty-dot" cx="42" cy="25" r="3" />
+              <circle className="step1-recent__empty-dot is-secondary" cx="151" cy="84" r="2.5" />
+              <path className="step1-recent__empty-spark" d="M145 25v12m-6-6h12" />
+            </svg>
+            <div className="step1-recent__empty-copy">
+              <strong>暂无最近项目</strong>
+              <span>选择或拖入项目文件夹后，最近使用的项目会显示在这里</span>
+            </div>
+          </div>
+        ) : (
+          <div className="step1-recent__list" tabIndex={0}>
+            {s.recent.map((r: RecentProject) => (
             <div key={r.root} className={`step1-recent__item card-hover${r.available ? '' : ' is-unavailable'}${selectedRecent.has(r.root) ? ' is-selected' : ''}`}
               role="button" tabIndex={0}
               aria-pressed={managingRecent ? selectedRecent.has(r.root) : undefined}
@@ -302,8 +347,9 @@ export default function Step1Import() {
                 </div>
               )}
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {recentMenu && (() => {
@@ -332,12 +378,27 @@ export default function Step1Import() {
             <button type="button" role="menuitem" tabIndex={-1} onClick={() => { void setPinned(project); }}>
               {project.pinned ? '取消置顶' : '置顶'}
             </button>
-            <button type="button" role="menuitem" tabIndex={-1} className="is-danger" onClick={() => { void removeOne(project); }}>
+            <button type="button" role="menuitem" tabIndex={-1} className="is-danger" onClick={() => removeOne(project)}>
               从最近项目移除
             </button>
           </div>
         );
       })()}
+
+      {removalConfirmation && (
+        <AppAlert
+          title={removalConfirmation.kind === 'single'
+            ? `从最近项目中移除“${removalConfirmation.project.name}”？`
+            : `移除选中的 ${removalConfirmation.roots.length} 条最近记录？`}
+          description={removalConfirmation.kind === 'single'
+            ? '只会移除该项目的最近记录，不会删除磁盘上的项目文件。'
+            : '只会移除最近项目记录，不会删除任何磁盘文件。'}
+          confirmLabel="移除"
+          confirmTone="danger"
+          onCancel={cancelRemoval}
+          onConfirm={() => { void confirmRemoval(); }}
+        />
+      )}
     </div>
   );
 }

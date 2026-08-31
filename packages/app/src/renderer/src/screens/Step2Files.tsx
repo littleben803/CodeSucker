@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import { completeFileOrder, orderedIncluded, reorderIncludedPaths, useStore, type FileRow } from '../store';
 import { unlockStep } from '../wizard-progress';
 import {
-  aggregateStats, compositionCells, includeOnlyExtension, rankExtensionStats,
+  aggregateStats, compositionCells, rankExtensionStats,
   scopeTotals, setExtensionIncluded, statValue, summarizeFileTypes,
   type ExtensionStat, type StatMetric, type StatScope,
 } from '../file-type-stats';
@@ -26,12 +26,6 @@ const LANG_COLORS: Record<string, [string, string]> = {
   SWIFT: ['#ea580c', 'rgba(234,88,12,.12)'], VUE: ['#059669', 'rgba(5,150,105,.12)'],
 };
 const langStyle = (lang: string) => LANG_COLORS[lang] ?? ['#6f6f78', 'rgba(110,110,120,.12)'];
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes >= 10 * 1024 ? 0 : 1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
 
 function SelectionCheckbox({ state, label, onChange }: {
   state: SelectionState;
@@ -83,7 +77,7 @@ function FileTreeNode({ node, depth, expandedDirectories, onToggleExpanded, onTo
           onChange={() => onToggleDirectory(node)} />
         <button type="button" className="file-tree-row__directory-name" title={node.relPath}
           onClick={() => onToggleExpanded(node.relPath)}>{node.name}</button>
-        <span className="file-tree-row__meta" title={`已纳入 ${node.includedFiles}，共 ${node.totalFiles} 个文件`}>
+        <span className="file-tree-row__meta" title={`已选择 ${node.includedFiles}，共 ${node.totalFiles} 个文件`}>
           {node.includedFiles} / {node.totalFiles}
         </span>
       </div>
@@ -168,7 +162,8 @@ export default function Step2Files() {
   const cells = compositionCells(fileTypes.extensions, statScope, statMetric);
 
   const totalRawLines = fileTypes.includedRawLines;
-  const estPages = Math.min(60, Math.ceil(totalRawLines * 0.82 / 50)); // 清洗后行数按 82% 粗估
+  const estimatedPages = Math.ceil(totalRawLines * 0.82 / 50); // 清洗后行数按 82% 粗估
+  const materialPages = Math.min(60, estimatedPages);
   const updateFiles = (files: FileRow[]) => {
     const knownPaths = new Set(files.map((file) => file.relPath));
     const preferred = s.sortMode === 'mtime' ? s.mtimeOrder : s.entryOrder;
@@ -222,10 +217,6 @@ export default function Step2Files() {
     updateFiles(setExtensionIncluded(s.files, stat.extension, !stat.fullyIncluded));
   };
 
-  const keepOnlyExtension = (stat: ExtensionStat) => {
-    updateFiles(includeOnlyExtension(s.files, stat.extension));
-  };
-
   const setSortMode = (mode: 'entry' | 'mtime' | 'manual') => {
     if (mode === 'manual') { s.set({ sortMode: mode }); return; }
     const base = mode === 'entry' ? s.entryOrder : s.mtimeOrder;
@@ -243,92 +234,94 @@ export default function Step2Files() {
   };
 
   const ring = 2 * Math.PI * 26;
-  const pageOk = estPages >= 55;
+  const pageOk = estimatedPages >= 60;
 
   return (
     <div className="step2-files">
-      {/* 文件树 */}
-      <aside className="file-tree-panel">
-        <div className="file-tree-toolbar">
-          <div className="file-tree-toolbar__heading">
-            <strong>项目文件</strong>
-            <span title={`已纳入 ${included.length}，共 ${s.files.length} 个文件`}>{included.length} / {s.files.length}</span>
-          </div>
-          <div className="file-tree-toolbar__actions" aria-label="全局文件选择">
-            <button type="button" onClick={() => setEveryFile(true)}>全选</button>
-            <button type="button" onClick={() => setEveryFile(false)}>清空</button>
-            <button type="button" onClick={invertEveryFile} title="反选当前项目的全部扫描文件">反选</button>
-          </div>
-          <div className="file-tree-search">
-            <span className="file-tree-search__icon" aria-hidden="true">⌕</span>
-            <input type="search" value={fileTreeSearchInput} placeholder="搜索目录、文件或相对路径"
-              aria-label="搜索项目文件" autoComplete="off" spellCheck={false}
-              onChange={(event) => setFileTreeSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key !== 'Escape' || !fileTreeSearchInput) return;
-                event.preventDefault();
-                clearFileTreeSearch();
-              }} />
-            {fileTreeSearchInput && (
-              <button type="button" aria-label="清空项目文件搜索" title="清空搜索（Esc）"
-                onClick={clearFileTreeSearch}>×</button>
-            )}
-          </div>
-          <div className="file-tree-search__status" role="status" aria-live="polite">
-            {isFileTreeSearchWaiting || isFilteringFileTree
-              ? '正在筛选…'
-              : isFileTreeSearchActive
-                ? `匹配 ${treeSearchResult.matchedNodes} 项 · 显示 ${treeSearchResult.visibleFiles} 个文件`
-                : '支持目录、文件名和相对路径'}
-          </div>
-        </div>
-        <div className="file-tree-scroll" aria-label="项目文件树">
-          {isFileTreeSearchActive && treeSearchResult.tree.children.length === 0 ? (
-            <div className="file-tree-empty">
-              <strong>无匹配结果</strong>
-              <span>换个关键词，或按 Esc 清空搜索</span>
+      <section className="step2-surface-card step2-main-card" aria-label="文件选择与排序">
+        {/* 文件树 */}
+        <aside className="file-tree-panel">
+          <div className="file-tree-toolbar">
+            <div className="file-tree-toolbar__heading">
+              <strong>项目文件</strong>
+              <span title={`已选择 ${included.length}，共 ${s.files.length} 个文件`}>{included.length} / {s.files.length}</span>
             </div>
-          ) : treeSearchResult.tree.children.map((node) => (
-            <FileTreeNode key={node.key} node={node} depth={0}
-              expandedDirectories={visibleExpandedDirectories} onToggleExpanded={toggleExpanded}
-              onToggleDirectory={toggleDirectory} onToggleFile={toggleFile} />
-          ))}
-        </div>
-      </aside>
+            <div className="file-tree-toolbar__actions" aria-label="全局文件选择">
+              <button type="button" onClick={() => setEveryFile(true)}>全选</button>
+              <button type="button" onClick={() => setEveryFile(false)}>清空</button>
+              <button type="button" onClick={invertEveryFile} title="反选当前项目的全部扫描文件">反选</button>
+            </div>
+            <div className="file-tree-search">
+              <span className="file-tree-search__icon" aria-hidden="true">⌕</span>
+              <input type="search" value={fileTreeSearchInput} placeholder="搜索目录、文件或相对路径"
+                aria-label="搜索项目文件" autoComplete="off" spellCheck={false}
+                onChange={(event) => setFileTreeSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Escape' || !fileTreeSearchInput) return;
+                  event.preventDefault();
+                  clearFileTreeSearch();
+                }} />
+              {fileTreeSearchInput && (
+                <button type="button" aria-label="清空项目文件搜索" title="清空搜索（Esc）"
+                  onClick={clearFileTreeSearch}>×</button>
+              )}
+            </div>
+            <div className="file-tree-search__status" role="status" aria-live="polite">
+              {isFileTreeSearchWaiting || isFilteringFileTree
+                ? '正在筛选…'
+                : isFileTreeSearchActive
+                  ? `匹配 ${treeSearchResult.matchedNodes} 项 · 显示 ${treeSearchResult.visibleFiles} 个文件`
+                  : '支持目录、文件名和相对路径'}
+            </div>
+          </div>
+          <div className="file-tree-scroll" aria-label="项目文件树">
+            {isFileTreeSearchActive && treeSearchResult.tree.children.length === 0 ? (
+              <div className="file-tree-empty">
+                <strong>无匹配结果</strong>
+                <span>换个关键词，或按 Esc 清空搜索</span>
+              </div>
+            ) : treeSearchResult.tree.children.map((node) => (
+              <FileTreeNode key={node.key} node={node} depth={0}
+                expandedDirectories={visibleExpandedDirectories} onToggleExpanded={toggleExpanded}
+                onToggleDirectory={toggleDirectory} onToggleFile={toggleFile} />
+            ))}
+          </div>
+        </aside>
 
-      {/* 有序列表 */}
-      <div className="step2-order-panel">
-        <div className="step2-order-header">
-          <div className="step2-order-header__title" title="已纳入文件顺序 · 拖拽调整">
-            已纳入文件顺序 <span>· 拖拽调整</span>
-          </div>
-          <div className="step2-segmented" aria-label="文件排序方式">
-            {([['entry', '入口优先', '入口优先（推荐）'], ['mtime', '修改时间', '按修改时间排序'], ['manual', '手动', '手动排序']] as const).map(([id, label, title]) => {
-              const on = s.sortMode === id;
-              return (
-                <button key={id} onClick={() => setSortMode(id)} title={title} className={on ? 'is-active' : undefined}>{label}</button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="step2-order-list">
-          {included.map((f, i) => (
-            <div key={f.relPath} draggable className="step2-order-row"
-              onDragStart={() => setDragIdx(i)} onDragOver={onDragOver(i)} onDragEnd={() => setDragIdx(null)}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--panel)', border: `1px solid ${dragIdx === i ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 9, cursor: 'grab', boxShadow: 'var(--shadow)', opacity: dragIdx === i ? 0.55 : 1 }}>
-              <svg width="10" height="14" viewBox="0 0 10 14" style={{ flex: 'none', color: 'var(--text3)' }}>{[3, 7, 11].map((y) => [3, 7].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.2" fill="currentColor" />))}</svg>
-              <span style={{ width: 20, fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', textAlign: 'right' }}>{i + 1}</span>
-              <span style={{ fontSize: 12.5, fontFamily: 'var(--mono)', fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
-              {i === 0 && <span className="step2-order-row__badge" style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-soft)', border: '1px solid var(--accent-line)', padding: '1px 7px', borderRadius: 5, fontWeight: 500 }}>📌 首页起点</span>}
-              {i === included.length - 1 && <span className="step2-order-row__badge" style={{ fontSize: 11, color: 'var(--green)', background: 'var(--green-soft)', padding: '1px 7px', borderRadius: 5, fontWeight: 500 }}>🏁 末页终点</span>}
-              <span className="step2-order-row__lines" style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{f.rawLines} 行</span>
+        {/* 有序列表 */}
+        <div className="step2-order-panel">
+          <div className="step2-order-header">
+            <div className="step2-order-header__title" title="已选择文件顺序 · 可拖拽调整">
+              已选择文件顺序 <span>· 可拖拽调整</span>
             </div>
-          ))}
+            <div className="step2-segmented" aria-label="文件排序方式">
+              {([['entry', '入口优先', '入口优先（推荐）'], ['mtime', '修改时间', '按修改时间排序'], ['manual', '手动', '手动排序']] as const).map(([id, label, title]) => {
+                const on = s.sortMode === id;
+                return (
+                  <button key={id} onClick={() => setSortMode(id)} title={title} className={on ? 'is-active' : undefined}>{label}</button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="step2-order-list">
+            {included.map((f, i) => (
+              <div key={f.relPath} draggable className="step2-order-row"
+                onDragStart={() => setDragIdx(i)} onDragOver={onDragOver(i)} onDragEnd={() => setDragIdx(null)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--panel)', border: `1px solid ${dragIdx === i ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 9, cursor: 'grab', boxShadow: 'var(--shadow)', opacity: dragIdx === i ? 0.55 : 1 }}>
+                <svg width="10" height="14" viewBox="0 0 10 14" style={{ flex: 'none', color: 'var(--text3)' }}>{[3, 7, 11].map((y) => [3, 7].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.2" fill="currentColor" />))}</svg>
+                <span style={{ width: 20, fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', textAlign: 'right' }}>{i + 1}</span>
+                <span style={{ fontSize: 12.5, fontFamily: 'var(--mono)', fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                {i === 0 && <span className="step2-order-row__badge" style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-soft)', border: '1px solid var(--accent-line)', padding: '1px 7px', borderRadius: 5, fontWeight: 500 }}>📌 首页起点</span>}
+                {i === included.length - 1 && <span className="step2-order-row__badge" style={{ fontSize: 11, color: 'var(--green)', background: 'var(--green-soft)', padding: '1px 7px', borderRadius: 5, fontWeight: 500 }}>🏁 末页终点</span>}
+                <span className="step2-order-row__lines" style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{f.rawLines} 行</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* 统计 */}
-      <aside className="step2-stats-panel">
+      <aside className="step2-surface-card step2-stats-panel">
         <div className="step2-stats-panel__title">统计</div>
         {s.scanErrors.length > 0 && (
           <div className="step2-scan-error" style={{ background: 'var(--orange-soft)', border: '1px solid color-mix(in srgb, var(--orange) 35%, transparent)', borderRadius: 9, padding: 10 }}>
@@ -339,33 +332,33 @@ export default function Step2Files() {
           </div>
         )}
         <div className="step2-stat-grid">
-          <StatCard label="总文件" value={String(s.files.length)} />
-          <StatCard label="已纳入" value={String(included.length)} accent />
+          <StatCard label="总文件" value={String(s.files.length)} unit="个" />
+          <StatCard label="已选择" value={String(included.length)} unit="个" accent />
         </div>
-        <StatCard label="已纳入原始行数" value={totalRawLines.toLocaleString()} wide />
+        <StatCard label="已选择原始行数" value={totalRawLines.toLocaleString()} unit="行" wide />
         <div className="step2-page-estimate">
           <svg width="62" height="62" viewBox="0 0 62 62">
             <circle cx="31" cy="31" r="26" fill="none" stroke="var(--border)" strokeWidth="6" />
             <circle cx="31" cy="31" r="26" fill="none" stroke={pageOk ? 'var(--green)' : 'var(--orange)'} strokeWidth="6" strokeLinecap="round"
-              strokeDasharray={`${ring * Math.min(1, estPages / 60)} ${ring}`} transform="rotate(-90 31 31)" />
-            <text x="31" y="29" textAnchor="middle" fontSize="14" fontWeight="600" fill="var(--text)" fontFamily="var(--mono)">{estPages}</text>
+              strokeDasharray={`${ring * Math.min(1, materialPages / 60)} ${ring}`} transform="rotate(-90 31 31)" />
+            <text x="31" y="29" textAnchor="middle" fontSize={estimatedPages >= 1000 ? 10 : estimatedPages >= 100 ? 12 : 14}
+              fontWeight="600" fill="var(--text)" fontFamily="var(--mono)">{estimatedPages}</text>
             <text x="31" y="42" textAnchor="middle" fontSize="11" fill="var(--text3)">页</text>
           </svg>
           <div className="step2-page-estimate__copy">
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>预估页数</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>预估 {estimatedPages} 页</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: pageOk ? 'var(--green)' : 'var(--orange)', marginTop: 2 }}>
-              {estPages >= 60 ? '满足 60 页 ✓' : `不足 60 页，将全量提交`}
+              {pageOk ? '满足材料 60 页要求 ✓' : `不足 60 页，将全量提交`}
             </div>
           </div>
         </div>
         <div className="step2-type-card">
           <div className="step2-type-card__heading">
             <div className="step2-type-card__heading-copy">
-              <div style={{ fontSize: 11.5, fontWeight: 600 }}>文件类型构成</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>勾选参与清洗与导出的后缀</div>
+              <div style={{ fontSize: 11.5, fontWeight: 600 }}>文件类型统计</div>
             </div>
             <div className="step2-scope-switch" aria-label="文件类型统计范围">
-              {([['all', '全部'], ['included', '已纳入']] as const).map(([value, label]) => (
+              {([['all', '全部'], ['included', '已选择']] as const).map(([value, label]) => (
                 <button key={value} onClick={() => setStatScope(value)}
                   className={statScope === value ? 'is-active' : undefined}>{label}</button>
               ))}
@@ -400,24 +393,22 @@ export default function Step2Files() {
               const values = scopeTotals(stat, statScope);
               const percentage = statTotal > 0 ? statValue(stat, statScope, statMetric) / statTotal : 0;
               return (
-                <div key={stat.key} className="file-type-row" style={{ opacity: statScope === 'included' && stat.includedFiles === 0 ? 0.5 : 1 }}>
+                <div key={stat.key} className="file-type-row">
                   <button onClick={() => toggleExtension(stat)} aria-label={`${stat.fullyIncluded ? '取消' : '选择'} ${stat.label}`} aria-pressed={stat.fullyIncluded}
-                    style={{ width: 15, height: 15, flex: 'none', padding: 0, border: `1.5px solid ${stat.includedFiles > 0 ? color : 'var(--border)'}`, borderRadius: 4, background: stat.includedFiles > 0 ? color : 'var(--panel)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                    style={{ width: 15, height: 15, flex: 'none', padding: 0, border: `1.5px solid ${color}`, borderRadius: 4, background: stat.includedFiles > 0 ? color : 'var(--panel)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                     {stat.fullyIncluded ? '✓' : stat.partiallyIncluded ? '−' : ''}
                   </button>
-                  <button onClick={() => toggleExtension(stat)} className="file-type-row__main" title={`${stat.label} · ${values.files} 文件 · ${values.rawLines.toLocaleString()} 行 · ${formatBytes(values.bytes)}`}>
+                  <button onClick={() => toggleExtension(stat)} className="file-type-row__main" title={`${stat.label} · ${values.files} 个文件 · ${values.rawLines.toLocaleString()} 行`}>
                     <span className="file-type-row__identity">
                       <span className="file-type-row__label">{stat.label}</span>
                       <span className="file-type-row__language" style={{ color, background: soft }}>{stat.language}</span>
                     </span>
                     <span className="file-type-row__details">
-                      {values.files} 文件 · {values.rawLines.toLocaleString()} 行 · {formatBytes(values.bytes)}
+                      {values.files} 个文件 · {values.rawLines.toLocaleString()} 行
                     </span>
                   </button>
                   <div className="file-type-row__aside">
                     <div style={{ fontSize: 11, fontFamily: 'var(--mono)', fontWeight: 600, color }}>{(percentage * 100).toFixed(percentage > 0 && percentage < 0.01 ? 1 : 0)}%</div>
-                    <button onClick={() => keepOnlyExtension(stat)} title={`只导出 ${stat.label} 文件`}
-                      style={{ border: 0, padding: 0, marginTop: 2, background: 'transparent', color: 'var(--text3)', fontSize: 11, cursor: 'pointer' }}>仅此类</button>
                   </div>
                 </div>
               );
@@ -445,11 +436,14 @@ export default function Step2Files() {
   );
 }
 
-function StatCard({ label, value, accent, wide }: { label: string; value: string; accent?: boolean; wide?: boolean }) {
+function StatCard({ label, value, unit, accent, wide }: { label: string; value: string; unit: string; accent?: boolean; wide?: boolean }) {
+  const valueColor = accent ? 'var(--accent)' : 'var(--text)';
   return (
     <div className="step2-stat-card" style={{ gridColumn: wide ? '1 / -1' : undefined }}>
       <div style={{ fontSize: 11, color: 'var(--text3)' }}>{label}</div>
-      <div title={value} style={{ fontSize: 19, fontWeight: 600, fontFamily: 'var(--mono)', marginTop: 2, color: accent ? 'var(--accent)' : 'var(--text)' }}>{value}</div>
+      <div title={`${value} ${unit}`} style={{ fontSize: 19, fontWeight: 600, fontFamily: 'var(--mono)', marginTop: 2, color: valueColor, whiteSpace: 'nowrap' }}>
+        {value}{' '}<span style={{ fontSize: 11.5, fontWeight: 500, fontFamily: 'var(--sans)', color: valueColor }}>{unit}</span>
+      </div>
     </div>
   );
 }

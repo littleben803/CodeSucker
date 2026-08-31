@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { refreshRecent, scanProject, useStore, toast } from './store';
 import Step1Import from './screens/Step1Import';
 import Step2Files from './screens/Step2Files';
@@ -9,8 +9,43 @@ import Settings from './screens/Settings';
 import { canStartScan } from './scan-guard';
 import { canVisitStep } from './wizard-progress';
 import { APP_ICON_URL } from './brand-icons';
+import AppAlert from './components/AppAlert';
 
-const STEP_TITLES = ['导入项目', '文件与排序', '清洗与排版', '分页预览', '校验与导出'];
+type NavigationIconName = 'organize' | 'import' | 'files' | 'clean' | 'preview' | 'export' | 'settings' | 'offline' | 'private' | 'readonly';
+
+const STEPS: Array<{ title: string; icon: NavigationIconName }> = [
+  { title: '导入项目', icon: 'import' },
+  { title: '文件与排序', icon: 'files' },
+  { title: '清洗与排版', icon: 'clean' },
+  { title: '分页预览', icon: 'preview' },
+  { title: '检验与导出', icon: 'export' },
+];
+
+function NavigationIcon({ name }: { name: NavigationIconName }) {
+  const common = { viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': true } as const;
+  switch (name) {
+    case 'organize':
+      return <svg {...common}><path d="m5 2.8.75 2.1 2.1.75-2.1.75L5 8.6l-.75-2.1-2.1-.75 2.1-.75L5 2.8Z" /><path d="M10 5.75h10M4 13l1.5 1.5 3-3M10 13h10M4 19l1.5 1.5 3-3M10 19h10" /></svg>;
+    case 'import':
+      return <svg {...common}><path d="M3.5 7.5h6l2-2h9v13h-17v-11Z" /><path d="M12 9v6m-2.5-2.5L12 15l2.5-2.5" /></svg>;
+    case 'files':
+      return <svg {...common}><path d="M7 4h12v16H7zM4 7v10" /><path d="M10 8h6m-6 4h6m-6 4h4" /></svg>;
+    case 'clean':
+      return <svg {...common}><path d="m5 19 10.5-10.5 2 2L7 21H5v-2Z" /><path d="m14.5 5 .8-2 .8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8ZM19 14l.55 1.45L21 16l-1.45.55L19 18l-.55-1.45L17 16l1.45-.55L19 14Z" /></svg>;
+    case 'preview':
+      return <svg {...common}><path d="M5 3.5h10l4 4v13H5v-17Z" /><path d="M15 3.5v4h4M8 12h8m-8 3h8m-8 3h5" /></svg>;
+    case 'export':
+      return <svg {...common}><path d="M12 3.5 19 6v5.5c0 4.2-2.7 7.5-7 9-4.3-1.5-7-4.8-7-9V6l7-2.5Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></svg>;
+    case 'settings':
+      return <svg {...common}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.08A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.08A1.65 1.65 0 0 0 20.91 10H21a2 2 0 1 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z" /></svg>;
+    case 'offline':
+      return <svg {...common}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v2" /></svg>;
+    case 'private':
+      return <svg {...common}><path d="M4 6.5A12 12 0 0 1 20 5M6 10.5a8 8 0 0 1 12-1M8.5 14a4.5 4.5 0 0 1 7.5-.7M3 3l18 18" /></svg>;
+    case 'readonly':
+      return <svg {...common}><path d="M5 3.5h10l4 4v13H5v-17Z" /><path d="M15 3.5v4h4M8.5 14.5l2 2 5-5" /></svg>;
+  }
+}
 
 function ThemeToggleIcon({ target }: { target: 'light' | 'dark' }) {
   if (target === 'dark') {
@@ -30,6 +65,7 @@ function ThemeToggleIcon({ target }: { target: 'light' | 'dark' }) {
 
 export default function App() {
   const s = useStore();
+  const [rescanConfirmOpen, setRescanConfirmOpen] = useState(false);
   const rescanEnabled = !!s.root && s.loaded && canStartScan(s);
   const nextTheme = s.theme === 'light' ? 'dark' : 'light';
   const themeLabel = nextTheme === 'dark' ? '切换到深色模式' : '切换到浅色模式';
@@ -58,26 +94,29 @@ export default function App() {
       order: s.order, excludedRelPaths: s.files.filter((f) => !f.included).map((f) => f.relPath),
       clean: s.clean, fmtPdf: s.fmtPdf, fmtDocx: s.fmtDocx, fmtTxt: s.fmtTxt, outDir: s.outDir,
     });
-    toast('配置已保存到项目（.codedoc.json）');
+    toast('当前配置已保存');
   };
 
   const rescan = () => {
     if (!s.root || !rescanEnabled) return;
-    const confirmed = window.confirm(
-      '重新扫描会读取当前磁盘源码，并使旧的处理预览、分页、校验和导出结果立即失效。\n\n软件信息、文件选择、排序、清洗与导出配置会保留。是否继续？',
-    );
-    if (confirmed) void scanProject(s.root, 'rescan');
+    setRescanConfirmOpen(true);
+  };
+
+  const confirmRescan = () => {
+    if (!s.root || !rescanEnabled) {
+      setRescanConfirmOpen(false);
+      return;
+    }
+
+    setRescanConfirmOpen(false);
+    void scanProject(s.root, 'rescan');
   };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
-      {/* 标题栏 */}
+    <div className="app-frame">
+      {/* Windows/Linux 自绘标题栏；macOS 使用内容区内嵌的原生窗口控件。 */}
       <div className="titlebar">
-        <div className="titlebar-brand">
-          <img className="titlebar-logo" src={APP_ICON_URL} alt="" aria-hidden="true" />
-          <div style={{ fontSize: 13, fontWeight: 600 }}>CodeDoc</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)' }}>软著代码整理器</div>
-        </div>
+        <span className="titlebar-window-title">CodeDoc</span>
         <div className="window-controls">
           <button className="winbtn" onClick={() => window.codedoc.win('minimize')}><svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" strokeWidth="1.2" /></svg></button>
           <button className="winbtn" onClick={() => window.codedoc.win('maximize')}><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg></button>
@@ -85,77 +124,129 @@ export default function App() {
         </div>
       </div>
 
-      {/* 工具栏 */}
-      <div style={{ height: 48, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', background: 'var(--panel)', borderBottom: '1px solid var(--border2)', position: 'relative', zIndex: 30 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 32, padding: '0 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1.5 4a1.5 1.5 0 0 1 1.5-1.5h3l2 2h5A1.5 1.5 0 0 1 14.5 6v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12V4Z" stroke="var(--accent)" strokeWidth="1.3" /></svg>
-          <span>{s.projName}</span>
-          {s.root && <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{s.root}</span>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn-ghost" style={{ height: 30, padding: '0 12px', fontSize: 12 }}
-            disabled={!rescanEnabled} onClick={rescan}
-            title={s.exporting ? '请等待导出写盘完成后再重新扫描' : undefined}>
-            {s.scanPhase === 'scanning' ? '正在扫描…' : s.exporting ? '导出完成后可重扫' : '重新扫描'}
-          </button>
-          <button className="btn-ghost" style={{ height: 30, padding: '0 12px', fontSize: 12 }} disabled={!s.loaded} onClick={saveConfig}>保存配置</button>
-          <button className="btn-ghost theme-toggle" title={themeLabel} aria-label={themeLabel}
-            onClick={() => s.set({ theme: nextTheme })}>
-            <ThemeToggleIcon target={nextTheme} />
-          </button>
-          <button className="btn-ghost" style={{ width: 30, height: 30 }} title="设置" onClick={() => s.set({ view: 'settings' })}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.4 7.4 0 0 0-1.64-.94l-.36-2.54a.49.49 0 0 0-.48-.41h-3.84a.49.49 0 0 0-.47.41l-.36 2.54c-.6.24-1.15.57-1.64.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.31-.09.65-.09.94s.03.63.08.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.38 1.04.7 1.64.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.6-.24 1.15-.56 1.64-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.03-1.58ZM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2Z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        {/* 步骤导航 */}
-        <div style={{ width: 196, flex: 'none', background: 'var(--panel)', borderRight: '1px solid var(--border2)', padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {STEP_TITLES.map((title, i) => {
-            const n = i + 1;
-            const active = s.view === 'wizard' && s.step === n;
-            const done = s.loaded && n < s.maxUnlockedStep;
-            const enabled = canVisitStep(n, s.loaded, s.maxUnlockedStep);
-            return (
-              <div key={n} className={`step-item${enabled ? '' : ' disabled'}`}
-                onClick={() => enabled && s.set({ step: n, view: 'wizard' })}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, cursor: enabled ? 'pointer' : 'not-allowed', background: active ? 'var(--accent-soft)' : 'transparent', opacity: enabled ? 1 : 0.5 }}>
-                <div style={{ width: 22, height: 22, flex: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, background: done ? 'var(--green-soft)' : active ? 'var(--accent)' : 'transparent', color: done ? 'var(--green)' : active ? '#fff' : 'var(--text3)', border: `1.5px solid ${done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--border)'}` }}>{done ? '✓' : n}</div>
-                <div style={{ fontSize: 13, fontWeight: active ? 600 : 500, color: active ? 'var(--accent)' : enabled ? 'var(--text)' : 'var(--text3)' }}>{n}. {title}</div>
-              </div>
-            );
-          })}
-          <div style={{ flex: 1 }} />
-          <div style={{ padding: 10, borderRadius: 8, background: 'var(--panel2)', border: '1px solid var(--border2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text2)' }}>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="var(--green)" strokeWidth="1.4" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="var(--green)" strokeWidth="1.4" /></svg>
-              源码处理全程离线
+      <div className="app-shell">
+        <aside className="app-sidebar" aria-label="应用导航">
+          <div className="sidebar-window-drag-region" aria-hidden="true" />
+          <div className="sidebar-brand">
+            <img className="sidebar-brand__logo" src={APP_ICON_URL} alt="" aria-hidden="true" />
+            <div className="sidebar-brand__copy">
+              <strong>软著代码整理器</strong>
+              <span>一键生成软著代码审核材料</span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3, lineHeight: 1.5 }}>当前维护基线不发起版本检测</div>
           </div>
-        </div>
 
-        {/* 主内容 */}
-        <div style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {s.view === 'settings' ? <Settings /> : (
-            <>
-              {s.step === 1 && <Step1Import />}
-              {s.step === 2 && <Step2Files />}
-              {s.step === 3 && <Step3Clean />}
-              {s.step === 4 && <Step4Preview />}
-              {s.step === 5 && <Step5Export />}
-            </>
-          )}
-        </div>
+          <nav className="sidebar-navigation" aria-label="主要功能">
+            <button type="button" className={`sidebar-primary${s.view === 'wizard' ? ' is-active' : ''}`}
+              aria-current={s.view === 'wizard' ? 'page' : undefined}
+              onClick={() => s.set({ view: 'wizard' })}>
+              <span className="sidebar-nav-icon"><NavigationIcon name="organize" /></span>
+              <span>智能整理</span>
+              <span className="sidebar-primary__indicator" aria-hidden="true" />
+            </button>
+
+            <div className="sidebar-steps" aria-label="智能整理步骤">
+              {STEPS.map(({ title, icon }, i) => {
+                const n = i + 1;
+                const active = s.view === 'wizard' && s.step === n;
+                const done = s.loaded && n < s.maxUnlockedStep;
+                const enabled = canVisitStep(n, s.loaded, s.maxUnlockedStep);
+                return (
+                  <button type="button" key={n}
+                    className={`sidebar-step${active ? ' is-active' : ''}${done ? ' is-complete' : ''}`}
+                    disabled={!enabled}
+                    aria-current={active ? 'step' : undefined}
+                    onClick={() => s.set({ step: n, view: 'wizard' })}>
+                    <span className="sidebar-nav-icon"><NavigationIcon name={icon} /></span>
+                    <span className="sidebar-step__title">{title}</span>
+                    <span className="sidebar-step__status" aria-hidden="true">
+                      {done
+                        ? <svg viewBox="0 0 16 16" fill="none"><path d="m3 8.2 3.1 3.1L13 4.7" /></svg>
+                        : n}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button type="button" className={`sidebar-primary${s.view === 'settings' ? ' is-active' : ''}`}
+              aria-current={s.view === 'settings' ? 'page' : undefined}
+              onClick={() => s.set({ view: 'settings' })}>
+              <span className="sidebar-nav-icon"><NavigationIcon name="settings" /></span>
+              <span>设置</span>
+              <span className="sidebar-primary__indicator" aria-hidden="true" />
+            </button>
+          </nav>
+
+          <section className="sidebar-safety" aria-labelledby="sidebar-safety-title">
+            <h2 id="sidebar-safety-title">本机安全</h2>
+            <ul>
+              <li><span className="sidebar-safety__icon"><NavigationIcon name="offline" /></span><span><strong>源码全程离线处理</strong><small>扫描、清洗与导出均在本机完成</small></span></li>
+              <li><span className="sidebar-safety__icon"><NavigationIcon name="private" /></span><span><strong>项目内容不会上传</strong><small>不连接在线服务处理项目代码</small></span></li>
+              <li><span className="sidebar-safety__icon"><NavigationIcon name="readonly" /></span><span><strong>原始文件只读保护</strong><small>不修改、删除或覆盖导入源码</small></span></li>
+            </ul>
+          </section>
+        </aside>
+
+        <main className="app-workspace">
+          <section className="route-page" aria-label={s.view === 'settings' ? '设置' : '智能整理'}>
+            {s.view === 'settings' ? (
+              <>
+                <header className="route-header settings-route-header">
+                  <div className="settings-route-header__inner">
+                    <h1>设置</h1>
+                    <p>管理扫描规则、界面主题与应用信息</p>
+                  </div>
+                </header>
+                <div className="route-content">
+                  <Settings />
+                </div>
+              </>
+            ) : (
+              <>
+                <header className="route-header workspace-toolbar">
+                  <div className="workspace-project" title={s.root ?? undefined}>
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 4a1.5 1.5 0 0 1 1.5-1.5h3l2 2h5A1.5 1.5 0 0 1 14.5 6v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12V4Z" stroke="var(--accent)" strokeWidth="1.3" /></svg>
+                    <span className="workspace-project__name">{s.projName}</span>
+                    {s.root && <span className="workspace-project__path">{s.root}</span>}
+                  </div>
+                  <div className="workspace-actions">
+                    <button className="btn-ghost workspace-action" disabled={!rescanEnabled} onClick={rescan}
+                      title={s.exporting ? '请等待导出写盘完成后再重新扫描' : undefined}>
+                      {s.scanPhase === 'scanning' ? '正在扫描…' : s.exporting ? '导出完成后可重扫' : '重新扫描'}
+                    </button>
+                    <button className="btn-ghost workspace-action" disabled={!s.loaded} onClick={saveConfig}>保存配置</button>
+                    <button className="btn-ghost theme-toggle" title={themeLabel} aria-label={themeLabel}
+                      onClick={() => s.set({ theme: nextTheme })}>
+                      <ThemeToggleIcon target={nextTheme} />
+                    </button>
+                  </div>
+                </header>
+                <div className="route-content">
+                  {s.step === 1 && <Step1Import />}
+                  {s.step === 2 && <Step2Files />}
+                  {s.step === 3 && <Step3Clean />}
+                  {s.step === 4 && <Step4Preview />}
+                  {s.step === 5 && <Step5Export />}
+                </div>
+              </>
+            )}
+          </section>
+        </main>
       </div>
+
+      {rescanConfirmOpen && (
+        <AppAlert
+          title="重新从磁盘加载项目源码并扫描。是否继续？"
+          description="软件全称、著作权人名称、清洗、排版以及导出配置会被保留。"
+          onCancel={() => setRescanConfirmOpen(false)}
+          onConfirm={confirmRescan}
+        />
+      )}
 
       {/* toast */}
       {s.toast && (
         <div role="status" aria-live="polite" aria-atomic="true"
-          style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, padding: '9px 18px', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.25)', animation: 'codedoc-fade .15s ease-out', zIndex: 60 }}>{s.toast}</div>
+          className="app-toast">{s.toast}</div>
       )}
     </div>
   );

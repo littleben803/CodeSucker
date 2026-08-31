@@ -107,7 +107,7 @@ function cleanOptions(value: unknown): CleanOptions {
   };
 }
 
-function processPayload(value: unknown, requireTitle = false): ProcessPayload {
+function processPayload(value: unknown, requireDocumentMetadata = false): ProcessPayload {
   if (!isRecord(value)) throw new Error('处理请求无效');
   const foundedDate = optionalText(value.foundedDate, '成立日期');
   if (foundedDate !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(foundedDate)) throw new Error('成立日期无效');
@@ -115,9 +115,9 @@ function processPayload(value: unknown, requireTitle = false): ProcessPayload {
     root: absolutePath(value.root, '项目目录'),
     scanSessionId: identifier(value.scanSessionId, 'scanSessionId'),
     orderedRelPaths: relativePaths(value.orderedRelPaths),
-    // 实时清洗预览允许标题暂时为空；只有导出必须具备有效页眉标题。
-    title: requireTitle ? requiredText(value.title, '软件全称') : presentText(value.title, '软件全称'),
-    owner: optionalText(value.owner, '著作权人名称'),
+    // 实时清洗预览允许文档信息暂时为空；只有导出必须具备有效页眉与页脚信息。
+    title: requireDocumentMetadata ? requiredText(value.title, '软件全称') : presentText(value.title, '软件全称'),
+    owner: requireDocumentMetadata ? requiredText(value.owner, '著作权人名称') : optionalText(value.owner, '著作权人名称'),
     foundedDate,
     clean: cleanOptions(value.clean),
   };

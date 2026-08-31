@@ -7,7 +7,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import assert from 'node:assert';
 import JSZip from 'jszip';
-import { annotate, defaultCleanOptions, DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, processFiles, renderDocx, renderPdfHtml, renderTxt, sortFiles, wrapLine } from '../src/index.ts';
+import { annotate, audit, defaultCleanOptions, DEFAULT_EXCLUDES, DEFAULT_EXTENSIONS, discover, processFiles, renderDocx, renderPdfHtml, renderTxt, sortFiles, wrapLine } from '../src/index.ts';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-'));
 
@@ -64,6 +64,32 @@ const config = {
 };
 const result = processFiles(ordered, config);
 const { pages } = result.selection;
+
+assert.strictEqual(result.auditItems.length, 6, '完整材料应生成 6 项校验');
+assert.deepStrictEqual(
+  result.auditItems.slice(0, 2).map((item) => item.name),
+  ['页眉与软件名称一致', '页脚与著作权人名称一致'],
+  '页脚校验应紧跟在页眉校验之后',
+);
+assert.deepStrictEqual(
+  result.auditItems[1],
+  {
+    status: 'pass',
+    name: '页脚与著作权人名称一致',
+    detail: '页脚「某某科技有限公司」将逐页居中显示，与申请表保持一致即可',
+  },
+  '页脚校验文案应使用当前著作权人名称',
+);
+const missingOwnerAudit = audit(result.cleaned, result.selection, { ...config, owner: '   ' });
+assert.deepStrictEqual(
+  missingOwnerAudit.find((item) => item.name === '缺少著作权人名称'),
+  {
+    status: 'fail',
+    name: '缺少著作权人名称',
+    detail: '页脚为空会影响材料完整性，请在「清洗与排版」页面中填写，并与申请表保持完全一致',
+  },
+  '未填写著作权人时应返回明确的页脚失败项',
+);
 
 assert.strictEqual(pages.length, 60, `应恰好 60 页，实际 ${pages.length}`);
 assert.ok(pages.every((p) => p.lines.length === 60), '每页应恰好 60 行');

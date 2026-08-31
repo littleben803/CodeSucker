@@ -52,6 +52,11 @@ assert.throws(() => parseExportRequest({
   },
 }), /不能为空/);
 assert.throws(() => parseExportRequest({
+  jobId: 'export-1', payload: {
+    ...payload, owner: '   ', outDir: path.join(root, 'out'), formats: { pdf: false, docx: true, txt: false },
+  },
+}), /著作权人名称 不能为空/);
+assert.throws(() => parseExportRequest({
   jobId: 'export-1', payload: { ...payload, outDir: path.join(root, 'out'), formats: { pdf: false, docx: false, txt: false } },
 }), /至少选择/);
 assert.throws(() => parseExportRequest({

@@ -45,7 +45,7 @@ export default function Step4Preview() {
   const thumbsB = split ? pages.slice(split) : [];
   const detail = p.selection.truncated
     ? `前段止于 ${p.selection.frontEndFile ?? '未知文件'} · 后段起于 ${p.selection.backStartFile ?? '未知文件'}`
-    : '完整代码已纳入分页';
+    : '完整代码已选择分页';
   const previewReady = !!pdfUrl && s.pdfPreviewKey === p.documentKey;
 
   const Thumb = ({ pg }: { pg: PageData }) => {

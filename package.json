@@ -1,6 +1,6 @@
 {
   "name": "codedoc",
-  "version": "0.4.4",
+  "version": "1.0.0",
   "private": true,
   "description": "软著代码整理器 —— 离线生成符合软件著作权申报规范的源程序文档",
   "license": "Apache-2.0",

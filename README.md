@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="packages/app/build/icon-256.png" width="110" alt="CodeDoc" />
+<img src="design/icon/codedoc-icon-source.png" width="110" alt="CodeDoc" />
 
 # CodeDoc · 软著代码整理器
 
@@ -40,7 +40,7 @@ CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流
 
 - 🗂 **目录级文件筛选** — 递归扫描项目并以真实目录树展示，支持目录三态选择、全选、清空和全局反选；设置页可维护所有项目共用的默认扫描排除规则，并与项目 `.gitignore` 独立叠加
 - 🔄 **安全重新扫描** — 源码在应用外部变化后可手动重扫；保留当前项目配置与未保存修改，同时使旧处理、分页、校验和导出结果立即失效
-- 📊 **文件类型构成与按后缀导出** — 按文件数/代码行查看完整与已纳入构成，可一键只保留 `.java` 等指定后缀参与清洗和导出
+- 📊 **文件类型构成与按后缀导出** — 按文件数/代码行查看完整与已选择构成，可一键只保留 `.java` 等指定后缀参与清洗和导出
 - 🧹 **状态机代码清洗** — 逐字符识别注释与字符串边界（`"https://..."` 里的 `//` 不会被误删），支持 Java/Kotlin/Python/JS/TS/Go/Rust/C/C++/C#/Swift/PHP/Ruby/Vue/HTML/CSS/SQL 等 30+ 后缀；删空行、Tab 转空格、超长行按 78 列硬折断
 - 🔒 **敏感信息脱敏** — API 密钥、密码、内网 IP、手机号自动替换为占位符
 - 📄 **规范化截取分页** — 超 3600 行自动取前 1800 + 后 1800 行；第 1 页必为模块开头、第 60 页必为模块结尾；产品按每页 60 行显式分页，不靠排版"凑页"
@@ -93,7 +93,7 @@ packages/
   app/      Electron 43 + React 18 + zustand（electron-vite 5 / Vite 7 构建）
 design/
   prototype/  Claude Design 高保真原型（UI 实现基准）
-  icon/       应用图标源文件（SVG）
+  icon/       应用与官网共用的唯一品牌图标源（PNG）
 docs/       功能设计、技术选型与原型 prompt
 scripts/    图标生成等工具脚本
 ```
