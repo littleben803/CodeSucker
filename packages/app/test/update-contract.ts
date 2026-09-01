@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  UPDATE_BASE_URL, updateChannelFromArgs, updateFeedUrl,
+} from '../src/shared/update.ts';
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = path.resolve(testDirectory, '..');
+const workspaceRoot = path.resolve(appRoot, '../..');
+const readSource = (relativePath: string) => fs.readFileSync(path.join(appRoot, relativePath), 'utf8');
+
+assert.equal(UPDATE_BASE_URL, 'https://download.ideaboxapps.com/codedoc');
+assert.equal(updateFeedUrl('stable', 'darwin', 'arm64'), `${UPDATE_BASE_URL}/stable/mac/arm64`);
+assert.equal(updateFeedUrl('beta', 'darwin', 'x64'), `${UPDATE_BASE_URL}/beta/mac/x64`);
+assert.equal(updateFeedUrl('stable', 'win32', 'x64'), `${UPDATE_BASE_URL}/stable/win/x64`);
+assert.equal(updateFeedUrl('stable', 'linux', 'x64'), null, 'Linux 不应启用桌面更新源');
+assert.equal(updateFeedUrl('stable', 'darwin', 'ia32'), null, '不受支持的架构不应启用更新源');
+assert.equal(updateChannelFromArgs([]), 'stable', '正式渠道必须默认使用 stable');
+assert.equal(updateChannelFromArgs(['--update-channel=beta']), 'beta');
+assert.equal(updateChannelFromArgs(['--update-channel=nightly']), 'stable', '未知渠道必须回落到 stable');
+
+const updateServiceSource = readSource('src/main/update-service.ts');
+const mainSource = readSource('src/main/index.ts');
+const preloadSource = readSource('src/preload/index.ts');
+const settingsSource = readSource('src/renderer/src/screens/Settings.tsx');
+const releaseWorkflow = fs.readFileSync(
+  path.join(workspaceRoot, '.github/workflows/release.yml'),
+  'utf8',
+);
+const packageJson = JSON.parse(readSource('package.json')) as {
+  dependencies: Record<string, string>;
+  build: {
+    publish: Array<{ provider: string; url: string }>;
+    mac: {
+      target: string[];
+      hardenedRuntime: boolean;
+      entitlements: string;
+      entitlementsInherit: string;
+      notarize: boolean;
+    };
+    win: { target: string };
+  };
+  scripts: Record<string, string>;
+};
+
+assert.match(updateServiceSource, /autoDownload = false/, '不得在用户确认前自动下载安装包');
+assert.match(updateServiceSource, /autoInstallOnAppQuit = false/, '不得在普通退出时静默安装');
+assert.match(updateServiceSource, /canInstall\(\)/, '安装前必须检查当前流水线任务');
+assert.match(updateServiceSource, /isTrustedSender\(event\.sender\)/, '更新 IPC 必须校验消息来自主窗口');
+assert.match(mainSource, /isPackaged: app\.isPackaged/, '开发版必须保持离线，不得连接正式更新源');
+assert.match(mainSource, /isPipelineBusy\(\)/, '安装更新必须避让扫描、处理和导出任务');
+assert.doesNotMatch(preloadSource, /\bautoUpdater\b/, 'Preload 不得直接暴露 updater 实例');
+for (const channel of ['update:getState', 'update:check', 'update:download', 'update:install']) {
+  assert.match(preloadSource, new RegExp(channel.replace(':', '\\:')), `Preload 缺少受控通道 ${channel}`);
+}
+assert.match(settingsSource, /IdeaBox 官方下载域名/, '隐私说明必须披露正式版更新网络请求边界');
+assert.match(settingsSource, /重启并安装/, '设置页必须由用户主动确认安装');
+
+assert.equal(packageJson.dependencies['electron-updater'], '6.8.9', 'electron-updater 必须固定确切版本');
+assert.deepEqual(packageJson.build.mac.target, ['dmg', 'zip'], 'macOS 更新必须同时产出 DMG 与 ZIP');
+assert.equal(packageJson.build.mac.hardenedRuntime, true, 'macOS 正式签名必须启用 Hardened Runtime');
+assert.equal(packageJson.build.mac.entitlements, 'build/entitlements.mac.plist');
+assert.equal(packageJson.build.mac.entitlementsInherit, 'build/entitlements.mac.inherit.plist');
+assert.equal(packageJson.build.mac.notarize, true, 'macOS 正式构建必须启用公证集成');
+assert.equal(packageJson.build.win.target, 'nsis');
+assert.deepEqual(packageJson.build.publish, [{
+  provider: 'generic',
+  url: 'https://download.ideaboxapps.com/codedoc/stable',
+}]);
+assert.match(releaseWorkflow, /CodeDoc-\*-mac-x64\.dmg\.blockmap/);
+assert.match(releaseWorkflow, /CodeDoc-\*-mac-x64\.zip\.blockmap/);
+assert.match(releaseWorkflow, /CodeDoc-\*-mac-arm64\.dmg\.blockmap/);
+assert.match(releaseWorkflow, /CodeDoc-\*-mac-arm64\.zip\.blockmap/);
+
+for (const script of ['dist:mac:x64:release', 'dist:mac:arm64:release']) {
+  assert.match(packageJson.scripts[script], /CSC_IDENTITY_AUTO_DISCOVERY=true/);
+  assert.match(packageJson.scripts[script], /APPLE_KEYCHAIN_PROFILE=ideabox-notary/);
+  assert.match(packageJson.scripts[script], /--config\.mac\.forceCodeSigning=true/);
+}
+
+for (const entitlementFile of ['build/entitlements.mac.plist', 'build/entitlements.mac.inherit.plist']) {
+  const entitlements = readSource(entitlementFile);
+  assert.match(entitlements, /com\.apple\.security\.cs\.allow-jit/);
+  assert.match(entitlements, /com\.apple\.security\.cs\.allow-unsigned-executable-memory/);
+  assert.doesNotMatch(entitlements, /com\.apple\.security\.cs\.disable-library-validation/);
+  assert.doesNotMatch(entitlements, /com\.apple\.security\.app-sandbox/);
+}
+
+console.log('✅ 应用内更新契约全部通过');

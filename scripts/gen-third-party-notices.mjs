@@ -59,7 +59,11 @@ function primaryLicenseFile(packageDir) {
 
 function selectedLicenseText(name, packageDir, choice) {
   const override = policy.licenseTextOverrides[name];
-  const sourcePath = override ? join(packageDir, override.file) : primaryLicenseFile(packageDir);
+  const sourcePath = override?.rootFile
+    ? join(root, override.rootFile)
+    : override
+      ? join(packageDir, override.file)
+      : primaryLicenseFile(packageDir);
   if (!existsSync(sourcePath)) throw new Error(`${name} 缺少许可证文本文件 ${sourcePath}`);
   const fullText = normalizeText(readFileSync(sourcePath, 'utf8'));
   const startMarker = choice?.startMarker ?? override?.startMarker;

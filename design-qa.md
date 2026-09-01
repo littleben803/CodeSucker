@@ -132,4 +132,232 @@
 - Post-fix evidence: the light, dark, management-state, and combined comparison captures listed above.
 - Result: passed. No actionable P0, P1, or P2 differences remain in the requested Stage 6 scope.
 
+## Stage 7 dark theme-only correction verification
+
+- Correction reason: the earlier Stage 7 attempt incorrectly treated the color-reference mock as a layout specification and enlarged production UI geometry. That acceptance criterion was rejected.
+- Final implementation evidence: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-dark-theme-only-final.png` (`1440 × 900`, device scale factor 1).
+- State: default dark theme, Smart Organize and Import active, future steps locked, no project loaded, one available recent project.
+
+### Geometry preservation evidence
+
+- Sidebar: `260px`.
+- Primary navigation: `44px` high.
+- Workflow step: `38px` high.
+- Workspace toolbar: `69px` high.
+- Import drop zone: `240px` high.
+- Import title: `16px`.
+- Recent-project avatar: `36 × 36px`.
+- The rejected `styles/shell.css` override layer is not loaded.
+
+### Theme evidence
+
+- Root theme is `dark` before React mounts.
+- The application frame retains the approved layered indigo, violet and magenta gradient.
+- Existing surfaces, borders, text hierarchy, semantic safety colors and control states continue to consume Theme Tokens.
+- Runtime console/exception collection reported zero errors during capture.
+
+### Scope verification
+
+- `Step1Import.tsx` is restored byte-for-byte to the repository layout baseline.
+- No business logic, Main, Preload, Core, dependency, build configuration, signing or release setting changed.
+- Theme regression tests now fail if a geometry override layer is loaded or if the four principal layout baselines change.
+- Result: passed.
+
+final result: passed
+
+## Stage 8 all-page dark theme verification
+
+- Implementation evidence is archived under `/Users/ideabox/repo/CodeSucker/design/theme/`:
+  - `codedoc-dark-files-final.png`
+  - `codedoc-dark-clean-final.png`
+  - `codedoc-dark-preview-final.png`
+  - `codedoc-dark-export-final.png`
+  - `codedoc-dark-settings-final.png`
+  - `codedoc-dark-settings-dialog-final.png`
+- All captures came from the running Electron Renderer at a `1440 × 900` CSS viewport and were archived as `2880 × 1800` macOS Retina images at device scale factor 2.
+- The complete local workflow was exercised from a recent project through file selection, cleaning, PDF preview and validation. No export action was invoked.
+
+### Geometry preservation evidence
+
+- Shared shell baselines remained unchanged: sidebar `260px`, primary navigation `44px`, workflow navigation `38px`, workspace toolbar `69px`.
+- Page-specific baselines remained unchanged: Step 2 statistics panel `286px`, Step 3 controls panel `420px`, Step 4 three-column preview grid, Step 5 export panel `284px`, Settings two-column grid.
+- No font-size, control-size, spacing or responsive-layout declaration was changed in this stage.
+
+### Theme coverage evidence
+
+- Step 2 language labels and composition chart now consume theme-managed categorical tokens.
+- Step 3 switch thumb and shadow consume component tokens.
+- Step 4 PDF canvas and elevation consume theme tokens while the generated PDF page remains intentionally white.
+- Step 5 spinner, success dialog, overlay and elevation consume theme tokens.
+- Settings cards, rule states, disabled controls, dialog and overlay render within the same indigo/violet surface hierarchy.
+- Runtime inspection found no white application-surface leak on Steps 2, 4, 5 or Settings. The white switch thumbs on Step 3 are intentional control affordances.
+- Page component sources contain no direct hexadecimal or `rgb/rgba` color literals; regression coverage enforces this boundary.
+
+### Scope verification
+
+- No business logic, Main, Preload, Core, dependency, engineering configuration, signing or release setting changed.
+- No document export was performed and imported source files remained read-only.
+- Result: passed.
+
+final result: passed
+
+## Stage 9 light theme scheme 2 implementation verification
+
+- Source visual truth: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-main.png`.
+- Implementation screenshot: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-theme-only-final.png`.
+- Full-view comparison input: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-source-vs-implementation.png`.
+- Focused comparison input: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-source-vs-implementation-focus.png`.
+- Source pixels: `1440 × 900`.
+- Implementation pixels: `1440 × 900`.
+- Implementation CSS viewport: `1440 × 900`.
+- Device scale factor: `1`; no density or crop normalization was required before comparison.
+- State: light theme, Smart Organize and Import active, future steps locked, no project loaded, one recent project available.
+
+### Findings
+
+- No actionable P0, P1 or P2 differences remain after the second comparison pass.
+- The source high-fidelity image defines color, atmosphere and material only. Production font sizes, control sizes, spacing, sidebar width and responsive layout intentionally remain at the previously accepted geometry baseline.
+- The implementation preserves the selected glacier-white canvas, faint periwinkle/violet environment light, violet navigation selection, magenta focus treatment, restrained surface borders and semantic status colors.
+
+### Required fidelity surfaces
+
+- Fonts and typography: platform-native UI and mono stacks, sizes, weights, line heights, wrapping and truncation remain unchanged from the accepted production layout; the minimum `11px` UI text and no synthetic `550/650` weight policies pass.
+- Spacing and layout rhythm: the runtime viewport is `1440 × 900`; sidebar `260px`, primary navigation `44px`, workflow navigation `38px`, workspace toolbar `69px`, Step 2 statistics panel `286px`, Step 3 controls `420px`, Step 5 export panel `284px` and the Settings two-column grid remain unchanged.
+- Colors and visual tokens: runtime values resolved to Canvas `#F5F7FC`, Canvas Raised `#EDF1FA`, Violet `#6F4CCB`, Magenta `#C72AA8`, Focus `#B9289B`, Text Primary `#1D2940` and Text Secondary `#657089`. No dark application-surface leak was found in the light DOM.
+- Image quality and asset fidelity: the existing CodeDoc application icon remains the only brand image and renders sharply. No placeholder, recreated illustration or approximate asset was introduced.
+- Copy and content: brand, workflow and privacy copy are unchanged and remain aligned with `docs/BRAND.md` and the offline product boundary.
+
+### All-page and interaction evidence
+
+- Files: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-files-final.png`.
+- Clean and layout: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-clean-final.png`.
+- PDF preview: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-preview-final.png`.
+- Validation and export: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-export-final.png`.
+- Settings: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-settings-final.png`.
+- Settings dialog: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-settings-dialog-final.png`.
+- All-page overview: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-all-pages-contact-sheet.png`.
+- Primary workflow navigation, project loading, cleaning, PDF generation, page transition, theme switching, Settings navigation and Settings help dialog were exercised in the running Electron app. Export was deliberately not invoked.
+- Runtime CDP collection observed `85` events and `0` exceptions, error log entries or renderer crashes.
+- Dark regression: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-dark-regression-after-light.png`; the default dark theme resolved Canvas `#090048`, Accent `#EF48BE`, Focus `#EF48BE` and retained the `260px` sidebar.
+
+### Comparison history
+
+#### Pass 1
+
+- P2 finding: the import drop zone used the general 10% violet soft-accent surface and appeared materially more saturated than the selected source.
+- Fix: introduced a component semantic token, `--dropzone-bg`; dark mode retains the existing accent-soft treatment, while light mode uses `rgb(111 76 203 / 3%)`. `Step1Import.tsx` now consumes the token without changing geometry.
+- Result: blocked pending recapture.
+
+#### Pass 2
+
+- Post-fix evidence: regenerated full-view and focused comparisons at the same `1440 × 900` state and density.
+- Result: the drop-zone surface now matches the source's restrained glacier material. No actionable P0, P1 or P2 finding remains.
+
+final result: passed
+
+## Stage 10 light export adaptation and list-shadow correction
+
+- Product style truth: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-business-states.png`.
+- Reported pre-fix evidence: `/var/folders/2h/l5_b11rs6b965l0bsswv0dcw0000gn/T/codex-clipboard-d997d1be-0730-473a-aa51-f933880913b2.png` (`2880 × 1800`, macOS Retina `2×`).
+- Revised implementation: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-export-theme-fixed.png` (`1440 × 900`).
+- Additional list evidence: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-files-no-row-shadow.png` (`1440 × 900`).
+- Full-view comparison input: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-export-before-after.png`.
+- Focused comparison input: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-export-before-after-focus.png`.
+- CSS viewport: `1440 × 900`; the reported screenshot was normalized from `2×` to `1×` before comparison.
+- State: light theme, LookAtMe loaded, validation complete, PDF selected, Word and TXT unselected.
+
+### Findings
+
+- No actionable P0, P1 or P2 issue remains after the correction pass.
+- The audit summary continues to use semantic green/warning/danger feedback as required by the approved business-state specification; navigation, selected export format and the main action use scheme 2 Violet/Magenta.
+- Audit rows, recent-project rows, file-order rows and nested comparison cards no longer use the panel-level shadow that caused the gray lower-right veil.
+
+### Required fidelity surfaces
+
+- Fonts and typography: unchanged; platform fonts, sizes, weights, line heights and truncation match the accepted production geometry.
+- Spacing and layout rhythm: unchanged; Step 5 export panel remains `284px`, list padding/gaps/radii are unchanged, and only fill, border and elevation tokens changed.
+- Colors and visual tokens: the selected PDF format resolves to `rgb(111 76 203 / 8%)` with a Violet border; unselected formats use translucent white; audit summary uses the approved semantic success surface; list rows use ice-white surfaces and `#D8DFEB` borders.
+- Image quality and asset fidelity: no image or icon asset changed.
+- Copy and content: no product copy or dynamic audit content changed.
+
+### Runtime evidence
+
+- All six Step 5 audit rows resolved `box-shadow: none`.
+- The first twelve sampled Step 2 ordering rows resolved `box-shadow: none`; the page contained `239` rows using the same token.
+- The Step 1 recent-project row resolved `box-shadow: none`.
+- Dark regression retained Canvas `#090048`, Accent `#EF48BE` and shadow-free dense list rows.
+- Theme switching, recent-project loading, Steps 2 through 5, PDF generation and format-state rendering were exercised. Export was not invoked.
+- Runtime exception, error-log and renderer-crash count: `0`.
+
+### Comparison history
+
+#### Pass 1
+
+- P2: `.step5-audit-card`, `.step1-recent__item` and Step 2 ordering rows reused the broad panel shadow, creating a repeated gray veil below and to the right of every row.
+- P2: Step 5 export options used the generic `panel2` surface, so selected and unselected formats did not clearly express the confirmed Violet/Magenta light-theme language.
+- Result: blocked pending correction.
+
+#### Pass 2
+
+- Fix: introduced theme-managed `--list-row-*`, `--audit-*` and `--export-*` component tokens; dense rows use no shadow, selected export formats use Violet, and the light panel shadow was reduced to a restrained one-pixel elevation.
+- Post-fix evidence: the full-view and focused comparisons plus Step 2 list screenshot listed above.
+- Result: no actionable P0, P1 or P2 issue remains.
+
+final result: passed
+
+## Stage 11 secondary-button hover and focus unification
+
+- Reported source evidence: `/var/folders/2h/l5_b11rs6b965l0bsswv0dcw0000gn/T/codex-clipboard-f7f3bde5-4f40-4c28-8613-5d8a89b2e9e5.png` (`934 × 902`, focused crop).
+- Revised implementation evidence:
+  - `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-secondary-hover-rescan.png`
+  - `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-secondary-hover-theme.png`
+  - `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-secondary-hover-manage.png`
+- Combined focused comparison: `/Users/ideabox/repo/CodeSucker/design/theme/codedoc-light-secondary-hover-audit-board.png`.
+- Figma audit file: `https://www.figma.com/design/etRyZCwziomrZAWv3ufITt`.
+- Implementation CSS viewport: `1440 × 900`; screenshots: `1440 × 900`; device scale factor: `1`.
+- State: light theme, Step 1 active, LookAtMe loaded, one recent project visible.
+
+### Findings
+
+- No actionable P0, P1 or P2 issue remains after the correction pass.
+- `重新扫描`, `保存配置`, the theme toggle and `管理` now resolve the same secondary-hover border, background and text values.
+- The theme toggle retains only its icon rotation/scale motion and no longer overrides shared button state colors or focus behavior.
+- Recent-project management controls consume the shared secondary hover and focus tokens while retaining their existing geometry.
+
+### Required fidelity surfaces
+
+- Fonts and typography: unchanged in the production UI. Figma annotations use Noto Sans SC because PingFang SC is unavailable in the connected Figma environment; the embedded application screenshots retain the production macOS font rendering.
+- Spacing and layout rhythm: unchanged. Toolbar actions remain `30px`; the theme control remains `30 × 30px`; the recent-project manage action remains `26px`; all padding, gaps, radii and page geometry are unchanged.
+- Colors and visual tokens: light hover resolves to border `rgba(111, 76, 203, 0.38)`, background `rgba(111, 76, 203, 0.08)` and text `rgb(111, 76, 203)` for all four actions. Dark hover continues to use the dark secondary-button tokens.
+- Image quality and asset fidelity: no application image or icon asset changed. The theme icon keeps its existing vector artwork and hover motion.
+- Copy and content: no product copy, project data or button semantics changed.
+
+### Runtime and automated evidence
+
+- Light runtime computed styles: `4/4` hover states match exactly.
+- Dark runtime computed styles: `4/4` hover states consume the same secondary-button rule.
+- Keyboard focus: all four controls consume `--control-focus-ring`; the theme toggle no longer adds a second outline or a separate transition.
+- `npm exec -w @codedoc/app tsx test/typography.ts`: passed.
+- `npm run verify`: passed, including Core/App tests, TypeScript checks, production Renderer build and Worker integration.
+- No export was invoked and imported source files remained read-only.
+
+### Comparison history
+
+#### Pass 1
+
+- P2: toolbar text actions used `--button-secondary-border-hover`, while theme and recent-project management actions overrode hover with `--accent-line`.
+- P2: the theme toggle also overrode the shared focus presentation and transition, producing a different keyboard-focus treatment.
+- Result: blocked pending correction.
+
+#### Pass 2
+
+- Fix: removed the theme toggle's button-level hover/focus/transition overrides, retained the SVG motion, and mapped recent-project management controls to the shared secondary hover and focus tokens.
+- Post-fix evidence: the three runtime screenshots and the combined Figma evidence row listed above.
+- Result: no actionable P0, P1 or P2 issue remains.
+
+### Figma handoff note
+
+- The evidence row was rendered and visually inspected after all four screenshots and annotations were placed.
+- The final Token/code/verification panels were created successfully. A subsequent full-board screenshot call was blocked by the Figma Starter-plan MCP call limit, so that last whole-board render could not be re-captured in this run.
+
 final result: passed

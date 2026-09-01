@@ -90,6 +90,10 @@ export async function shutdownPipeline(): Promise<void> {
   else await pdfRenderer.close();
 }
 
+export function isPipelineBusy(): boolean {
+  return jobs.hasActive();
+}
+
 const recentFile = () => path.join(app.getPath('userData'), 'recent.json');
 const scanExcludesFile = () => path.join(app.getPath('userData'), SCAN_EXCLUDES_CONFIG_NAME);
 

@@ -1,0 +1,97 @@
+:root,
+:root[data-theme="dark"]{
+ color-scheme:dark;
+
+ --color-bg-canvas:var(--ref-color-indigo-950);
+ --color-bg-canvas-raised:var(--ref-color-violet-925);
+ --color-bg-surface:rgb(26 18 61 / 88%);
+ --color-bg-surface-elevated:rgb(36 22 75 / 92%);
+ --color-bg-surface-subtle:rgb(36 22 75 / 64%);
+ --color-text-primary:var(--ref-color-lavender-050);
+ --color-text-secondary:var(--ref-color-lavender-300);
+ --color-text-disabled:var(--ref-color-lavender-500);
+ --color-border-subtle:rgb(185 172 211 / 14%);
+ --color-border-default:rgb(185 172 211 / 24%);
+ --color-border-strong:rgb(185 172 211 / 42%);
+ --color-accent:var(--ref-color-magenta-400);
+ --color-accent-strong:var(--ref-color-magenta-500);
+ --color-accent-soft:rgb(211 29 172 / 14%);
+ --color-focus:var(--ref-color-magenta-400);
+ --color-success:var(--ref-color-success-400);
+ --color-warning:var(--ref-color-warning-400);
+ --color-danger:var(--ref-color-danger-400);
+ --color-info:var(--ref-color-info-400);
+ --color-on-accent:var(--ref-color-white);
+ --color-window-close:#ff5f57;
+ --color-switch-thumb:var(--ref-color-white);
+ --color-document-canvas:#342b4a;
+
+ --color-language-kotlin:var(--ref-color-lang-violet);
+ --color-language-java:var(--ref-color-lang-coral);
+ --color-language-python:var(--ref-color-lang-teal);
+ --color-language-typescript:var(--ref-color-lang-blue);
+ --color-language-javascript:var(--ref-color-lang-yellow);
+ --color-language-go:var(--ref-color-lang-cyan);
+ --color-language-xml:var(--ref-color-lang-orange);
+ --color-language-html:var(--ref-color-lang-red);
+ --color-language-css:var(--ref-color-lang-purple);
+ --color-language-scss:var(--ref-color-lang-pink);
+ --color-language-c:var(--ref-color-lang-slate);
+ --color-language-csharp:var(--ref-color-lang-green);
+ --color-language-rust:var(--ref-color-lang-orange);
+ --color-language-swift:var(--ref-color-lang-coral);
+ --color-language-vue:var(--ref-color-lang-teal);
+
+ --gradient-app-background:
+  radial-gradient(800px 520px at 60% 14%,rgb(211 29 172 / 28%),transparent 68%),
+  radial-gradient(640px 420px at 28% 10%,rgb(104 19 146 / 28%),transparent 72%),
+  linear-gradient(138deg,var(--ref-color-violet-700) 0%,#200456 38%,var(--ref-color-indigo-950) 100%);
+ --gradient-sidebar-background:linear-gradient(180deg,rgb(19 10 53 / 92%),rgb(9 0 72 / 86%));
+
+ /* Compatibility aliases used by the current screens during phased migration. */
+ --accent-base:var(--ref-color-violet-500);
+ --accent:var(--color-accent);
+ --accent-soft:var(--color-accent-soft);
+ --accent-line:rgb(239 72 190 / 38%);
+ --bg:var(--color-bg-canvas);
+ --panel:var(--color-bg-surface);
+ --panel2:var(--color-bg-surface-subtle);
+ --border:var(--color-border-default);
+ --border2:var(--color-border-subtle);
+ --text:var(--color-text-primary);
+ --text2:var(--color-text-secondary);
+ --text3:var(--color-text-disabled);
+ --green:var(--color-success);
+ --green-soft:rgb(94 230 138 / 12%);
+ --orange:var(--color-warning);
+ --orange-soft:rgb(255 191 74 / 12%);
+ --red:var(--color-danger);
+ --red-soft:rgb(255 107 122 / 12%);
+ --shadow:0 18px 48px rgb(3 0 32 / 30%),inset 0 1px rgb(255 255 255 / 4%);
+ --sidebar:rgb(19 10 53 / 86%);
+ --sidebar-border:var(--color-border-default);
+ --sidebar-card:rgb(26 18 61 / 78%);
+ --sidebar-muted:var(--color-text-secondary);
+ --sidebar-active:rgb(104 19 146 / 28%);
+ --dropzone-bg:var(--color-accent-soft);
+ --list-row-bg:var(--panel);
+ --list-row-border:var(--border);
+ --list-row-shadow:none;
+ --audit-pass-bg:var(--green-soft);
+ --audit-pass-border:color-mix(in srgb,var(--green) 30%,transparent);
+ --audit-risk-bg:var(--red-soft);
+ --audit-risk-border:color-mix(in srgb,var(--red) 30%,transparent);
+ --export-panel-bg:var(--panel);
+ --export-option-bg:var(--panel2);
+ --export-option-selected-bg:var(--accent-soft);
+ --export-option-border:var(--border);
+ --export-option-selected-border:var(--accent-line);
+ --export-path-bg:var(--panel2);
+ --shimmer-highlight:rgb(255 255 255 / 42%);
+ --button-spinner-track:rgb(255 255 255 / 30%);
+ --button-spinner-foreground:var(--color-on-accent);
+ --switch-thumb-shadow:0 1px 3px rgb(3 0 32 / 38%);
+ --menu-elevation:0 12px 36px rgb(3 0 32 / 32%);
+ --dialog-elevation:0 24px 70px rgb(3 0 32 / 44%),inset 0 1px rgb(255 255 255 / 5%);
+ --document-elevation:0 10px 40px rgb(3 0 32 / 26%);
+}

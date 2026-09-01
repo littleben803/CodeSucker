@@ -61,17 +61,30 @@ jobs:
             runner: macos-14
             script: dist:mac:x64
             artifact: codedoc-macos-x64
-            path: packages/app/release/CodeDoc-*-mac-x64.dmg
+            path: |
+              packages/app/release/CodeDoc-*-mac-x64.dmg
+              packages/app/release/CodeDoc-*-mac-x64.dmg.blockmap
+              packages/app/release/CodeDoc-*-mac-x64.zip
+              packages/app/release/CodeDoc-*-mac-x64.zip.blockmap
+              packages/app/release/latest-mac.yml
           - label: macOS arm64
             runner: macos-14
             script: dist:mac:arm64
             artifact: codedoc-macos-arm64
-            path: packages/app/release/CodeDoc-*-mac-arm64.dmg
+            path: |
+              packages/app/release/CodeDoc-*-mac-arm64.dmg
+              packages/app/release/CodeDoc-*-mac-arm64.dmg.blockmap
+              packages/app/release/CodeDoc-*-mac-arm64.zip
+              packages/app/release/CodeDoc-*-mac-arm64.zip.blockmap
+              packages/app/release/latest-mac.yml
           - label: Windows x64
             runner: windows-2022
             script: dist:win:x64
             artifact: codedoc-windows-x64
-            path: packages/app/release/CodeDoc-*-win-x64.exe
+            path: |
+              packages/app/release/CodeDoc-*-win-x64.exe
+              packages/app/release/CodeDoc-*-win-x64.exe.blockmap
+              packages/app/release/latest.yml
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
@@ -123,16 +136,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download installers
+      - name: Download release artifacts
         uses: actions/download-artifact@v8
         with:
           pattern: codedoc-*
           path: release-assets
-          merge-multiple: true
 
       - name: Generate SHA-256 checksums
-        working-directory: release-assets
-        run: sha256sum CodeDoc-* > SHA256SUMS.txt
+        run: |
+          find release-assets -type f -name 'CodeDoc-*' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > release-assets/SHA256SUMS.txt
 
       - name: Create GitHub Release
         env:
@@ -145,7 +159,8 @@ jobs:
             release_options+=(--prerelease)
           fi
 
-          gh release create "$GITHUB_REF_NAME" release-assets/* \
+          mapfile -d '' release_files < <(find release-assets -type f \( -name 'CodeDoc-*' -o -name 'SHA256SUMS.txt' \) -print0)
+          gh release create "$GITHUB_REF_NAME" "${release_files[@]}" \
             --verify-tag \
             --title "CodeDoc $GITHUB_REF_NAME" \
             --generate-notes \

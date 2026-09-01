@@ -52,7 +52,7 @@ export default function Step3Clean() {
                   <button type="button" role="switch" aria-checked={on} aria-label={t.label}
                     onClick={() => s.set({ clean: { ...s.clean, [t.key]: !on }, processData: null, pdfPreviewKey: null })}
                     style={{ width: 34, height: 20, padding: 0, border: 0, flex: 'none', borderRadius: 10, background: on ? 'var(--accent)' : 'var(--border)', position: 'relative', cursor: 'pointer', transition: 'background .15s' }}>
-                    <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)', transition: 'left .15s' }} />
+                    <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--color-switch-thumb)', boxShadow: 'var(--switch-thumb-shadow)', transition: 'left .15s' }} />
                   </button>
                 </div>
               );

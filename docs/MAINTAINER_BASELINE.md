@@ -50,14 +50,17 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 ## 当前网络边界
 
-正式发布渠道尚未确定。为避免启动时请求失效服务或把用户导向错误下载地址，维护基线已经移除：
+CodeDoc 已接入受控的应用内更新路径：正式安装版可在启动后延迟检查，或由用户在设置页主动检查和下载更新；开发版不会连接生产更新源。更新源仅允许使用 `https://download.ideaboxapps.com/codedoc/<channel>/<platform>/<arch>/`，渲染进程只能经 Preload 白名单调用检查、下载和安装操作，不能直接访问网络、文件系统或完整 `ipcRenderer`。
 
-- 启动时 GitHub Release 检查；
-- 设置页手动检查更新和下载入口；
-- 渲染进程可调用的外部链接 IPC；
-- 指向失效原仓库的运行时 URL。
+以下边界继续保持：
 
-扫描、清洗、排版和导出保持离线。重新接入更新功能前，必须先确定公开维护仓库，并重新建立仅允许预期域名和路径的外链白名单及测试。
+- 不恢复旧 GitHub Release 检查或任何失效原仓库 URL；
+- 不向渲染进程开放通用外部链接 IPC；
+- 不自动下载更新，不在普通退出时静默安装；
+- 安装前必须等待扫描、处理或导出任务结束；
+- 扫描、清洗、脱敏、排版和导出保持完全离线，更新请求不携带项目内容。
+
+更新架构、OSS/CDN 路径、发布顺序和证书续期方案详见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
 
 ## 安全与依赖基线
 
@@ -76,10 +79,10 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 以下事项不得由维护脚本猜测或自动填写：
 
-1. 公开维护仓库、Release 地址和用户可见支持渠道。
+1. 用户可见支持渠道。
 2. CodeDoc 新图标及其平台生成资产。
-3. Apple Developer Team、Developer ID Application 证书和公证凭据。
-4. 是否继续提供 Windows 版本及其代码签名方案。
+3. 官网直接分发所需的 Developer ID Application 证书和公证凭据；当前检测到的 Apple Distribution 证书不能替代该用途。
+4. Windows 正式版本的代码签名方案。
 
 任何密钥、证书、私钥、公证密码或 Apple 凭据都不得提交到仓库。
 

@@ -1,0 +1,73 @@
+:root{
+ --font-ui:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;
+ --font-mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+ --sans:var(--font-ui);
+ --mono:var(--font-mono);
+
+ --ref-color-indigo-950:#090048;
+ --ref-color-violet-925:#130a35;
+ --ref-color-violet-900:#1a123d;
+ --ref-color-violet-850:#24164b;
+ --ref-color-violet-700:#3b0d77;
+ --ref-color-violet-600:#681392;
+ --ref-color-violet-500:#8b2bc3;
+ --ref-color-magenta-500:#d31dac;
+ --ref-color-magenta-400:#ef48be;
+ --ref-color-lavender-050:#f7f3ff;
+ --ref-color-lavender-300:#b9acd3;
+ --ref-color-lavender-500:#756a90;
+ --ref-color-success-400:#5ee68a;
+ --ref-color-warning-400:#ffbf4a;
+ --ref-color-danger-400:#ff6b7a;
+ --ref-color-info-400:#61a8ff;
+ --ref-color-white:#ffffff;
+ --ref-color-ink-975:#030020;
+
+ /* Stable categorical hues. Theme files decide how they are presented. */
+ --ref-color-lang-violet:#a98bff;
+ --ref-color-lang-coral:#ff967d;
+ --ref-color-lang-teal:#63d7c6;
+ --ref-color-lang-blue:#6ea8ff;
+ --ref-color-lang-yellow:#f4cc67;
+ --ref-color-lang-cyan:#55c7e8;
+ --ref-color-lang-orange:#ffad5c;
+ --ref-color-lang-red:#ff7f92;
+ --ref-color-lang-purple:#bd8cff;
+ --ref-color-lang-pink:#f277d8;
+ --ref-color-lang-slate:#a7b2ca;
+ --ref-color-lang-green:#70dda0;
+
+ --space-1:4px;
+ --space-2:8px;
+ --space-3:12px;
+ --space-4:16px;
+ --space-5:20px;
+ --space-6:24px;
+ --space-8:32px;
+ --space-10:40px;
+ --space-12:48px;
+ --space-16:64px;
+
+ --radius-xs:6px;
+ --radius-sm:8px;
+ --radius-md:10px;
+ --radius-lg:12px;
+ --radius-xl:16px;
+ --radius-pill:999px;
+
+ --duration-fast:120ms;
+ --duration-normal:180ms;
+ --duration-slow:260ms;
+ --ease-standard:cubic-bezier(.2,0,0,1);
+ --ease-emphasized:cubic-bezier(.2,.8,.2,1);
+}
+
+:root[data-platform="darwin"]{
+ --font-ui:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;
+ --font-mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+}
+
+:root[data-platform="win32"]{
+ --font-ui:"Segoe UI Variable","Segoe UI","Microsoft YaHei UI",sans-serif;
+ --font-mono:"Cascadia Mono",Consolas,"Microsoft YaHei UI",monospace;
+}

@@ -1,0 +1,29 @@
+:root{
+ --control-height-sm:28px;
+ --control-height-md:32px;
+ --control-height-lg:40px;
+ --control-focus-ring:0 0 0 2px var(--color-bg-canvas),0 0 0 4px rgb(239 72 190 / 88%);
+
+ --button-primary-bg:linear-gradient(135deg,var(--ref-color-violet-500),var(--ref-color-magenta-500));
+ --button-primary-bg-hover:linear-gradient(135deg,#9c38d2,#e32bb9);
+ --button-primary-bg-pressed:linear-gradient(135deg,#7422a6,#b81796);
+ --button-primary-text:var(--color-text-primary);
+ --button-primary-disabled-bg:rgb(139 43 195 / 22%);
+ --button-primary-disabled-text:var(--color-text-disabled);
+
+ --button-secondary-bg:rgb(36 22 75 / 72%);
+ --button-secondary-bg-hover:rgb(104 19 146 / 30%);
+ --button-secondary-bg-pressed:rgb(104 19 146 / 40%);
+ --button-secondary-border:var(--color-border-default);
+ --button-secondary-border-hover:var(--color-border-strong);
+
+ --input-bg:rgb(19 10 53 / 72%);
+ --input-bg-hover:rgb(36 22 75 / 72%);
+ --input-bg-focus:rgb(26 18 61 / 92%);
+ --input-border:var(--color-border-default);
+ --input-border-hover:var(--color-border-strong);
+ --input-border-focus:var(--color-focus);
+
+ --overlay-backdrop:rgb(9 0 72 / 64%);
+ --surface-elevation:0 18px 48px rgb(3 0 32 / 38%),inset 0 1px rgb(255 255 255 / 5%);
+}

@@ -59,6 +59,10 @@ export class JobController {
     return this.active?.id === id && !this.active.controller.signal.aborted;
   }
 
+  hasActive(): boolean {
+    return this.active !== null && !this.active.controller.signal.aborted;
+  }
+
   cancelAll(): void {
     this.active?.controller.abort(new JobCancelledError('应用正在退出'));
     this.active = null;

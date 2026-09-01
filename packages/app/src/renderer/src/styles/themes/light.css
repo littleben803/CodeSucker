@@ -1,0 +1,121 @@
+:root[data-theme="light"]{
+ color-scheme:light;
+
+ --color-bg-canvas:#f5f7fc;
+ --color-bg-canvas-raised:#edf1fa;
+ --color-bg-surface:rgb(251 252 255 / 92%);
+ --color-bg-surface-elevated:#ffffff;
+ --color-bg-surface-subtle:rgb(237 241 250 / 72%);
+ --color-text-primary:#1d2940;
+ --color-text-secondary:#657089;
+ --color-text-disabled:#9aa4b6;
+ --color-border-subtle:rgb(101 112 137 / 14%);
+ --color-border-default:#d8dfeb;
+ --color-border-strong:rgb(111 76 203 / 38%);
+ --color-accent:#6f4ccb;
+ --color-accent-strong:#c72aa8;
+ --color-accent-soft:rgb(111 76 203 / 10%);
+ --color-focus:#b9289b;
+ --color-success:#14804a;
+ --color-warning:#a96500;
+ --color-danger:#c7354b;
+ --color-info:#2f6fed;
+ --color-on-accent:#ffffff;
+ --color-window-close:#e5484d;
+ --color-switch-thumb:#ffffff;
+ --color-document-canvas:#e3e7ef;
+
+ --color-language-kotlin:#6f4ccb;
+ --color-language-java:#b94a36;
+ --color-language-python:#147d73;
+ --color-language-typescript:#2f6fed;
+ --color-language-javascript:#816000;
+ --color-language-go:#087b96;
+ --color-language-xml:#9b5700;
+ --color-language-html:#c7354b;
+ --color-language-css:#7548c9;
+ --color-language-scss:#a92b91;
+ --color-language-c:#59657b;
+ --color-language-csharp:#14804a;
+ --color-language-rust:#9b5700;
+ --color-language-swift:#b94a36;
+ --color-language-vue:#147d73;
+
+ --gradient-app-background:
+  radial-gradient(780px 480px at 14% 8%,rgb(111 76 203 / 10%),transparent 70%),
+  radial-gradient(720px 420px at 58% 2%,rgb(199 42 168 / 7%),transparent 72%),
+  linear-gradient(138deg,#edf1fa 0%,#f7f8fd 42%,#fbfcff 100%);
+ --gradient-sidebar-background:
+  linear-gradient(180deg,rgb(237 241 250 / 96%),rgb(245 247 252 / 94%));
+
+ /* Compatibility aliases consumed by the current screens. */
+ --accent-base:#6f4ccb;
+ --accent:var(--color-accent);
+ --accent-soft:var(--color-accent-soft);
+ --accent-line:rgb(185 40 155 / 30%);
+ --bg:var(--color-bg-canvas);
+ --panel:var(--color-bg-surface);
+ --panel2:var(--color-bg-surface-subtle);
+ --border:var(--color-border-default);
+ --border2:var(--color-border-subtle);
+ --text:var(--color-text-primary);
+ --text2:var(--color-text-secondary);
+ --text3:var(--color-text-disabled);
+ --green:var(--color-success);
+ --green-soft:rgb(20 128 74 / 10%);
+ --orange:var(--color-warning);
+ --orange-soft:rgb(169 101 0 / 10%);
+ --red:var(--color-danger);
+ --red-soft:rgb(199 53 75 / 10%);
+ --shadow:0 1px 2px rgb(58 68 98 / 4%),inset 0 1px rgb(255 255 255 / 84%);
+ --sidebar:rgb(237 241 250 / 94%);
+ --sidebar-border:rgb(111 76 203 / 14%);
+ --sidebar-card:rgb(255 255 255 / 78%);
+ --sidebar-muted:var(--color-text-secondary);
+ --sidebar-active:rgb(111 76 203 / 10%);
+ --dropzone-bg:rgb(111 76 203 / 3%);
+ --list-row-bg:rgb(255 255 255 / 72%);
+ --list-row-border:var(--color-border-default);
+ --list-row-shadow:none;
+ --audit-pass-bg:rgb(20 128 74 / 6%);
+ --audit-pass-border:rgb(20 128 74 / 24%);
+ --audit-risk-bg:rgb(199 53 75 / 6%);
+ --audit-risk-border:rgb(199 53 75 / 24%);
+ --export-panel-bg:rgb(255 255 255 / 72%);
+ --export-option-bg:rgb(255 255 255 / 64%);
+ --export-option-selected-bg:rgb(111 76 203 / 8%);
+ --export-option-border:var(--color-border-default);
+ --export-option-selected-border:rgb(111 76 203 / 34%);
+ --export-path-bg:rgb(111 76 203 / 3%);
+
+ --control-focus-ring:0 0 0 2px var(--color-bg-canvas),0 0 0 4px rgb(185 40 155 / 72%);
+ --button-primary-bg:linear-gradient(135deg,#6f4ccb,#c72aa8);
+ --button-primary-bg-hover:linear-gradient(135deg,#7954d2,#d132b1);
+ --button-primary-bg-pressed:linear-gradient(135deg,#5f3db8,#ae218f);
+ --button-primary-text:#ffffff;
+ --button-primary-disabled-bg:linear-gradient(135deg,rgb(111 76 203 / 18%),rgb(199 42 168 / 16%));
+ --button-primary-disabled-text:#8f8fa4;
+
+ --button-secondary-bg:rgb(255 255 255 / 76%);
+ --button-secondary-bg-hover:rgb(111 76 203 / 8%);
+ --button-secondary-bg-pressed:rgb(111 76 203 / 13%);
+ --button-secondary-border:var(--color-border-default);
+ --button-secondary-border-hover:var(--color-border-strong);
+
+ --input-bg:rgb(255 255 255 / 72%);
+ --input-bg-hover:rgb(255 255 255 / 92%);
+ --input-bg-focus:#ffffff;
+ --input-border:var(--color-border-default);
+ --input-border-hover:var(--color-border-strong);
+ --input-border-focus:var(--color-focus);
+
+ --shimmer-highlight:rgb(255 255 255 / 82%);
+ --button-spinner-track:rgb(255 255 255 / 34%);
+ --button-spinner-foreground:#ffffff;
+ --switch-thumb-shadow:0 1px 3px rgb(29 41 64 / 24%);
+ --overlay-backdrop:rgb(29 41 64 / 30%);
+ --surface-elevation:0 16px 44px rgb(58 68 98 / 14%),inset 0 1px rgb(255 255 255 / 88%);
+ --menu-elevation:0 12px 34px rgb(58 68 98 / 16%),inset 0 1px rgb(255 255 255 / 86%);
+ --dialog-elevation:0 24px 64px rgb(58 68 98 / 22%),inset 0 1px rgb(255 255 255 / 90%);
+ --document-elevation:0 10px 36px rgb(58 68 98 / 16%);
+}

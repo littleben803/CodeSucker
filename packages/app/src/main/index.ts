@@ -1,13 +1,15 @@
 import { app, BrowserWindow, ipcMain, screen, type WebContents } from 'electron';
 import * as path from 'node:path';
-import { registerPipelineIpc, shutdownPipeline } from './pipeline';
+import { isPipelineBusy, registerPipelineIpc, shutdownPipeline } from './pipeline';
 import {
   loadWindowState, minimumSizeForBounds, showRestoredWindow,
   WINDOW_STATE_CONFIG_NAME, WindowStateTracker,
 } from './window-state';
 import { windowChromeOptions } from './window-chrome';
+import { registerUpdateIpc, UpdateService } from './update-service';
 
 let win: BrowserWindow | null = null;
+let updateService: UpdateService | null = null;
 
 app.setName('CodeDoc');
 app.enableSandbox();
@@ -40,6 +42,7 @@ function createWindow() {
   new WindowStateTracker(stateFile, createdWindow, screen, restoredState);
   createdWindow.on('ready-to-show', () => {
     showRestoredWindow(createdWindow, restoredState);
+    updateService?.scheduleAutomaticCheck();
   });
 
   if (process.env.ELECTRON_RENDERER_URL) {
@@ -51,6 +54,15 @@ function createWindow() {
 
 app.whenReady().then(() => {
   registerPipelineIpc(isTrustedRenderer);
+  updateService = new UpdateService({
+    appVersion: app.getVersion(),
+    isPackaged: app.isPackaged,
+    canInstall: () => !isPipelineBusy(),
+    broadcast: (state) => {
+      if (win && !win.isDestroyed()) win.webContents.send('update:state', state);
+    },
+  });
+  registerUpdateIpc(updateService, isTrustedRenderer);
 
   ipcMain.on('win:minimize', (event) => {
     if (!isTrustedRenderer(event.sender)) return;

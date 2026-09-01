@@ -1,0 +1,57 @@
+.software-update__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.software-update__channel {
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 999px;
+  color: var(--text-secondary, #5b6472);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 18px;
+  padding: 0 7px;
+  text-transform: uppercase;
+}
+
+.software-update__channel--beta {
+  color: #a85d00;
+}
+
+.software-update__meta {
+  color: var(--text-tertiary, #7b8492);
+  font-size: 12px;
+}
+
+.software-update__progress {
+  display: grid;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.software-update__progress-track {
+  background: color-mix(in srgb, var(--accent, #2563eb) 12%, transparent);
+  border-radius: 999px;
+  height: 5px;
+  overflow: hidden;
+}
+
+.software-update__progress-track > span {
+  background: var(--accent, #2563eb);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 180ms ease;
+}
+
+.software-update__progress > span {
+  color: var(--text-tertiary, #7b8492);
+  font-size: 11px;
+}
+
+.software-update__action {
+  align-self: flex-start;
+  margin-top: 6px;
+}

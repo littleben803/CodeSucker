@@ -6,6 +6,8 @@ import {
 } from '../scan-exclude-rules';
 import { getBuiltInScanExcludeRuleHelp } from '../scan-exclude-rule-help';
 import { toast } from '../store';
+import type { UpdateState } from '../../../shared/update';
+import '../software-update.css';
 
 interface SettingsCardHeaderProps {
   icon: ReactNode;
@@ -92,6 +94,37 @@ function DeleteRuleIcon() {
   );
 }
 
+function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  const scaled = value / (1024 ** index);
+  return `${scaled >= 100 || index === 0 ? scaled.toFixed(0) : scaled.toFixed(1)} ${units[index]}`;
+}
+
+function updateActionLabel(state: UpdateState | null): string {
+  if (!state) return '正在读取…';
+  if (state.phase === 'checking') return '正在检查…';
+  if (state.phase === 'downloading') return '正在下载…';
+  if (state.phase === 'downloaded') return '重启并安装';
+  if (state.phase === 'available' || (state.phase === 'error' && state.errorCode === 'download-failed' && state.targetVersion)) {
+    return '下载更新';
+  }
+  return '检查更新';
+}
+
+function updateStatusTitle(state: UpdateState | null): string {
+  if (!state) return '正在读取更新状态';
+  if (!state.supported) return '开发版不检查更新';
+  if (state.phase === 'up-to-date') return '当前已是最新版本';
+  if (state.phase === 'available') return `发现新版本 v${state.targetVersion}`;
+  if (state.phase === 'downloading') return `正在下载 v${state.targetVersion ?? ''}`.trim();
+  if (state.phase === 'downloaded') return `v${state.targetVersion} 已准备好安装`;
+  if (state.phase === 'installing') return '正在重启并安装';
+  if (state.phase === 'error') return '更新操作未完成';
+  return '软件更新';
+}
+
 export default function Settings() {
   const [rules, setRules] = useState<string[]>([]);
   const [savedRules, setSavedRules] = useState<string[]>([]);
@@ -104,6 +137,8 @@ export default function Settings() {
   const [newRuleError, setNewRuleError] = useState<string | null>(null);
   const [focusedRuleIndex, setFocusedRuleIndex] = useState<number | null>(null);
   const [ruleHelpOpen, setRuleHelpOpen] = useState(false);
+  const [updateState, setUpdateState] = useState<UpdateState | null>(null);
+  const [updateActionPending, setUpdateActionPending] = useState(false);
   const ruleHelpButtonRef = useRef<HTMLButtonElement>(null);
   const ruleHelpDialogRef = useRef<HTMLDivElement>(null);
   const ruleErrors = useMemo(() => getScanExcludeRuleErrors(rules), [rules]);
@@ -131,6 +166,20 @@ export default function Settings() {
   };
 
   useEffect(() => { void loadRules(); }, []);
+
+  useEffect(() => {
+    let active = true;
+    void window.codedoc.getUpdateState()
+      .then((state) => { if (active) setUpdateState(state); })
+      .catch(() => { if (active) setUpdateState(null); });
+    const unsubscribe = window.codedoc.onUpdateState((state) => {
+      if (active) setUpdateState(state);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!ruleHelpOpen) return;
@@ -186,6 +235,29 @@ export default function Settings() {
       toast(`恢复失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setRuleSaving(false);
+    }
+  };
+
+  const handleUpdateAction = async () => {
+    if (!updateState?.supported || updateActionPending) return;
+    if (updateState.phase === 'checking' || updateState.phase === 'downloading' || updateState.phase === 'installing') return;
+    setUpdateActionPending(true);
+    try {
+      let nextState: UpdateState;
+      if (updateState.phase === 'downloaded') {
+        nextState = await window.codedoc.installUpdate();
+      } else if (updateState.phase === 'available'
+        || (updateState.phase === 'error' && updateState.errorCode === 'download-failed' && updateState.targetVersion)) {
+        nextState = await window.codedoc.downloadUpdate();
+      } else {
+        nextState = await window.codedoc.checkForUpdates();
+      }
+      setUpdateState(nextState);
+      if (nextState.errorCode === 'pipeline-busy') toast(nextState.message);
+    } catch (error) {
+      toast(`更新操作失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUpdateActionPending(false);
     }
   };
 
@@ -321,9 +393,37 @@ export default function Settings() {
               <section className="settings-card" aria-labelledby="software-update-title">
                 <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title" />
                 <div className="settings-card__content settings-card__content--compact">
-                  <div className="settings-update-state">
-                    <strong>更新渠道迁移中</strong>
-                    <span>当前 v{__APP_VERSION__} · 自动版本检测已关闭，待新维护仓库确定后恢复</span>
+                  <div className="settings-update-state" aria-live="polite">
+                    <div className="software-update__heading">
+                      <strong>{updateStatusTitle(updateState)}</strong>
+                      <span className={`software-update__channel software-update__channel--${updateState?.channel ?? 'stable'}`}>
+                        {updateState?.channel === 'beta' ? 'Beta' : 'Stable'}
+                      </span>
+                    </div>
+                    <span>{updateState?.message ?? '正在读取正式更新渠道…'}</span>
+                    <span className="software-update__meta">
+                      当前 v{updateState?.currentVersion ?? __APP_VERSION__}
+                      {updateState?.targetVersion ? ` · 最新 v${updateState.targetVersion}` : ''}
+                    </span>
+                    {updateState?.phase === 'downloading' && updateState.progress && (
+                      <div className="software-update__progress" aria-label={`更新下载进度 ${updateState.progress.percent}%`}>
+                        <div className="software-update__progress-track">
+                          <span style={{ width: `${updateState.progress.percent}%` }} />
+                        </div>
+                        <span>
+                          {updateState.progress.percent}% · {formatBytes(updateState.progress.transferred)} / {formatBytes(updateState.progress.total)}
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-ghost software-update__action"
+                      disabled={!updateState?.supported || updateActionPending
+                        || updateState.phase === 'checking' || updateState.phase === 'downloading' || updateState.phase === 'installing'}
+                      onClick={() => void handleUpdateAction()}
+                    >
+                      {updateActionPending ? '处理中…' : updateActionLabel(updateState)}
+                    </button>
                   </div>
                 </div>
               </section>
@@ -331,7 +431,7 @@ export default function Settings() {
               <section className="settings-card" aria-labelledby="privacy-settings-title">
                 <SettingsCardHeader icon={<PrivacyIcon />} title="隐私说明" titleId="privacy-settings-title" />
                 <div className="settings-card__content settings-card__content--compact settings-privacy-copy">
-                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>。当前维护基线已关闭版本检测，产品功能不发起网络请求。
+                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>。正式安装版仅为检查和下载应用更新连接 IdeaBox 官方下载域名，不上传项目内容。
                 </div>
               </section>
 

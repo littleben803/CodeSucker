@@ -100,7 +100,7 @@ export default function Step5Export() {
     <div className="step5-export">
       <section className="step5-audit-panel" aria-label="检验结果">
         <div className="step5-audit-scroll">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 11, background: hasRisk ? 'var(--red-soft)' : 'var(--green-soft)', border: `1px solid color-mix(in srgb, ${hasRisk ? 'var(--red)' : 'var(--green)'} 30%, transparent)`, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 11, background: hasRisk ? 'var(--audit-risk-bg)' : 'var(--audit-pass-bg)', border: `1px solid ${hasRisk ? 'var(--audit-risk-border)' : 'var(--audit-pass-border)'}`, marginBottom: 14 }}>
             <span style={{ fontSize: 17 }}>{hasRisk ? '⛔' : '✅'}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600 }}>{passN} 项通过 · {warnN} 项警告 · {failN} 项退回风险</div>
@@ -165,23 +165,23 @@ export default function Step5Export() {
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>导出</div>
         <div>
           <div style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 7 }}>输出格式</div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', marginBottom: 6, background: 'var(--panel2)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: `1px solid ${s.fmtPdf ? 'var(--export-option-selected-border)' : 'var(--export-option-border)'}`, borderRadius: 8, cursor: 'pointer', marginBottom: 6, background: s.fmtPdf ? 'var(--export-option-selected-bg)' : 'var(--export-option-bg)' }}>
             <input type="checkbox" checked={s.fmtPdf} onChange={() => s.set({ fmtPdf: !s.fmtPdf })} style={{ accentColor: 'var(--accent)', margin: 0 }} />
             <span style={{ fontSize: 12.5, fontWeight: 500 }}>PDF 文档（.pdf）</span>
             <span style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-soft)', padding: '1px 6px', borderRadius: 4, marginLeft: 'auto' }}>推荐</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', marginBottom: 6, background: 'var(--panel2)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: `1px solid ${s.fmtDocx ? 'var(--export-option-selected-border)' : 'var(--export-option-border)'}`, borderRadius: 8, cursor: 'pointer', marginBottom: 6, background: s.fmtDocx ? 'var(--export-option-selected-bg)' : 'var(--export-option-bg)' }}>
             <input type="checkbox" checked={s.fmtDocx} onChange={() => s.set({ fmtDocx: !s.fmtDocx })} style={{ accentColor: 'var(--accent)', margin: 0 }} />
             <span style={{ fontSize: 12.5, fontWeight: 500 }}>Word 文档（.docx）</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', background: 'var(--panel2)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', border: `1px solid ${s.fmtTxt ? 'var(--export-option-selected-border)' : 'var(--export-option-border)'}`, borderRadius: 8, cursor: 'pointer', background: s.fmtTxt ? 'var(--export-option-selected-bg)' : 'var(--export-option-bg)' }}>
             <input type="checkbox" checked={s.fmtTxt} onChange={() => s.set({ fmtTxt: !s.fmtTxt })} style={{ accentColor: 'var(--accent)', margin: 0 }} />
             <span style={{ fontSize: 12.5, fontWeight: 500 }}>纯文本（.txt）</span>
           </label>
         </div>
         <div>
           <div style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 7 }}>输出路径</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px', background: 'var(--panel2)', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, border: '1px solid var(--export-option-border)', borderRadius: 8, padding: '0 10px', background: 'var(--export-path-bg)', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text2)' }}>
             <span title={displayedOutDir} aria-label={`完整输出路径：${displayedOutDir}`}
               style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayedOutDir}</span>
             <span style={{ color: 'var(--accent)', cursor: 'pointer', fontSize: 11, flex: 'none' }}
@@ -197,15 +197,15 @@ export default function Step5Export() {
         <button className="btn-primary" onClick={s.exporting ? cancelExport : doExport}
           disabled={!s.exporting && !hasExportableContent}
           style={{ height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, boxShadow: '0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, opacity: s.exporting ? 0.85 : hasExportableContent ? 1 : 0.5, cursor: !s.exporting && !hasExportableContent ? 'not-allowed' : undefined }}>
-          {s.exporting && <svg width="15" height="15" viewBox="0 0 30 30" style={{ animation: 'codedoc-spin .8s linear infinite' }}><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(255,255,255,.3)" strokeWidth="4" /><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" /></svg>}
+          {s.exporting && <svg width="15" height="15" viewBox="0 0 30 30" style={{ animation: 'codedoc-spin .8s linear infinite' }}><circle cx="15" cy="15" r="12" fill="none" stroke="var(--button-spinner-track)" strokeWidth="4" /><path d="M15 3a12 12 0 0 1 12 12" fill="none" stroke="var(--button-spinner-foreground)" strokeWidth="4" strokeLinecap="round" /></svg>}
           {s.exporting ? `${exportLabel} · 点击取消` : '生成申报文档'}
         </button>
       </aside>
 
       {/* 导出成功弹窗 */}
       {r && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,16,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, backdropFilter: 'blur(2px)' }}>
-          <div style={{ width: 400, background: 'var(--panel)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,.35)', padding: 28, textAlign: 'center', animation: 'codedoc-pop .18s ease-out' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, backdropFilter: 'blur(2px)' }}>
+          <div style={{ width: 400, background: 'var(--panel)', borderRadius: 16, boxShadow: 'var(--dialog-elevation)', padding: 28, textAlign: 'center', animation: 'codedoc-pop .18s ease-out' }}>
             <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--green-soft)', color: 'var(--green)', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', animation: 'codedoc-check .45s cubic-bezier(.34,1.56,.64,1) both .1s' }}>✓</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>已生成申报文档</div>
             <div style={{ fontSize: 12.5, color: 'var(--text2)', marginTop: 8, fontFamily: 'var(--mono)', wordBreak: 'break-all', lineHeight: 1.6, background: 'var(--panel2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px' }}>

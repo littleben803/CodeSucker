@@ -8,6 +8,7 @@
     "BlueOak-1.0.0",
     "ISC",
     "MIT",
+    "Python-2.0",
     "Zlib",
     "(MIT AND Zlib)"
   ],
@@ -29,6 +30,9 @@
     "isarray": {
       "file": "README.md",
       "startMarker": "## License"
+    },
+    "lazy-val": {
+      "rootFile": "licenses/third-party/lazy-val.LICENSE"
     }
   },
   "additionalLicenseFiles": {

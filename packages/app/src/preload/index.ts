@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
+import type { UpdateState } from '../shared/update';
 
 interface ProgressEvent {
   jobId: string;
@@ -40,6 +41,15 @@ const api = {
   saveConfig: (root: string, config: unknown) => ipcRenderer.invoke('project:saveConfig', root, config),
   revealProjectFile: (root: string, relPath: string): Promise<void> => ipcRenderer.invoke('project:revealFile', root, relPath),
   revealLatestExport: (): Promise<void> => ipcRenderer.invoke('project:revealLatestExport'),
+  getUpdateState: (): Promise<UpdateState> => ipcRenderer.invoke('update:getState'),
+  checkForUpdates: (): Promise<UpdateState> => ipcRenderer.invoke('update:check'),
+  downloadUpdate: (): Promise<UpdateState> => ipcRenderer.invoke('update:download'),
+  installUpdate: (): Promise<UpdateState> => ipcRenderer.invoke('update:install'),
+  onUpdateState: (callback: (state: UpdateState) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: UpdateState) => callback(state);
+    ipcRenderer.on('update:state', listener);
+    return () => ipcRenderer.removeListener('update:state', listener);
+  },
 };
 
 contextBridge.exposeInMainWorld('codedoc', api);

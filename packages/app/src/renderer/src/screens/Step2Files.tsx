@@ -15,17 +15,26 @@ import {
 const FILE_TREE_SEARCH_DEBOUNCE_MS = 180;
 
 const LANG_COLORS: Record<string, [string, string]> = {
-  KT: ['#7c5cff', 'rgba(124,92,255,.12)'], JAVA: ['#e76f51', 'rgba(231,111,81,.12)'],
-  PY: ['#2a9d8f', 'rgba(42,157,143,.12)'], TS: ['#2563eb', 'rgba(37,99,235,.12)'],
-  TSX: ['#2563eb', 'rgba(37,99,235,.12)'], JS: ['#b8860b', 'rgba(184,134,11,.14)'],
-  GO: ['#0891b2', 'rgba(8,145,178,.12)'], XML: ['#d97706', 'rgba(217,119,6,.12)'],
-  HTML: ['#dc2626', 'rgba(220,38,38,.10)'], CSS: ['#7c3aed', 'rgba(124,58,237,.10)'],
-  SCSS: ['#c026d3', 'rgba(192,38,211,.10)'], LESS: ['#1d4ed8', 'rgba(29,78,216,.10)'],
-  CPP: ['#2563eb', 'rgba(37,99,235,.12)'], C: ['#64748b', 'rgba(100,116,139,.12)'],
-  CS: ['#16a34a', 'rgba(22,163,74,.12)'], RS: ['#b45309', 'rgba(180,83,9,.12)'],
-  SWIFT: ['#ea580c', 'rgba(234,88,12,.12)'], VUE: ['#059669', 'rgba(5,150,105,.12)'],
+  KT: ['var(--color-language-kotlin)', 'color-mix(in srgb,var(--color-language-kotlin) 14%,transparent)'],
+  JAVA: ['var(--color-language-java)', 'color-mix(in srgb,var(--color-language-java) 14%,transparent)'],
+  PY: ['var(--color-language-python)', 'color-mix(in srgb,var(--color-language-python) 14%,transparent)'],
+  TS: ['var(--color-language-typescript)', 'color-mix(in srgb,var(--color-language-typescript) 14%,transparent)'],
+  TSX: ['var(--color-language-typescript)', 'color-mix(in srgb,var(--color-language-typescript) 14%,transparent)'],
+  JS: ['var(--color-language-javascript)', 'color-mix(in srgb,var(--color-language-javascript) 14%,transparent)'],
+  GO: ['var(--color-language-go)', 'color-mix(in srgb,var(--color-language-go) 14%,transparent)'],
+  XML: ['var(--color-language-xml)', 'color-mix(in srgb,var(--color-language-xml) 14%,transparent)'],
+  HTML: ['var(--color-language-html)', 'color-mix(in srgb,var(--color-language-html) 14%,transparent)'],
+  CSS: ['var(--color-language-css)', 'color-mix(in srgb,var(--color-language-css) 14%,transparent)'],
+  SCSS: ['var(--color-language-scss)', 'color-mix(in srgb,var(--color-language-scss) 14%,transparent)'],
+  LESS: ['var(--color-language-css)', 'color-mix(in srgb,var(--color-language-css) 14%,transparent)'],
+  CPP: ['var(--color-language-typescript)', 'color-mix(in srgb,var(--color-language-typescript) 14%,transparent)'],
+  C: ['var(--color-language-c)', 'color-mix(in srgb,var(--color-language-c) 14%,transparent)'],
+  CS: ['var(--color-language-csharp)', 'color-mix(in srgb,var(--color-language-csharp) 14%,transparent)'],
+  RS: ['var(--color-language-rust)', 'color-mix(in srgb,var(--color-language-rust) 14%,transparent)'],
+  SWIFT: ['var(--color-language-swift)', 'color-mix(in srgb,var(--color-language-swift) 14%,transparent)'],
+  VUE: ['var(--color-language-vue)', 'color-mix(in srgb,var(--color-language-vue) 14%,transparent)'],
 };
-const langStyle = (lang: string) => LANG_COLORS[lang] ?? ['#6f6f78', 'rgba(110,110,120,.12)'];
+const langStyle = (lang: string) => LANG_COLORS[lang] ?? ['var(--text2)', 'var(--panel2)'];
 
 function SelectionCheckbox({ state, label, onChange }: {
   state: SelectionState;
@@ -307,7 +316,7 @@ export default function Step2Files() {
             {included.map((f, i) => (
               <div key={f.relPath} draggable className="step2-order-row"
                 onDragStart={() => setDragIdx(i)} onDragOver={onDragOver(i)} onDragEnd={() => setDragIdx(null)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--panel)', border: `1px solid ${dragIdx === i ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 9, cursor: 'grab', boxShadow: 'var(--shadow)', opacity: dragIdx === i ? 0.55 : 1 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--list-row-bg)', border: `1px solid ${dragIdx === i ? 'var(--accent)' : 'var(--list-row-border)'}`, borderRadius: 9, cursor: 'grab', boxShadow: 'var(--list-row-shadow)', opacity: dragIdx === i ? 0.55 : 1 }}>
                 <svg width="10" height="14" viewBox="0 0 10 14" style={{ flex: 'none', color: 'var(--text3)' }}>{[3, 7, 11].map((y) => [3, 7].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.2" fill="currentColor" />))}</svg>
                 <span style={{ width: 20, fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', textAlign: 'right' }}>{i + 1}</span>
                 <span style={{ fontSize: 12.5, fontFamily: 'var(--mono)', fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
@@ -395,7 +404,7 @@ export default function Step2Files() {
               return (
                 <div key={stat.key} className="file-type-row">
                   <button onClick={() => toggleExtension(stat)} aria-label={`${stat.fullyIncluded ? '取消' : '选择'} ${stat.label}`} aria-pressed={stat.fullyIncluded}
-                    style={{ width: 15, height: 15, flex: 'none', padding: 0, border: `1.5px solid ${color}`, borderRadius: 4, background: stat.includedFiles > 0 ? color : 'var(--panel)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                    style={{ width: 15, height: 15, flex: 'none', padding: 0, border: `1.5px solid ${color}`, borderRadius: 4, background: stat.includedFiles > 0 ? color : 'var(--panel)', color: 'var(--color-on-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                     {stat.fullyIncluded ? '✓' : stat.partiallyIncluded ? '−' : ''}
                   </button>
                   <button onClick={() => toggleExtension(stat)} className="file-type-row__main" title={`${stat.label} · ${values.files} 个文件 · ${values.rawLines.toLocaleString()} 行`}>

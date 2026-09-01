@@ -10,6 +10,7 @@ import { canStartScan } from './scan-guard';
 import { canVisitStep } from './wizard-progress';
 import { APP_ICON_URL } from './brand-icons';
 import AppAlert from './components/AppAlert';
+import { applyTheme } from './theme-controller';
 
 type NavigationIconName = 'organize' | 'import' | 'files' | 'clean' | 'preview' | 'export' | 'settings' | 'offline' | 'private' | 'readonly';
 
@@ -71,7 +72,7 @@ export default function App() {
   const themeLabel = nextTheme === 'dark' ? '切换到深色模式' : '切换到浅色模式';
 
   useEffect(() => {
-    document.body.classList.toggle('dark', s.theme === 'dark');
+    applyTheme(s.theme);
   }, [s.theme]);
 
   useEffect(() => {

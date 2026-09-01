@@ -1,3 +1,5 @@
+import type { UpdateState } from '../../shared/update';
+
 export {};
 
 declare global {
@@ -56,6 +58,11 @@ declare global {
       saveConfig: (root: string, config: unknown) => Promise<boolean>;
       revealProjectFile: (root: string, relPath: string) => Promise<void>;
       revealLatestExport: () => Promise<void>;
+      getUpdateState: () => Promise<UpdateState>;
+      checkForUpdates: () => Promise<UpdateState>;
+      downloadUpdate: () => Promise<UpdateState>;
+      installUpdate: () => Promise<UpdateState>;
+      onUpdateState: (callback: (state: UpdateState) => void) => () => void;
     };
   }
 }

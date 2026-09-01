@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { mergeRescannedFiles } from './scan-project-state';
 import { canStartScan } from './scan-guard';
 import { LatestRequestGuard } from './latest-request-guard';
+import { DEFAULT_THEME, type ThemeMode } from './theme-controller';
 
 export interface FileRow {
   relPath: string; name: string; ext: string; lang: string;
@@ -76,7 +77,7 @@ const DEFAULT_CLEAN: CleanToggles = {
 };
 
 interface State {
-  theme: 'light' | 'dark';
+  theme: ThemeMode;
   view: 'wizard' | 'settings';
   step: number;
   maxUnlockedStep: number;
@@ -115,7 +116,7 @@ interface State {
 }
 
 export const useStore = create<State>((set) => ({
-  theme: 'light',
+  theme: DEFAULT_THEME,
   view: 'wizard',
   step: 1,
   maxUnlockedStep: 1,
