@@ -1,5 +1,5 @@
 export type UpdateChannel = 'stable' | 'beta';
-export type UpdatePlatform = 'mac' | 'win';
+export type UpdatePlatform = 'mac';
 export type UpdateArch = 'arm64' | 'x64';
 
 export type UpdatePhase =
@@ -34,10 +34,12 @@ export interface UpdateState {
 
 export const UPDATE_BASE_URL = 'https://download.ideaboxapps.com/codedoc';
 
+export function supportsAppUpdates(platform: NodeJS.Platform): boolean {
+  return platform === 'darwin';
+}
+
 export function updatePlatform(platform: NodeJS.Platform): UpdatePlatform | null {
-  if (platform === 'darwin') return 'mac';
-  if (platform === 'win32') return 'win';
-  return null;
+  return supportsAppUpdates(platform) ? 'mac' : null;
 }
 
 export function updateArch(arch: string): UpdateArch | null {

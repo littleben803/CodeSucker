@@ -6,7 +6,7 @@ import {
 } from '../scan-exclude-rules';
 import { getBuiltInScanExcludeRuleHelp } from '../scan-exclude-rule-help';
 import { toast } from '../store';
-import type { UpdateState } from '../../../shared/update';
+import { supportsAppUpdates, type UpdateState } from '../../../shared/update';
 import '../software-update.css';
 
 interface SettingsCardHeaderProps {
@@ -126,6 +126,7 @@ function updateStatusTitle(state: UpdateState | null): string {
 }
 
 export default function Settings() {
+  const updatesEnabled = supportsAppUpdates(window.codedoc.platform);
   const [rules, setRules] = useState<string[]>([]);
   const [savedRules, setSavedRules] = useState<string[]>([]);
   const [ruleSource, setRuleSource] = useState<'default' | 'user'>('default');
@@ -168,6 +169,7 @@ export default function Settings() {
   useEffect(() => { void loadRules(); }, []);
 
   useEffect(() => {
+    if (!updatesEnabled) return undefined;
     let active = true;
     void window.codedoc.getUpdateState()
       .then((state) => { if (active) setUpdateState(state); })
@@ -179,7 +181,7 @@ export default function Settings() {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [updatesEnabled]);
 
   useEffect(() => {
     if (!ruleHelpOpen) return;
@@ -368,7 +370,7 @@ export default function Settings() {
                       </form>
 
                       <div className="settings-rule-syntax">
-                        <span>不含通配符时按文件夹处理；含通配符时按文件或文件夹路径匹配。 <code>*</code> 匹配当前层级，<code>**</code> 可跨目录层级，<code>?</code> 匹配一个字符。</span>
+                        <span>不含通配符时按文件夹处理；含通配符时按路径匹配： <code>*</code> 匹配当前层级，<code>**</code> 可跨目录层级，<code>?</code> 匹配一个字符。</span>
                       </div>
 
                       <div className="settings-rule-footer">
@@ -390,48 +392,50 @@ export default function Settings() {
             </div>
 
             <aside className="settings-info-stack" aria-label="应用设置与信息">
-              <section className="settings-card" aria-labelledby="software-update-title">
-                <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title" />
-                <div className="settings-card__content settings-card__content--compact">
-                  <div className="settings-update-state" aria-live="polite">
-                    <div className="software-update__heading">
-                      <strong>{updateStatusTitle(updateState)}</strong>
-                      <span className={`software-update__channel software-update__channel--${updateState?.channel ?? 'stable'}`}>
-                        {updateState?.channel === 'beta' ? 'Beta' : 'Stable'}
-                      </span>
-                    </div>
-                    <span>{updateState?.message ?? '正在读取正式更新渠道…'}</span>
-                    <span className="software-update__meta">
-                      当前 v{updateState?.currentVersion ?? __APP_VERSION__}
-                      {updateState?.targetVersion ? ` · 最新 v${updateState.targetVersion}` : ''}
-                    </span>
-                    {updateState?.phase === 'downloading' && updateState.progress && (
-                      <div className="software-update__progress" aria-label={`更新下载进度 ${updateState.progress.percent}%`}>
-                        <div className="software-update__progress-track">
-                          <span style={{ width: `${updateState.progress.percent}%` }} />
-                        </div>
-                        <span>
-                          {updateState.progress.percent}% · {formatBytes(updateState.progress.transferred)} / {formatBytes(updateState.progress.total)}
+              {updatesEnabled && (
+                <section className="settings-card" aria-labelledby="software-update-title">
+                  <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title" />
+                  <div className="settings-card__content settings-card__content--compact">
+                    <div className="settings-update-state" aria-live="polite">
+                      <div className="software-update__heading">
+                        <strong>{updateStatusTitle(updateState)}</strong>
+                        <span className={`software-update__channel software-update__channel--${updateState?.channel ?? 'stable'}`}>
+                          {updateState?.channel === 'beta' ? 'Beta' : 'Stable'}
                         </span>
                       </div>
-                    )}
-                    <button
-                      type="button"
-                      className="btn-ghost software-update__action"
-                      disabled={!updateState?.supported || updateActionPending
-                        || updateState.phase === 'checking' || updateState.phase === 'downloading' || updateState.phase === 'installing'}
-                      onClick={() => void handleUpdateAction()}
-                    >
-                      {updateActionPending ? '处理中…' : updateActionLabel(updateState)}
-                    </button>
+                      <span>{updateState?.message ?? '正在读取正式更新渠道…'}</span>
+                      <span className="software-update__meta">
+                        当前 v{updateState?.currentVersion ?? __APP_VERSION__}
+                        {updateState?.targetVersion ? ` · 最新 v${updateState.targetVersion}` : ''}
+                      </span>
+                      {updateState?.phase === 'downloading' && updateState.progress && (
+                        <div className="software-update__progress" aria-label={`更新下载进度 ${updateState.progress.percent}%`}>
+                          <div className="software-update__progress-track">
+                            <span style={{ width: `${updateState.progress.percent}%` }} />
+                          </div>
+                          <span>
+                            {updateState.progress.percent}% · {formatBytes(updateState.progress.transferred)} / {formatBytes(updateState.progress.total)}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-ghost software-update__action"
+                        disabled={!updateState?.supported || updateActionPending
+                          || updateState.phase === 'checking' || updateState.phase === 'downloading' || updateState.phase === 'installing'}
+                        onClick={() => void handleUpdateAction()}
+                      >
+                        {updateActionPending ? '处理中…' : updateActionLabel(updateState)}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               <section className="settings-card" aria-labelledby="privacy-settings-title">
                 <SettingsCardHeader icon={<PrivacyIcon />} title="隐私说明" titleId="privacy-settings-title" />
                 <div className="settings-card__content settings-card__content--compact settings-privacy-copy">
-                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>。正式安装版仅为检查和下载应用更新连接 IdeaBox 官方下载域名，不上传项目内容。
+                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>，不会同步任何项目内容到远端。
                 </div>
               </section>
 

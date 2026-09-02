@@ -60,7 +60,7 @@ export class UpdateService {
       supported,
       channel: this.channel,
       currentVersion: options.appVersion,
-      message: supported ? '已准备好检查更新。' : '仅 macOS 与 Windows 正式安装版支持应用内更新。',
+      message: supported ? '已准备好检查更新。' : '仅 macOS 正式安装版支持应用内更新。',
     };
 
     if (!supported || !this.feedUrl) return;

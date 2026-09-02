@@ -50,7 +50,7 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 ## 当前网络边界
 
-CodeDoc 已接入受控的应用内更新路径：正式安装版可在启动后延迟检查，或由用户在设置页主动检查和下载更新；开发版不会连接生产更新源。更新源仅允许使用 `https://download.ideaboxapps.com/codedoc/<channel>/<platform>/<arch>/`，渲染进程只能经 Preload 白名单调用检查、下载和安装操作，不能直接访问网络、文件系统或完整 `ipcRenderer`。
+CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装版可在启动后延迟检查，或由用户在设置页主动检查和下载更新；Windows 不展示更新入口，也不执行启动检查，采用人工获取新版安装包的方式更新；开发版不会连接生产更新源。macOS 更新源仅允许使用 `https://download.ideaboxapps.com/codedoc/<channel>/mac/<arch>/`，渲染进程只能经 Preload 白名单调用检查、下载和安装操作，不能直接访问网络、文件系统或完整 `ipcRenderer`。
 
 以下边界继续保持：
 
