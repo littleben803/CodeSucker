@@ -52,7 +52,8 @@ export function updateFeedUrl(channel: UpdateChannel, platform: NodeJS.Platform,
   return `${UPDATE_BASE_URL}/${channel}/${targetPlatform}/${targetArch}`;
 }
 
-export function updateChannelFromArgs(args: readonly string[]): UpdateChannel {
+export function updateChannelFromArgs(args: readonly string[], appVersion = ''): UpdateChannel {
   const value = args.find((arg) => arg.startsWith('--update-channel='))?.split('=', 2)[1];
-  return value === 'beta' ? 'beta' : 'stable';
+  if (value !== undefined) return value === 'beta' ? 'beta' : 'stable';
+  return /-beta(?:[.-]|$)/i.test(appVersion) ? 'beta' : 'stable';
 }

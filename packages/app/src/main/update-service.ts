@@ -52,7 +52,7 @@ export class UpdateService {
   constructor(options: UpdateServiceOptions) {
     this.options = options;
     this.updater = options.updater ?? autoUpdater;
-    this.channel = updateChannelFromArgs(options.argv ?? process.argv);
+    this.channel = updateChannelFromArgs(options.argv ?? process.argv, options.appVersion);
     this.feedUrl = updateFeedUrl(this.channel, options.platform ?? process.platform, options.arch ?? process.arch);
     const supported = options.isPackaged && this.feedUrl !== null;
     this.state = {

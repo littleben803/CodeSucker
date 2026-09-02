@@ -20,6 +20,22 @@ assert.equal(updateFeedUrl('stable', 'darwin', 'ia32'), null, '不受支持的�
 assert.equal(updateChannelFromArgs([]), 'stable', '正式渠道必须默认使用 stable');
 assert.equal(updateChannelFromArgs(['--update-channel=beta']), 'beta');
 assert.equal(updateChannelFromArgs(['--update-channel=nightly']), 'stable', '未知渠道必须回落到 stable');
+assert.equal(
+  updateChannelFromArgs([], '1.0.1-beta.2'),
+  'beta',
+  'Beta 安装版升级重启后必须自动恢复 beta 通道',
+);
+assert.equal(updateChannelFromArgs([], '1.0.1'), 'stable', '正式版本无参数时必须使用 stable');
+assert.equal(
+  updateChannelFromArgs(['--update-channel=stable'], '1.0.1-beta.2'),
+  'stable',
+  '显式 stable 参数必须能覆盖版本推导结果',
+);
+assert.equal(
+  updateChannelFromArgs(['--update-channel=beta'], '1.0.1'),
+  'beta',
+  '显式 beta 参数必须能覆盖正式版本默认通道',
+);
 
 const updateServiceSource = readSource('src/main/update-service.ts');
 const mainSource = readSource('src/main/index.ts');
