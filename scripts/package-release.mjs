@@ -35,16 +35,15 @@ const CODEDOC_ELECTRON_CACHE = process.platform === 'darwin'
   ? join(homedir(), 'Library', 'Caches', 'CodeDoc', 'electron')
   : join(homedir(), '.cache', 'codedoc', 'electron');
 const BUILDER_BINARIES_BASE_URL = 'https://github.com/electron-userland/electron-builder-binaries/releases/download';
-const SEVEN_ZIP_CHECKSUMS = Object.freeze({
-  '7zip-linux-ia32.tar.gz': '24a5d5bfe81506d0bfe21a812588119ae3deb757e8ba084b2339d8e899543686',
-  '7zip-darwin-arm64.tar.gz': '496a341abe210aae1a25bc202ee97f6de6c76a3dc80f91d96616be05502d72c1',
-  '7zip-darwin-x86_64.tar.gz': '496a341abe210aae1a25bc202ee97f6de6c76a3dc80f91d96616be05502d72c1',
-  '7zip-linux-arm64.tar.gz': '5aff5034206b78f8261249ceb922b5c7e04c9bdb733784d8f5b6df9732cf1f79',
-  '7zip-linux-x64.tar.gz': 'd151bb44b2a9d9bfc52813ce4cac042916394a0ab8a56bd5d221a5dc9ef8d5d7',
-  '7zip-win-arm64.tar.gz': 'ac3f38f96ce7498096a123bb0862dd6db863a7353c9e9e1c15f73c183adf6620',
-  '7zip-win-ia32.tar.gz': 'ac3f38f96ce7498096a123bb0862dd6db863a7353c9e9e1c15f73c183adf6620',
-  '7zip-win-x64.tar.gz': 'be071f15bd6da2f78fe81c6ddef2009b0c4d8a51f36b780cb806c7e6df95e1b3',
-});
+const RELEASE_BUILD_INPUTS = Object.freeze([
+  'package.json',
+  'package-lock.json',
+  'packages/app',
+  'packages/core',
+  'LICENSE',
+  'NOTICE',
+  'THIRD_PARTY_NOTICES.txt',
+]);
 
 export const TARGETS = Object.freeze({
   'mac-arm64': Object.freeze({
@@ -184,43 +183,18 @@ function defaultElectronBuilderCacheRoot() {
   return join(homedir(), '.cache', 'electron-builder');
 }
 
-function sevenZipArtifactName(platform, arch) {
-  if (platform === 'darwin') return `7zip-darwin-${arch === 'arm64' ? 'arm64' : 'x86_64'}.tar.gz`;
-  if (platform === 'linux' && ['arm64', 'ia32', 'x64'].includes(arch)) return `7zip-linux-${arch}.tar.gz`;
-  if (platform === 'win32' && ['arm64', 'ia32', 'x64'].includes(arch)) return `7zip-win-${arch}.tar.gz`;
-  throw new Error(`当前主机没有受支持的 7zip 工具缓存：${platform}/${arch}`);
-}
-
-export function windowsBuilderToolsetSpecs(
-  cacheRoot = defaultElectronBuilderCacheRoot(),
-  host = { platform: process.platform, arch: process.arch },
-) {
-  const sevenZipFile = sevenZipArtifactName(host.platform, host.arch);
-  const definitions = [
-    {
-      label: '7zip 解压工具',
-      releaseName: '7zip@1.0.0',
-      artifactName: sevenZipFile,
-      expectedSha256: SEVEN_ZIP_CHECKSUMS[sevenZipFile],
-    },
-    {
-      label: 'NSIS 编译器',
-      releaseName: 'nsis-3.0.4.1',
-      artifactName: 'nsis-3.0.4.1.7z',
-      expectedSha256: '9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa',
-    },
-    {
-      label: 'NSIS 插件与资源',
-      releaseName: 'nsis-resources-3.4.1',
-      artifactName: 'nsis-resources-3.4.1.7z',
-      expectedSha256: '593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103',
-    },
-  ];
-  return definitions.map((definition) => ({
+export function windowsBuilderToolsetSpecs(cacheRoot = defaultElectronBuilderCacheRoot()) {
+  const definition = {
+    label: 'NSIS 3.12 统一工具包',
+    releaseName: 'nsis@1.2.1',
+    artifactName: 'nsis-bundle-3.12.tar.gz',
+    expectedSha256: '56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4',
+  };
+  return [{
     ...definition,
     url: `${BUILDER_BINARIES_BASE_URL}/${definition.releaseName}/${definition.artifactName}`,
     outputPath: join(cacheRoot, definition.releaseName, definition.artifactName),
-  }));
+  }];
 }
 
 function defaultElectronCacheRoots() {
@@ -415,21 +389,79 @@ function assertCleanRepository(repositoryRoot, label) {
   }
 }
 
-async function assertArchiveTargetsAbsent(websiteRoot, channel, version, targetIds) {
-  for (const targetId of targetIds) {
-    const target = TARGETS[targetId];
-    const archiveDirectory = join(
-      websiteRoot, 'ops', 'app-release', '.release-work', APP_SLUG, channel,
-      target.platform, target.arch, version,
-    );
-    const recordPath = join(
+export function classifyArchivePresence(archiveExists, recordExists) {
+  if (!archiveExists && !recordExists) return 'pending';
+  if (archiveExists && recordExists) return 'completed-candidate';
+  return 'inconsistent';
+}
+
+function targetArchivePaths(websiteRoot, channel, version, target) {
+  const archiveDirectory = join(
+    websiteRoot, 'ops', 'app-release', '.release-work', APP_SLUG, channel,
+    target.platform, target.arch, version,
+  );
+  return {
+    archiveDirectory,
+    manifestPath: join(archiveDirectory, 'release-manifest.json'),
+    recordPath: join(
       websiteRoot, 'ops', 'app-release', 'releases', APP_SLUG, channel, version,
       `${target.platform}-${target.arch}.prepared.json`,
-    );
-    if (await pathExists(archiveDirectory) || await pathExists(recordPath)) {
-      throw new Error(`拒绝覆盖已有归档或发布记录：${targetId} ${version}`);
-    }
+    ),
+  };
+}
+
+function assertReusableBuildInputs(sourceCommit, currentCommit) {
+  const ancestry = spawnSync('git', ['merge-base', '--is-ancestor', sourceCommit, currentCommit], { cwd: REPO_ROOT });
+  if (ancestry.status !== 0) {
+    throw new Error(`已有归档源码 ${sourceCommit} 不是当前源码 ${currentCommit} 的祖先，不能自动复用`);
   }
+  const changed = runCapture(
+    'git', ['diff', '--name-only', `${sourceCommit}..${currentCommit}`, '--', ...RELEASE_BUILD_INPUTS],
+  ).stdout.trim();
+  if (changed) {
+    throw new Error(`已有归档之后产品构建输入发生变化，不能复用：${changed.split('\n').join(', ')}`);
+  }
+}
+
+export async function resolveResumableTargets({ websiteRoot, channel, version, targetIds, currentCommit }) {
+  const prepareScript = join(websiteRoot, 'ops', 'app-release', 'prepare-release.mjs');
+  const pendingTargetIds = [];
+  const completed = [];
+  for (const targetId of targetIds) {
+    const target = TARGETS[targetId];
+    const paths = targetArchivePaths(websiteRoot, channel, version, target);
+    const state = classifyArchivePresence(
+      await pathExists(paths.archiveDirectory),
+      await pathExists(paths.recordPath),
+    );
+    if (state === 'pending') {
+      pendingTargetIds.push(targetId);
+      continue;
+    }
+    if (state === 'inconsistent') {
+      throw new Error(`已有目标状态不完整，拒绝覆盖：${targetId} ${version}（归档与 prepared 记录必须同时存在）`);
+    }
+
+    const record = JSON.parse(await readFile(paths.recordPath, 'utf8'));
+    const manifest = JSON.parse(await readFile(paths.manifestPath, 'utf8'));
+    const identityMatches = record.recordType === 'prepared-release'
+      && record.appSlug === APP_SLUG
+      && record.version === version
+      && record.channel === channel
+      && record.target?.platform === target.platform
+      && record.target?.arch === target.arch;
+    if (!identityMatches) throw new Error(`已有 prepared 记录身份不匹配：${targetId} ${version}`);
+    if (!record.source?.commit || manifest.source?.commit !== record.source.commit) {
+      throw new Error(`已有归档与 prepared 记录的源码 Commit 不一致：${targetId} ${version}`);
+    }
+    runCapture(process.execPath, [prepareScript, 'checklist', '--manifest', paths.manifestPath], { cwd: websiteRoot });
+    assertReusableBuildInputs(record.source.commit, currentCommit);
+    completed.push({ targetId, sourceCommit: record.source.commit, archiveDirectory: paths.archiveDirectory });
+    process.stdout.write(
+      `[package] 已有归档复核通过，跳过 ${target.label}：${paths.archiveDirectory}\n`,
+    );
+  }
+  return { pendingTargetIds, completed };
 }
 
 function assertMacReleaseEnvironment(notaryProfile) {
@@ -666,7 +698,8 @@ export function builderCommand(target, outputDirectory, electronDist) {
   return {
     executable,
     args: [
-      '--win', 'nsis', '--x64', '--publish', 'never', `--config.electronDist=${electronDist}`,
+      '--win', 'nsis', '--x64', '--publish', 'never', '--config.toolsets.nsis=1.2.1',
+      `--config.electronDist=${electronDist}`,
       `--config.directories.output=${outputDirectory}`,
     ],
   };
@@ -788,10 +821,16 @@ export async function main(argv = process.argv.slice(2)) {
   await access(registry);
   assertCleanRepository(REPO_ROOT, 'CodeSucker');
   assertCleanRepository(options.websiteRoot, 'IdeaBoxWebsite');
-  await assertArchiveTargetsAbsent(options.websiteRoot, channel, version, targetIds);
-  const electronDistributions = await resolveElectronDistributions(targetIds);
-  await verifyWindowsBuilderToolsets(targetIds);
-  if (targetIds.some((id) => TARGETS[id].platform === 'mac')) {
+  const { pendingTargetIds, completed } = await resolveResumableTargets({
+    websiteRoot: options.websiteRoot, channel, version, targetIds, currentCommit: commit,
+  });
+  if (pendingTargetIds.length === 0) {
+    process.stdout.write('\n[package] 所选目标均已有通过复核的归档，无需重复构建。\n');
+    return;
+  }
+  const electronDistributions = await resolveElectronDistributions(pendingTargetIds);
+  await verifyWindowsBuilderToolsets(pendingTargetIds);
+  if (pendingTargetIds.some((id) => TARGETS[id].platform === 'mac')) {
     assertMacReleaseEnvironment(options.notaryProfile);
   }
 
@@ -802,8 +841,8 @@ export async function main(argv = process.argv.slice(2)) {
     logPath: join(sessionDirectory, 'npm-verify.log'),
   });
 
-  const archives = [];
-  for (const targetId of targetIds) {
+  const archives = completed.map((entry) => entry.archiveDirectory);
+  for (const targetId of pendingTargetIds) {
     archives.push(await buildTarget({
       target: TARGETS[targetId],
       version,
@@ -815,7 +854,9 @@ export async function main(argv = process.argv.slice(2)) {
       electronDist: electronDistributions.get(targetId),
     }));
   }
-  process.stdout.write('\n[package] 全部本地目标已完成。未上传服务器或 OSS。\n');
+  process.stdout.write(
+    `\n[package] 全部本地目标已完成（复用 ${completed.length}，新建 ${pendingTargetIds.length}）。未上传服务器或 OSS。\n`,
+  );
   for (const archive of archives) process.stdout.write(`- ${archive}\n`);
 }
 

@@ -51,7 +51,7 @@ CodeDoc 专用缓存默认位于：
 ~/Library/Caches/CodeDoc/electron/
 ```
 
-Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时，脚本还会在构建前检查当前宿主机的 7zip、NSIS 编译器和 NSIS 资源归档。它们必须位于 Electron Builder 的标准缓存目录并通过脚本内固定 SHA-256 校验；缺失时同样以红字给出官方 `curl` 命令。下载归档即可，无需手动解压，Electron Builder 会从本地归档安全解压。
+Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时，脚本固定使用 Electron Builder toolset `nsis@1.2.1` 的 NSIS 3.12 unified bundle，避免 Apple Silicon 执行旧版 Intel `makensis` 时依赖 Rosetta。统一归档必须位于 Electron Builder 标准缓存目录并通过固定 SHA-256 校验；缺失时以红字给出官方 `curl` 命令。下载归档即可，无需手动解压。
 
 通道与版本必须匹配：
 
@@ -64,8 +64,8 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 
 脚本在真正构建前显示版本、通道、Commit、目标和归档仓库，并提示 `开始本地打包与归档？[Y/n]`。直接回车或输入 `y` 继续，输入 `n` 取消；默认选择 `y`。确认后执行：
 
-1. 检查源码与归档目标不存在冲突；
-2. 查找并校验全部所选目标的 Electron 本地缓存；选择 Windows 时同时校验 7zip、NSIS 和 NSIS 资源缓存；
+1. 检查源码与归档状态；完整且仍兼容当前构建输入的已有目标会复核后跳过；
+2. 查找并校验全部所选目标的 Electron 本地缓存；选择 Windows 时同时校验 NSIS 3.12 unified bundle；
 3. 检查 macOS 签名身份、公证 profile 和 Gatekeeper；
 4. 运行完整 `npm run verify`；
 5. 在互相隔离的临时目录依次构建三个目标；
@@ -74,7 +74,13 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 8. 调用 IdeaBoxWebsite 的发布 checklist；
 9. 写入二进制归档、SHA-256、构建日志、验证日志与 Git-safe prepared 记录。
 
-任何目标失败都会停止后续目标，并保留临时目录和已完成目标，方便审计。脚本拒绝覆盖同版本同目标的既有归档；修复后应使用新版本号重新构建。
+任何目标失败都会停止后续目标，并保留临时目录和已完成目标，方便审计。重新执行时，脚本支持断点续打：
+
+- 归档目录与 `*.prepared.json` 同时存在时，重新运行 checklist 并校验源码兼容性；
+- 从原构建 Commit 到当前 Commit 只修改打包脚本或文档时，已有目标会自动跳过；
+- `packages/app`、`packages/core`、根 `package.json`、`package-lock.json` 或随包许可证发生变化时，拒绝复用旧包；
+- 只有归档或只有 prepared 记录属于不完整状态，脚本会停止，不会覆盖历史；
+- 尚未归档的目标继续构建，全部目标已经完成时正常结束。
 
 ## 归档位置
 
