@@ -55,7 +55,7 @@ Options:
   --targets <all|list>          Comma-separated target ids; defaults to all three.
   --website-root <directory>    IdeaBoxWebsite checkout; defaults to the sibling repository.
   --notary-profile <name>       notarytool Keychain profile; defaults to ideabox-notary.
-  --yes                         Skip the final local BUILD confirmation.
+  --yes                         Skip the final local y/n confirmation.
   --dry-run                     Print the plan without building or writing archives.
   --help                        Show this help.
 
@@ -496,6 +496,13 @@ function formatPlan({ version, channel, targetIds, websiteRoot, commit }) {
   ].join('\n');
 }
 
+export function parseBuildConfirmation(value) {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '' || normalized === 'y') return true;
+  if (normalized === 'n') return false;
+  return undefined;
+}
+
 async function resolveInteractiveOptions(options, version) {
   if (options.channel && options.targets) {
     return { channel: options.channel, targetIds: parseTargetSelection(options.targets) };
@@ -523,8 +530,12 @@ async function confirmBuild(options, plan) {
   if (options.yes) return true;
   const readline = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const answer = await readline.question('输入 BUILD 开始本地打包与归档：');
-    return answer === 'BUILD';
+    while (true) {
+      const answer = await readline.question('开始本地打包与归档？[Y/n]：');
+      const confirmation = parseBuildConfirmation(answer);
+      if (confirmation !== undefined) return confirmation;
+      process.stdout.write('请输入 y 或 n；直接回车默认为 y。\n');
+    }
   } finally {
     readline.close();
   }

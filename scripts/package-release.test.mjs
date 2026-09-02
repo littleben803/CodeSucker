@@ -5,6 +5,7 @@ import {
   TARGETS,
   createReleaseManifest,
   defaultChannelForVersion,
+  parseBuildConfirmation,
   parsePackageArgs,
   parseTargetSelection,
   validateChannelVersion,
@@ -16,6 +17,15 @@ test('interactive package arguments keep local writes gated by confirmation', ()
   assert.equal(options.targets, undefined);
   assert.equal(options.yes, false);
   assert.equal(options.dryRun, false);
+});
+
+test('build confirmation defaults to yes and accepts y/n case-insensitively', () => {
+  assert.equal(parseBuildConfirmation(''), true);
+  assert.equal(parseBuildConfirmation('y'), true);
+  assert.equal(parseBuildConfirmation('Y'), true);
+  assert.equal(parseBuildConfirmation('n'), false);
+  assert.equal(parseBuildConfirmation('N'), false);
+  assert.equal(parseBuildConfirmation('1'), undefined);
 });
 
 test('non-interactive arguments select a channel and all targets', () => {
