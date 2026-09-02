@@ -1,10 +1,19 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import {
   TARGETS,
+  builderCommand,
   createReleaseManifest,
   defaultChannelForVersion,
+  electronArtifactName,
+  electronDownloadCommand,
+  electronDownloadUrl,
+  findVerifiedElectronArtifact,
   parseBuildConfirmation,
   parsePackageArgs,
   parseTargetSelection,
@@ -39,6 +48,45 @@ test('non-interactive arguments select a channel and all targets', () => {
 test('target selection is deterministic and rejects unknown targets', () => {
   assert.deepEqual(parseTargetSelection('mac-x64,mac-arm64,mac-x64'), ['mac-x64', 'mac-arm64']);
   assert.throws(() => parseTargetSelection('linux-x64'), /未知构建目标/);
+});
+
+test('Electron runtime names and curl commands match every packaging target', () => {
+  assert.equal(electronArtifactName(TARGETS['mac-arm64'], '43.2.0'), 'electron-v43.2.0-darwin-arm64.zip');
+  assert.equal(electronArtifactName(TARGETS['mac-x64'], '43.2.0'), 'electron-v43.2.0-darwin-x64.zip');
+  assert.equal(electronArtifactName(TARGETS['win-x64'], '43.2.0'), 'electron-v43.2.0-win32-x64.zip');
+  assert.equal(
+    electronDownloadUrl(TARGETS['win-x64'], '43.2.0'),
+    'https://github.com/electron/electron/releases/download/v43.2.0/electron-v43.2.0-win32-x64.zip',
+  );
+  const command = electronDownloadCommand(TARGETS['mac-arm64'], '43.2.0', '/tmp/codedoc-electron');
+  assert.match(command, /^curl --fail --location --progress-bar --create-dirs /);
+  assert.match(command, /electron-v43\.2\.0-darwin-arm64\.zip/);
+  const builder = builderCommand(TARGETS['mac-arm64'], '/tmp/output', '/tmp/electron-arm64.zip');
+  assert.ok(builder.args.includes('--config.electronDist=/tmp/electron-arm64.zip'));
+});
+
+test('Electron runtime cache is accepted only when SHA-256 matches', async () => {
+  const validRoot = await mkdtemp(join(tmpdir(), 'codedoc-electron-valid-'));
+  const invalidRoot = await mkdtemp(join(tmpdir(), 'codedoc-electron-invalid-'));
+  const artifactName = 'electron-v43.2.0-darwin-arm64.zip';
+  const payload = Buffer.from('verified Electron fixture');
+  const nestedDirectory = join(validRoot, 'content-addressed');
+  await mkdir(nestedDirectory);
+  await writeFile(join(nestedDirectory, artifactName), payload);
+  await writeFile(join(invalidRoot, artifactName), 'tampered');
+  const expectedSha256 = createHash('sha256').update(payload).digest('hex');
+
+  const valid = await findVerifiedElectronArtifact({
+    artifactName, expectedSha256, cacheRoots: [invalidRoot, validRoot],
+  });
+  assert.equal(valid.path, join(nestedDirectory, artifactName));
+  assert.equal(valid.invalid.length, 1);
+
+  const missing = await findVerifiedElectronArtifact({
+    artifactName, expectedSha256, cacheRoots: [invalidRoot],
+  });
+  assert.equal(missing.path, null);
+  assert.match(missing.invalid[0].reason, /SHA-256 不匹配/);
 });
 
 test('release channel must match the committed application version', () => {

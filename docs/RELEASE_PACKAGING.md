@@ -43,10 +43,15 @@ npm run package:release -- --channel beta --targets win-x64 --yes
 4. macOS 目标需要本机存在 Developer ID Application，并已保存 `ideabox-notary` Keychain profile。
 5. Gatekeeper 必须开启。
 
-首次在 macOS 上交叉构建 Windows 安装包时，Electron Builder 会下载官方
-Electron / NSIS 工具链。若代理或网络导致下载长时间无进展，可按
-`Control-C` 中止，修复网络后重新执行；目标未通过校验前，脚本不会生成该
-版本的官网归档记录。
+打包脚本不会让 Electron Builder 隐式下载目标平台的 Electron Runtime。它会优先查找 CodeDoc 专用缓存和 Electron 标准缓存，并使用仓库中锁定版本的 `node_modules/electron/checksums.json` 校验 SHA-256。只要任一所选目标缺少有效缓存，脚本就会在构建前停止，以红字显示缺失文件、期望哈希和可复制的官方 `curl` 下载命令。下载完成后重新运行即可。
+
+CodeDoc 专用缓存默认位于：
+
+```text
+~/Library/Caches/CodeDoc/electron/
+```
+
+Windows NSIS 等 Electron Builder 辅助工具不属于 Electron Runtime；首次交叉构建时仍可能由 Electron Builder 单独准备。如果后续出现辅助工具下载错误，应按实际工具另行处理，不能通过关闭 TLS 校验绕过。
 
 通道与版本必须匹配：
 
@@ -60,13 +65,14 @@ Electron / NSIS 工具链。若代理或网络导致下载长时间无进展，�
 脚本在真正构建前显示版本、通道、Commit、目标和归档仓库，并提示 `开始本地打包与归档？[Y/n]`。直接回车或输入 `y` 继续，输入 `n` 取消；默认选择 `y`。确认后执行：
 
 1. 检查源码与归档目标不存在冲突；
-2. 检查 macOS 签名身份、公证 profile 和 Gatekeeper；
-3. 运行完整 `npm run verify`；
-4. 在互相隔离的临时目录依次构建三个目标；
-5. macOS 校验 Bundle ID、版本、单架构、深层签名、公证票据和系统分发策略；
-6. Windows 校验 EXE 体积和 MZ/PE 文件头；
-7. 调用 IdeaBoxWebsite 的发布 checklist；
-8. 写入二进制归档、SHA-256、构建日志、验证日志与 Git-safe prepared 记录。
+2. 查找并校验全部所选目标的 Electron 本地缓存；
+3. 检查 macOS 签名身份、公证 profile 和 Gatekeeper；
+4. 运行完整 `npm run verify`；
+5. 在互相隔离的临时目录依次构建三个目标；
+6. macOS 校验 Bundle ID、版本、单架构、深层签名、公证票据和系统分发策略；
+7. Windows 校验 EXE 体积和 MZ/PE 文件头；
+8. 调用 IdeaBoxWebsite 的发布 checklist；
+9. 写入二进制归档、SHA-256、构建日志、验证日志与 Git-safe prepared 记录。
 
 任何目标失败都会停止后续目标，并保留临时目录和已完成目标，方便审计。脚本拒绝覆盖同版本同目标的既有归档；修复后应使用新版本号重新构建。
 

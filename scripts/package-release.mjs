@@ -5,6 +5,7 @@ import { createReadStream, createWriteStream } from 'node:fs';
 import {
   access,
   copyFile,
+  lstat,
   mkdir,
   mkdtemp,
   open,
@@ -13,7 +14,7 @@ import {
   stat,
   writeFile,
 } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
@@ -23,11 +24,16 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(SCRIPT_DIR, '..');
 const APP_ROOT = join(REPO_ROOT, 'packages', 'app');
 const APP_PACKAGE_PATH = join(APP_ROOT, 'package.json');
+const ELECTRON_PACKAGE_PATH = join(REPO_ROOT, 'node_modules', 'electron', 'package.json');
+const ELECTRON_CHECKSUMS_PATH = join(REPO_ROOT, 'node_modules', 'electron', 'checksums.json');
 const DEFAULT_WEBSITE_ROOT = resolve(REPO_ROOT, '..', 'IdeaBoxWebsite');
 const DEFAULT_NOTARY_PROFILE = 'ideabox-notary';
 const APP_SLUG = 'codedoc';
 const APP_NAME = 'CodeDoc';
 const BUNDLE_ID = 'com.ideaboxapps.codedoc';
+const CODEDOC_ELECTRON_CACHE = process.platform === 'darwin'
+  ? join(homedir(), 'Library', 'Caches', 'CodeDoc', 'electron')
+  : join(homedir(), '.cache', 'codedoc', 'electron');
 
 export const TARGETS = Object.freeze({
   'mac-arm64': Object.freeze({
@@ -127,6 +133,123 @@ export function parseTargetSelection(value = 'all') {
   const unknown = ids.filter((id) => !TARGETS[id]);
   if (unknown.length > 0) throw new Error(`未知构建目标：${unknown.join(', ')}`);
   return ids;
+}
+
+export function electronArtifactName(target, electronVersion) {
+  const platform = target.platform === 'mac' ? 'darwin' : target.platform === 'win' ? 'win32' : null;
+  if (!platform) throw new Error(`不支持的 Electron 目标平台：${target.platform}`);
+  return `electron-v${electronVersion}-${platform}-${target.arch}.zip`;
+}
+
+export function electronDownloadUrl(target, electronVersion) {
+  const artifactName = electronArtifactName(target, electronVersion);
+  return `https://github.com/electron/electron/releases/download/v${electronVersion}/${artifactName}`;
+}
+
+function shellQuote(value) {
+  return `'${value.replaceAll("'", `'"'"'`)}'`;
+}
+
+export function electronDownloadCommand(target, electronVersion, cacheDirectory = CODEDOC_ELECTRON_CACHE) {
+  const artifactName = electronArtifactName(target, electronVersion);
+  const outputPath = join(cacheDirectory, artifactName);
+  return [
+    'curl', '--fail', '--location', '--progress-bar', '--create-dirs',
+    '--output', shellQuote(outputPath), shellQuote(electronDownloadUrl(target, electronVersion)),
+  ].join(' ');
+}
+
+function defaultElectronCacheRoots() {
+  const roots = [CODEDOC_ELECTRON_CACHE];
+  if (process.platform === 'darwin') roots.push(join(homedir(), 'Library', 'Caches', 'electron'));
+  else if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
+    roots.push(join(process.env.LOCALAPPDATA, 'electron', 'Cache'));
+  } else roots.push(join(homedir(), '.cache', 'electron'));
+  return [...new Set(roots)];
+}
+
+async function findFilesNamed(root, fileName, maximumDepth = 3, depth = 0) {
+  let entries;
+  try {
+    entries = await readdir(root, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  const matches = [];
+  for (const entry of entries) {
+    const entryPath = join(root, entry.name);
+    if (entry.isFile() && entry.name === fileName) matches.push(entryPath);
+    else if (entry.isDirectory() && depth < maximumDepth) {
+      matches.push(...await findFilesNamed(entryPath, fileName, maximumDepth, depth + 1));
+    }
+  }
+  return matches;
+}
+
+export async function findVerifiedElectronArtifact({ artifactName, expectedSha256, cacheRoots }) {
+  const invalid = [];
+  for (const cacheRoot of cacheRoots) {
+    const candidates = await findFilesNamed(cacheRoot, artifactName);
+    for (const candidate of candidates) {
+      const candidateStat = await lstat(candidate);
+      if (!candidateStat.isFile() || candidateStat.isSymbolicLink()) {
+        invalid.push({ path: candidate, reason: '不是普通文件' });
+        continue;
+      }
+      const actualSha256 = await sha256(candidate);
+      if (actualSha256 === expectedSha256) return { path: candidate, invalid };
+      invalid.push({ path: candidate, reason: `SHA-256 不匹配（实际 ${actualSha256}）` });
+    }
+  }
+  return { path: null, invalid };
+}
+
+function red(message) {
+  return process.stderr.isTTY ? `\u001b[31m${message}\u001b[0m` : message;
+}
+
+export async function resolveElectronDistributions(targetIds) {
+  const electronPackage = JSON.parse(await readFile(ELECTRON_PACKAGE_PATH, 'utf8'));
+  const checksums = JSON.parse(await readFile(ELECTRON_CHECKSUMS_PATH, 'utf8'));
+  const electronVersion = electronPackage.version;
+  if (typeof electronVersion !== 'string' || !electronVersion) throw new Error('无法读取 Electron 版本');
+  const cacheRoots = defaultElectronCacheRoots();
+  const distributions = new Map();
+  const missing = [];
+
+  for (const targetId of targetIds) {
+    const target = TARGETS[targetId];
+    const artifactName = electronArtifactName(target, electronVersion);
+    const expectedSha256 = checksums[artifactName];
+    if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+      throw new Error(`Electron 官方校验清单缺少 ${artifactName}`);
+    }
+    const result = await findVerifiedElectronArtifact({ artifactName, expectedSha256, cacheRoots });
+    if (result.path) {
+      distributions.set(targetId, result.path);
+      process.stdout.write(`[package] Electron 本地缓存校验通过：${target.label} -> ${result.path}\n`);
+    } else {
+      missing.push({ target, artifactName, expectedSha256, invalid: result.invalid });
+    }
+  }
+
+  if (missing.length > 0) {
+    const lines = ['缺少打包所需的已校验 Electron 本地缓存，尚未开始构建。'];
+    for (const item of missing) {
+      lines.push('', `${item.target.label}：${item.artifactName}`);
+      for (const invalidEntry of item.invalid) {
+        lines.push(`已拒绝缓存：${invalidEntry.path}（${invalidEntry.reason}）`);
+      }
+      lines.push(`期望 SHA-256：${item.expectedSha256}`);
+      lines.push('请执行：');
+      lines.push(electronDownloadCommand(item.target, electronVersion));
+    }
+    lines.push('', '下载完成后重新执行 npm run package:release；脚本会先校验 SHA-256，再开始打包。');
+    process.stderr.write(`${red(lines.join('\n'))}\n`);
+    throw new Error('Electron 本地缓存不完整');
+  }
+  return distributions;
 }
 
 function runCapture(command, args, options = {}) {
@@ -430,24 +553,28 @@ async function archiveTarget({ websiteRoot, target, version, channel, commit, re
   return archiveDirectory;
 }
 
-function builderCommand(target, outputDirectory) {
+export function builderCommand(target, outputDirectory, electronDist) {
   const executable = join(REPO_ROOT, 'node_modules', '.bin', 'electron-builder');
   if (target.platform === 'mac') {
     return {
       executable,
       args: [
         '--mac', 'dmg', 'zip', `--${target.arch}`, '--publish', 'never',
-        '--config.mac.forceCodeSigning=true', `--config.directories.output=${outputDirectory}`,
+        '--config.mac.forceCodeSigning=true', `--config.electronDist=${electronDist}`,
+        `--config.directories.output=${outputDirectory}`,
       ],
     };
   }
   return {
     executable,
-    args: ['--win', 'nsis', '--x64', '--publish', 'never', `--config.directories.output=${outputDirectory}`],
+    args: [
+      '--win', 'nsis', '--x64', '--publish', 'never', `--config.electronDist=${electronDist}`,
+      `--config.directories.output=${outputDirectory}`,
+    ],
   };
 }
 
-async function buildTarget({ target, version, channel, commit, websiteRoot, notaryProfile, sessionDirectory }) {
+async function buildTarget({ target, version, channel, commit, websiteRoot, notaryProfile, sessionDirectory, electronDist }) {
   const targetDirectory = join(sessionDirectory, target.id);
   const outputDirectory = join(targetDirectory, 'output');
   await mkdir(outputDirectory, { recursive: true });
@@ -455,7 +582,7 @@ async function buildTarget({ target, version, channel, commit, websiteRoot, nota
   if (target.platform === 'mac') {
     previousNotaryIds = new Set((await notaryHistory(notaryProfile)).map((entry) => entry.id));
   }
-  const command = builderCommand(target, outputDirectory);
+  const command = builderCommand(target, outputDirectory, electronDist);
   const buildLog = join(sessionDirectory, `${target.id}-build.log`);
   const environment = {
     ...process.env,
@@ -564,6 +691,7 @@ export async function main(argv = process.argv.slice(2)) {
   assertCleanRepository(REPO_ROOT, 'CodeSucker');
   assertCleanRepository(options.websiteRoot, 'IdeaBoxWebsite');
   await assertArchiveTargetsAbsent(options.websiteRoot, channel, version, targetIds);
+  const electronDistributions = await resolveElectronDistributions(targetIds);
   if (targetIds.some((id) => TARGETS[id].platform === 'mac')) {
     assertMacReleaseEnvironment(options.notaryProfile);
   }
@@ -585,6 +713,7 @@ export async function main(argv = process.argv.slice(2)) {
       websiteRoot: options.websiteRoot,
       notaryProfile: options.notaryProfile,
       sessionDirectory,
+      electronDist: electronDistributions.get(targetId),
     }));
   }
   process.stdout.write('\n[package] 全部本地目标已完成。未上传服务器或 OSS。\n');
