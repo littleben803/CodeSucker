@@ -2,11 +2,11 @@
 
 ## 目标
 
-本文件定义 CodeDoc v0.4.4 的最低可复现条件、验证命令和暂不跨越的分发边界。
+本文件定义 CodeDoc 当前版本的最低可复现条件、验证命令和分发边界。
 
 ## 产品与工程基线
 
-- 产品版本：`0.4.4`
+- 产品版本：由根目录及两个 workspace 的 `package.json` 统一声明，并由 `npm run version:check` 校验
 - 产品名称：`CodeDoc`
 - App ID：`com.ideaboxapps.codedoc`
 - npm workspace：`@codedoc/app`、`@codedoc/core`
@@ -28,6 +28,7 @@ npm run dev
 npm run audit:runtime
 npm run audit:all
 npm run verify
+npm run package:release
 npm run perf
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:arm64
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
@@ -60,7 +61,7 @@ CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装�
 - 安装前必须等待扫描、处理或导出任务结束；
 - 扫描、清洗、脱敏、排版和导出保持完全离线，更新请求不携带项目内容。
 
-更新架构、OSS/CDN 路径、发布顺序和证书续期方案详见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
+一键本地打包和归档详见 [`RELEASE_PACKAGING.md`](RELEASE_PACKAGING.md)。更新架构、OSS/CDN 路径、发布顺序和证书续期方案详见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
 
 ## 安全与依赖基线
 
@@ -82,7 +83,7 @@ CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装�
 1. 用户可见支持渠道。
 2. CodeDoc 新图标及其平台生成资产。
 3. 官网直接分发所需的 Developer ID Application 证书和公证凭据；当前检测到的 Apple Distribution 证书不能替代该用途。
-4. Windows 正式版本的代码签名方案。
+4. Windows 安装包仅用于小范围内部下载，不启用应用内更新，也不要求代码签名；若未来扩大公开分发范围，必须重新评估 Windows 签名方案。
 
 任何密钥、证书、私钥、公证密码或 Apple 凭据都不得提交到仓库。
 

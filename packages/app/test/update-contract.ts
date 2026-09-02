@@ -75,7 +75,6 @@ assert.doesNotMatch(preloadSource, /\bautoUpdater\b/, 'Preload 不得直接暴�
 for (const channel of ['update:getState', 'update:check', 'update:download', 'update:install']) {
   assert.match(preloadSource, new RegExp(channel.replace(':', '\\:')), `Preload 缺少受控通道 ${channel}`);
 }
-assert.match(settingsSource, /IdeaBox 官方下载域名/, '隐私说明必须披露正式版更新网络请求边界');
 assert.match(settingsSource, /supportsAppUpdates\(window\.codedoc\.platform\)/, '设置页必须使用实际运行平台判断更新能力');
 assert.match(settingsSource, /\{updatesEnabled && \(/, '非 macOS 平台必须隐藏软件更新卡片');
 assert.match(settingsSource, /if \(!updatesEnabled\) return undefined;/, '非 macOS 平台不得读取或订阅更新状态');

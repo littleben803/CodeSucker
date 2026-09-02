@@ -139,9 +139,10 @@ CodeDoc 使用 Semantic Versioning。根包、桌面应用、core 包和 lockfil
 npm run version:check                    # 检查所有版本字段一致
 npm run version:set -- 0.2.0-beta.1      # 统一设置产品版本
 npm run verify                           # 发布前完整校验
+npm run package:release                  # 交互构建并归档三平台发布候选包
 ```
 
-新的正式发布仓库尚未确定。在维护者地址、签名和公证方案确认前，不应创建面向用户的正式 Release。完整版本规则见 [VERSIONING.md](VERSIONING.md)，用户可见变化记录在 [CHANGELOG.md](CHANGELOG.md)。
+本地发布打包、签名公证检查、三目标归档和安全边界见 [docs/RELEASE_PACKAGING.md](docs/RELEASE_PACKAGING.md)。完整版本规则见 [VERSIONING.md](VERSIONING.md)，用户可见变化记录在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 参与贡献
 

@@ -1,6 +1,6 @@
 {
   "name": "@codedoc/app",
-  "version": "1.0.1-beta.2",
+  "version": "1.0.0",
   "private": true,
   "description": "离线生成符合软件著作权申报规范的源程序文档",
   "license": "Apache-2.0",
@@ -40,6 +40,10 @@
     ],
     "mac": {
       "icon": "build/icon.icns",
+      "electronLanguages": [
+        "zh_CN",
+        "en"
+      ],
       "category": "public.app-category.developer-tools",
       "hardenedRuntime": true,
       "entitlements": "build/entitlements.mac.plist",
@@ -53,6 +57,10 @@
     },
     "win": {
       "icon": "build/icon.ico",
+      "electronLanguages": [
+        "zh-CN",
+        "en-US"
+      ],
       "target": "nsis",
       "artifactName": "${productName}-${version}-win-${arch}.${ext}"
     },
@@ -68,7 +76,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "tsc --noEmit && electron-vite build",
-    "test": "tsx test/job-controller.ts && tsx test/scan-session.ts && tsx test/scan-guard.ts && tsx test/scan-project-state.ts && tsx test/preview-layout.ts && tsx test/wizard-progress.ts && tsx test/worker-pool.ts && tsx test/export-guard.ts && tsx test/export-state.ts && tsx test/project-file.ts && tsx test/drop-path.ts && tsx test/ipc-validation.ts && tsx test/file-type-stats.ts && tsx test/file-selection.ts && tsx test/scan-exclude-rules.ts && tsx test/scan-excludes-config.ts && tsx test/latest-request-guard.ts && tsx test/recent-project-state.ts && tsx test/recent-projects.ts && tsx test/brand-icons.ts && tsx test/license-compliance.ts && tsx test/window-state.ts && tsx test/window-chrome.ts && tsx test/update-contract.ts && tsx test/typography.ts && tsx test/security-policy.ts",
+    "test": "tsx test/job-controller.ts && tsx test/scan-session.ts && tsx test/scan-guard.ts && tsx test/scan-project-state.ts && tsx test/preview-layout.ts && tsx test/wizard-progress.ts && tsx test/worker-pool.ts && tsx test/export-guard.ts && tsx test/export-state.ts && tsx test/project-file.ts && tsx test/drop-path.ts && tsx test/ipc-validation.ts && tsx test/file-type-stats.ts && tsx test/file-selection.ts && tsx test/scan-exclude-rules.ts && tsx test/scan-excludes-config.ts && tsx test/latest-request-guard.ts && tsx test/recent-project-state.ts && tsx test/recent-projects.ts && tsx test/brand-icons.ts && tsx test/packaging-config.ts && tsx test/license-compliance.ts && tsx test/window-state.ts && tsx test/window-chrome.ts && tsx test/update-contract.ts && tsx test/typography.ts && tsx test/security-policy.ts",
     "test:workers": "tsx test/worker-integration.ts",
     "perf": "tsx test/performance.ts",
     "dist:mac:x64": "npm run build && electron-builder --mac dmg zip --x64 --publish never",

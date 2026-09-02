@@ -1,6 +1,6 @@
 {
   "name": "codedoc",
-  "version": "1.0.1-beta.2",
+  "version": "1.0.0",
   "private": true,
   "description": "软著代码整理器 —— 离线生成符合软件著作权申报规范的源程序文档",
   "license": "Apache-2.0",
@@ -27,7 +27,9 @@
     "audit:all": "npm audit --audit-level=low",
     "version:check": "node scripts/check-version.mjs",
     "version:set": "node scripts/set-version.mjs",
-    "verify": "npm run version:check && npm run lockfile:check && npm run maintenance:check && npm run icons:check && npm run licenses:check && npm test && npm run build && npm run test:integration"
+    "package:release": "node scripts/package-release.mjs",
+    "package:release:test": "node --test scripts/package-release.test.mjs",
+    "verify": "npm run version:check && npm run lockfile:check && npm run maintenance:check && npm run icons:check && npm run licenses:check && npm run package:release:test && npm test && npm run build && npm run test:integration"
   },
   "engines": {
     "node": ">=24.19.0 <25"
