@@ -51,7 +51,7 @@ CodeDoc 专用缓存默认位于：
 ~/Library/Caches/CodeDoc/electron/
 ```
 
-Windows NSIS 等 Electron Builder 辅助工具不属于 Electron Runtime；首次交叉构建时仍可能由 Electron Builder 单独准备。如果后续出现辅助工具下载错误，应按实际工具另行处理，不能通过关闭 TLS 校验绕过。
+Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时，脚本还会在构建前检查当前宿主机的 7zip、NSIS 编译器和 NSIS 资源归档。它们必须位于 Electron Builder 的标准缓存目录并通过脚本内固定 SHA-256 校验；缺失时同样以红字给出官方 `curl` 命令。下载归档即可，无需手动解压，Electron Builder 会从本地归档安全解压。
 
 通道与版本必须匹配：
 
@@ -65,7 +65,7 @@ Windows NSIS 等 Electron Builder 辅助工具不属于 Electron Runtime；首�
 脚本在真正构建前显示版本、通道、Commit、目标和归档仓库，并提示 `开始本地打包与归档？[Y/n]`。直接回车或输入 `y` 继续，输入 `n` 取消；默认选择 `y`。确认后执行：
 
 1. 检查源码与归档目标不存在冲突；
-2. 查找并校验全部所选目标的 Electron 本地缓存；
+2. 查找并校验全部所选目标的 Electron 本地缓存；选择 Windows 时同时校验 7zip、NSIS 和 NSIS 资源缓存；
 3. 检查 macOS 签名身份、公证 profile 和 Gatekeeper；
 4. 运行完整 `npm run verify`；
 5. 在互相隔离的临时目录依次构建三个目标；

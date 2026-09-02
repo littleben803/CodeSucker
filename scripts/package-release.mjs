@@ -15,7 +15,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -34,6 +34,17 @@ const BUNDLE_ID = 'com.ideaboxapps.codedoc';
 const CODEDOC_ELECTRON_CACHE = process.platform === 'darwin'
   ? join(homedir(), 'Library', 'Caches', 'CodeDoc', 'electron')
   : join(homedir(), '.cache', 'codedoc', 'electron');
+const BUILDER_BINARIES_BASE_URL = 'https://github.com/electron-userland/electron-builder-binaries/releases/download';
+const SEVEN_ZIP_CHECKSUMS = Object.freeze({
+  '7zip-linux-ia32.tar.gz': '24a5d5bfe81506d0bfe21a812588119ae3deb757e8ba084b2339d8e899543686',
+  '7zip-darwin-arm64.tar.gz': '496a341abe210aae1a25bc202ee97f6de6c76a3dc80f91d96616be05502d72c1',
+  '7zip-darwin-x86_64.tar.gz': '496a341abe210aae1a25bc202ee97f6de6c76a3dc80f91d96616be05502d72c1',
+  '7zip-linux-arm64.tar.gz': '5aff5034206b78f8261249ceb922b5c7e04c9bdb733784d8f5b6df9732cf1f79',
+  '7zip-linux-x64.tar.gz': 'd151bb44b2a9d9bfc52813ce4cac042916394a0ab8a56bd5d221a5dc9ef8d5d7',
+  '7zip-win-arm64.tar.gz': 'ac3f38f96ce7498096a123bb0862dd6db863a7353c9e9e1c15f73c183adf6620',
+  '7zip-win-ia32.tar.gz': 'ac3f38f96ce7498096a123bb0862dd6db863a7353c9e9e1c15f73c183adf6620',
+  '7zip-win-x64.tar.gz': 'be071f15bd6da2f78fe81c6ddef2009b0c4d8a51f36b780cb806c7e6df95e1b3',
+});
 
 export const TARGETS = Object.freeze({
   'mac-arm64': Object.freeze({
@@ -150,13 +161,66 @@ function shellQuote(value) {
   return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 
+export function curlDownloadCommand(url, outputPath) {
+  return [
+    'curl', '--fail', '--location', '--progress-bar', '--create-dirs',
+    '--output', shellQuote(outputPath), shellQuote(url),
+  ].join(' ');
+}
+
 export function electronDownloadCommand(target, electronVersion, cacheDirectory = CODEDOC_ELECTRON_CACHE) {
   const artifactName = electronArtifactName(target, electronVersion);
   const outputPath = join(cacheDirectory, artifactName);
-  return [
-    'curl', '--fail', '--location', '--progress-bar', '--create-dirs',
-    '--output', shellQuote(outputPath), shellQuote(electronDownloadUrl(target, electronVersion)),
-  ].join(' ');
+  return curlDownloadCommand(electronDownloadUrl(target, electronVersion), outputPath);
+}
+
+function defaultElectronBuilderCacheRoot() {
+  const configured = process.env.ELECTRON_BUILDER_CACHE?.trim();
+  if (configured && isAbsolute(configured)) return configured;
+  if (process.platform === 'darwin') return join(homedir(), 'Library', 'Caches', 'electron-builder');
+  if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
+    return join(process.env.LOCALAPPDATA, 'electron-builder', 'Cache');
+  }
+  return join(homedir(), '.cache', 'electron-builder');
+}
+
+function sevenZipArtifactName(platform, arch) {
+  if (platform === 'darwin') return `7zip-darwin-${arch === 'arm64' ? 'arm64' : 'x86_64'}.tar.gz`;
+  if (platform === 'linux' && ['arm64', 'ia32', 'x64'].includes(arch)) return `7zip-linux-${arch}.tar.gz`;
+  if (platform === 'win32' && ['arm64', 'ia32', 'x64'].includes(arch)) return `7zip-win-${arch}.tar.gz`;
+  throw new Error(`当前主机没有受支持的 7zip 工具缓存：${platform}/${arch}`);
+}
+
+export function windowsBuilderToolsetSpecs(
+  cacheRoot = defaultElectronBuilderCacheRoot(),
+  host = { platform: process.platform, arch: process.arch },
+) {
+  const sevenZipFile = sevenZipArtifactName(host.platform, host.arch);
+  const definitions = [
+    {
+      label: '7zip 解压工具',
+      releaseName: '7zip@1.0.0',
+      artifactName: sevenZipFile,
+      expectedSha256: SEVEN_ZIP_CHECKSUMS[sevenZipFile],
+    },
+    {
+      label: 'NSIS 编译器',
+      releaseName: 'nsis-3.0.4.1',
+      artifactName: 'nsis-3.0.4.1.7z',
+      expectedSha256: '9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa',
+    },
+    {
+      label: 'NSIS 插件与资源',
+      releaseName: 'nsis-resources-3.4.1',
+      artifactName: 'nsis-resources-3.4.1.7z',
+      expectedSha256: '593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103',
+    },
+  ];
+  return definitions.map((definition) => ({
+    ...definition,
+    url: `${BUILDER_BINARIES_BASE_URL}/${definition.releaseName}/${definition.artifactName}`,
+    outputPath: join(cacheRoot, definition.releaseName, definition.artifactName),
+  }));
 }
 
 function defaultElectronCacheRoots() {
@@ -250,6 +314,40 @@ export async function resolveElectronDistributions(targetIds) {
     throw new Error('Electron 本地缓存不完整');
   }
   return distributions;
+}
+
+export async function verifyWindowsBuilderToolsets(targetIds) {
+  if (!targetIds.some((targetId) => TARGETS[targetId].platform === 'win')) return [];
+  const specs = windowsBuilderToolsetSpecs();
+  const missing = [];
+  for (const spec of specs) {
+    const result = await findVerifiedElectronArtifact({
+      artifactName: spec.artifactName,
+      expectedSha256: spec.expectedSha256,
+      cacheRoots: [dirname(spec.outputPath)],
+    });
+    if (result.path) {
+      process.stdout.write(`[package] Windows 工具缓存校验通过：${spec.label} -> ${result.path}\n`);
+    } else {
+      missing.push({ ...spec, invalid: result.invalid });
+    }
+  }
+  if (missing.length > 0) {
+    const lines = ['缺少 Windows NSIS 打包工具缓存，尚未开始构建。'];
+    for (const item of missing) {
+      lines.push('', `${item.label}：${item.artifactName}`);
+      for (const invalidEntry of item.invalid) {
+        lines.push(`已拒绝缓存：${invalidEntry.path}（${invalidEntry.reason}）`);
+      }
+      lines.push(`期望 SHA-256：${item.expectedSha256}`);
+      lines.push('请执行：');
+      lines.push(curlDownloadCommand(item.url, item.outputPath));
+    }
+    lines.push('', '下载完成后重新执行 npm run package:release；Electron Builder 将从本地归档安全解压。');
+    process.stderr.write(`${red(lines.join('\n'))}\n`);
+    throw new Error('Windows NSIS 工具缓存不完整');
+  }
+  return specs;
 }
 
 function runCapture(command, args, options = {}) {
@@ -692,6 +790,7 @@ export async function main(argv = process.argv.slice(2)) {
   assertCleanRepository(options.websiteRoot, 'IdeaBoxWebsite');
   await assertArchiveTargetsAbsent(options.websiteRoot, channel, version, targetIds);
   const electronDistributions = await resolveElectronDistributions(targetIds);
+  await verifyWindowsBuilderToolsets(targetIds);
   if (targetIds.some((id) => TARGETS[id].platform === 'mac')) {
     assertMacReleaseEnvironment(options.notaryProfile);
   }

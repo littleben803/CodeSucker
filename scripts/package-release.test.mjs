@@ -18,6 +18,7 @@ import {
   parsePackageArgs,
   parseTargetSelection,
   validateChannelVersion,
+  windowsBuilderToolsetSpecs,
 } from './package-release.mjs';
 
 test('interactive package arguments keep local writes gated by confirmation', () => {
@@ -63,6 +64,23 @@ test('Electron runtime names and curl commands match every packaging target', ()
   assert.match(command, /electron-v43\.2\.0-darwin-arm64\.zip/);
   const builder = builderCommand(TARGETS['mac-arm64'], '/tmp/output', '/tmp/electron-arm64.zip');
   assert.ok(builder.args.includes('--config.electronDist=/tmp/electron-arm64.zip'));
+});
+
+test('Windows NSIS toolset preflight uses pinned archives and checksums', () => {
+  const specs = windowsBuilderToolsetSpecs('/tmp/electron-builder-cache', { platform: 'darwin', arch: 'arm64' });
+  assert.deepEqual(specs.map((spec) => spec.artifactName), [
+    '7zip-darwin-arm64.tar.gz',
+    'nsis-3.0.4.1.7z',
+    'nsis-resources-3.4.1.7z',
+  ]);
+  for (const spec of specs) {
+    assert.match(spec.expectedSha256, /^[a-f0-9]{64}$/);
+    assert.equal(spec.outputPath, join('/tmp/electron-builder-cache', spec.releaseName, spec.artifactName));
+    assert.equal(
+      spec.url,
+      `https://github.com/electron-userland/electron-builder-binaries/releases/download/${spec.releaseName}/${spec.artifactName}`,
+    );
+  }
 });
 
 test('Electron runtime cache is accepted only when SHA-256 matches', async () => {
