@@ -126,46 +126,60 @@ function runGh(args, { allowFailure = false } = {}) {
   return { status: result.status, stdout: (result.stdout ?? '').trim(), stderr: (result.stderr ?? '').trim() };
 }
 
-export function inspectGitHubRelease(provider, tag, expectedCommit) {
-  runGh(['auth', 'status', '--hostname', 'github.com']);
+export function inspectGitHubRelease(provider, tag, expectedCommit, options = {}) {
+  const skipAccessChecks = options.skipAccessChecks === true;
   const repository = `${provider.owner}/${provider.repo}`;
-  const repoInfo = JSON.parse(runGh(['repo', 'view', repository, '--json', 'nameWithOwner,viewerPermission,isPrivate']).stdout);
-  if (repoInfo.nameWithOwner.toLowerCase() !== repository.toLowerCase()) throw new Error('GitHub repository identity mismatch');
-  if (!['ADMIN', 'MAINTAIN', 'WRITE'].includes(repoInfo.viewerPermission)) {
-    throw new Error(`GitHub repository write permission is required; current permission is ${repoInfo.viewerPermission}`);
-  }
-  const remoteCommit = runGh(['api', `repos/${repository}/commits/${tag}`, '--jq', '.sha'], { allowFailure: true });
-  if (remoteCommit.status !== 0) {
-    if (/(?:HTTP\s+(?:404|422)|not found|no commit found)/i.test(remoteCommit.stderr)) {
-      throw new Error(`Remote Git tag is missing: ${tag}`);
+  let permission;
+  let commit = expectedCommit;
+  if (!skipAccessChecks) {
+    runGh(['auth', 'status', '--hostname', 'github.com']);
+    const repoInfo = JSON.parse(runGh(['repo', 'view', repository, '--json', 'nameWithOwner,viewerPermission,isPrivate']).stdout);
+    if (repoInfo.nameWithOwner.toLowerCase() !== repository.toLowerCase()) throw new Error('GitHub repository identity mismatch');
+    if (!['ADMIN', 'MAINTAIN', 'WRITE'].includes(repoInfo.viewerPermission)) {
+      throw new Error(`GitHub repository write permission is required; current permission is ${repoInfo.viewerPermission}`);
     }
-    throw new Error(`Cannot inspect remote Git tag ${tag}: ${remoteCommit.stderr || 'GitHub CLI failed'}`);
+    permission = repoInfo.viewerPermission;
+    const remoteCommit = runGh(['api', `repos/${repository}/commits/${tag}`, '--jq', '.sha'], { allowFailure: true });
+    if (remoteCommit.status !== 0) {
+      if (/(?:HTTP\s+(?:404|422)|not found|no commit found)/i.test(remoteCommit.stderr)) {
+        throw new Error(`Remote Git tag is missing: ${tag}`);
+      }
+      throw new Error(`Cannot inspect remote Git tag ${tag}: ${remoteCommit.stderr || 'GitHub CLI failed'}`);
+    }
+    if (remoteCommit.stdout !== expectedCommit) {
+      throw new Error(`Remote Git tag ${tag} points to ${remoteCommit.stdout}, expected ${expectedCommit}`);
+    }
+    commit = remoteCommit.stdout;
   }
-  if (remoteCommit.stdout !== expectedCommit) {
-    throw new Error(`Remote Git tag ${tag} points to ${remoteCommit.stdout}, expected ${expectedCommit}`);
-  }
-  const release = runGh(['api', `repos/${repository}/releases/tags/${encodeURIComponent(tag)}`], { allowFailure: true });
+  // GitHub's REST "release by tag" endpoint does not return draft releases.
+  // `gh release view` resolves drafts for an authenticated maintainer, which is
+  // required when an interrupted publish is resumed after its assets uploaded.
+  const release = runGh([
+    'release', 'view', tag,
+    '--repo', repository,
+    '--json', 'isDraft,isPrerelease,url,assets',
+  ], { allowFailure: true });
   let releaseState = 'absent';
   let releaseInfo = null;
   if (release.status === 0) {
     const value = JSON.parse(release.stdout);
-    releaseState = value.draft ? 'draft' : 'published';
+    releaseState = value.isDraft ? 'draft' : 'published';
     releaseInfo = {
-      prerelease: value.prerelease === true,
-      url: value.html_url,
+      prerelease: value.isPrerelease === true,
+      url: value.url,
       assets: (value.assets ?? []).map((asset) => ({
         name: asset.name,
         size: asset.size,
         digest: asset.digest,
         state: asset.state,
-        publicUrl: asset.browser_download_url,
+        publicUrl: asset.url,
       })),
     };
-  } else if (!/(?:HTTP\s+404|not found)/i.test(release.stderr)) {
+  } else if (!/(?:HTTP\s+404|not found|release not found)/i.test(`${release.stdout}\n${release.stderr}`)) {
     throw new Error(`Cannot inspect GitHub Release ${tag}: ${release.stderr || 'GitHub CLI failed'}`);
   }
   return {
-    repository, permission: repoInfo.viewerPermission, tag, commit: remoteCommit.stdout, releaseState, releaseInfo,
+    repository, permission, tag, commit, releaseState, releaseInfo,
   };
 }
 
@@ -390,7 +404,7 @@ export async function executeGitHubRelease(plan, runtime = {}) {
   }
 
   log('[github] verify-assets START');
-  const draft = inspect(plan.provider, plan.tag, plan.sourceCommit);
+  const draft = inspect(plan.provider, plan.tag, plan.sourceCommit, { skipAccessChecks: true });
   assertVerifiedAssets(plan, draft);
   log(`[github] verify-assets SUCCESS: ${plan.attachments.length}/${plan.attachments.length}`);
 
@@ -401,7 +415,7 @@ export async function executeGitHubRelease(plan, runtime = {}) {
     else args.push('--latest');
     log(`[github] publish START: ${plan.tag}`);
     await command(args);
-    published = inspect(plan.provider, plan.tag, plan.sourceCommit);
+    published = inspect(plan.provider, plan.tag, plan.sourceCommit, { skipAccessChecks: true });
     if (published.releaseState !== 'published') throw new Error(`GitHub Release was not published: ${plan.tag}`);
     assertVerifiedAssets(plan, published);
     log(`[github] publish SUCCESS: ${published.releaseInfo.url}`);

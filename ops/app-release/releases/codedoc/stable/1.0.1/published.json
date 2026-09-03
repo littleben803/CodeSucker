@@ -1,0 +1,200 @@
+{
+  "releaseCollectionVersion": 2,
+  "recordType": "published-release-collection",
+  "appSlug": "codedoc",
+  "version": "1.0.1",
+  "channel": "stable",
+  "targets": [
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "published-release",
+      "provider": "github",
+      "recordedAt": "2026-09-03T11:04:09.123Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "mac",
+        "arch": "arm64"
+      },
+      "distributionMode": "app-update",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "release": {
+        "repository": "littleben803/CodeSucker",
+        "tag": "v1.0.1",
+        "url": "https://github.com/littleben803/CodeSucker/releases/tag/v1.0.1",
+        "prerelease": false
+      },
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.dmg",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-arm64.dmg",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-arm64.dmg",
+          "size": 113435094,
+          "sha256": "9a670a799a39aae1a7303e2ec9b52517d89e826202056e950e59eb15a9f23cbb"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "size": 120250,
+          "sha256": "e1a3aa158e79ccfdb4ec7a81601ba19f341b8d3f0f079d8438b06dd9daa88f82"
+        },
+        {
+          "role": "updater",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.zip",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-arm64.zip",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-arm64.zip",
+          "size": 111322666,
+          "sha256": "3fef124cdffc34e3691618d30b6ad7b6a6e3a9b8f8f6f93a6c2e002d0cd5df40"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "size": 118361,
+          "sha256": "d622130c90e59980c361140540178dbcca7cfebd9646b211a9b02764701d076d"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "mac-update",
+          "publishName": "latest-mac.yml",
+          "key": "v1.0.1/latest-mac.yml",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/latest-mac.yml",
+          "size": 821,
+          "sha256": "f7d2fa9ba4b2c41c8ee8785a21d56c6c8bfcce07ecc3fc4fa847a5aeab8e37b3"
+        }
+      ]
+    },
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "published-release",
+      "provider": "github",
+      "recordedAt": "2026-09-03T11:04:09.125Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "mac",
+        "arch": "x64"
+      },
+      "distributionMode": "app-update",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "release": {
+        "repository": "littleben803/CodeSucker",
+        "tag": "v1.0.1",
+        "url": "https://github.com/littleben803/CodeSucker/releases/tag/v1.0.1",
+        "prerelease": false
+      },
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-mac-x64.dmg",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-x64.dmg",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-x64.dmg",
+          "size": 118203705,
+          "sha256": "dc4d84092c335139f458978b4ca6789b7f52f2811306f4c87f2be152a56d4926"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "size": 122367,
+          "sha256": "e8efb0ac3ccbcbb43b9dd73483974ca98c3577833e50f3ef5618ba7881641edb"
+        },
+        {
+          "role": "updater",
+          "publishName": "CodeDoc-1.0.1-mac-x64.zip",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-x64.zip",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-x64.zip",
+          "size": 116129978,
+          "sha256": "2d3ea6c35fba1c55cbff27522f0746a5afd4a90f47e7f36d1725575ab0b3c5bd"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "key": "v1.0.1/CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "size": 122666,
+          "sha256": "559102d0035d62dcc292e5665e352eace96ea58af40b35e0d2738e256e07047b"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "mac-update",
+          "publishName": "latest-mac.yml",
+          "key": "v1.0.1/latest-mac.yml",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/latest-mac.yml",
+          "size": 821,
+          "sha256": "f7d2fa9ba4b2c41c8ee8785a21d56c6c8bfcce07ecc3fc4fa847a5aeab8e37b3"
+        }
+      ]
+    },
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "published-release",
+      "provider": "github",
+      "recordedAt": "2026-09-03T11:04:09.126Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "win",
+        "arch": "x64"
+      },
+      "distributionMode": "internal-download",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "release": {
+        "repository": "littleben803/CodeSucker",
+        "tag": "v1.0.1",
+        "url": "https://github.com/littleben803/CodeSucker/releases/tag/v1.0.1",
+        "prerelease": false
+      },
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-win-x64.exe",
+          "key": "v1.0.1/CodeDoc-1.0.1-win-x64.exe",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-win-x64.exe",
+          "size": 94154649,
+          "sha256": "863a91730f6ea8ece6d1518c5691739908fe017734d04a17b2874c2828b615fd"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "key": "v1.0.1/CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "size": 100172,
+          "sha256": "ffe3461fbeb80d1e81d1f89c5b48cf445b3f4f1f60917ff08be4055a7b9bfc26"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "windows-version",
+          "publishName": "latest-win.yml",
+          "key": "v1.0.1/latest-win.yml",
+          "publicUrl": "https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/latest-win.yml",
+          "size": 306,
+          "sha256": "11b2ea978e7a48c7fb14e7da1ed4810789c39aebc3ce5d86f12f81935daedda5"
+        }
+      ]
+    }
+  ]
+}

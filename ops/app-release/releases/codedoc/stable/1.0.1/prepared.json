@@ -1,0 +1,304 @@
+{
+  "releaseCollectionVersion": 2,
+  "recordType": "prepared-release-collection",
+  "appSlug": "codedoc",
+  "version": "1.0.1",
+  "channel": "stable",
+  "targets": [
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "prepared-release",
+      "recordedAt": "2026-09-03T09:28:49.443Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "mac",
+        "arch": "arm64"
+      },
+      "distributionMode": "app-update",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "verification": {
+        "releaseBuild": "passed",
+        "signing": "passed",
+        "bundleId": "com.ideaboxapps.codedoc",
+        "notarization": "accepted",
+        "notarizationSubmissionId": "af4cba09-4889-4fc0-b1f4-e3fceb8d036a",
+        "gatekeeper": "passed"
+      },
+      "confirmationToken": "codedoc@1.0.1:stable:mac:arm64",
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.dmg",
+          "key": "codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.dmg",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.dmg",
+          "size": 113435094,
+          "sha256": "9a670a799a39aae1a7303e2ec9b52517d89e826202056e950e59eb15a9f23cbb"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "key": "codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+          "size": 120250,
+          "sha256": "e1a3aa158e79ccfdb4ec7a81601ba19f341b8d3f0f079d8438b06dd9daa88f82"
+        },
+        {
+          "role": "updater",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.zip",
+          "key": "codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.zip",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.zip",
+          "size": 111322666,
+          "sha256": "3fef124cdffc34e3691618d30b6ad7b6a6e3a9b8f8f6f93a6c2e002d0cd5df40",
+          "referencedByMetadata": true
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "key": "codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/arm64/CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+          "size": 118361,
+          "sha256": "d622130c90e59980c361140540178dbcca7cfebd9646b211a9b02764701d076d"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "metadata",
+          "publishName": "latest-mac.yml",
+          "key": "codedoc/stable/mac/arm64/latest-mac.yml",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/arm64/latest-mac.yml",
+          "size": 509,
+          "sha256": "a909f1b2d8961e3cc3b0609be117186bd75168dcd1855f11f7e895a989089767"
+        }
+      ],
+      "checklist": {
+        "status": "passed",
+        "checks": [
+          {
+            "id": "registered-target",
+            "status": "passed",
+            "detail": "codedoc/stable/mac/arm64"
+          },
+          {
+            "id": "versioned-artifacts",
+            "status": "passed",
+            "detail": "4 immutable artifacts"
+          },
+          {
+            "id": "metadata-reference",
+            "status": "passed",
+            "detail": "1 validated metadata file(s)"
+          },
+          {
+            "id": "artifact-hashes",
+            "status": "passed",
+            "detail": "SHA-256 calculated for every file"
+          },
+          {
+            "id": "source-revision",
+            "status": "passed",
+            "detail": "CodeSucker@27780affd4a93d9f4f6d0963ae25aaf720b9cbc9 (commit-only, Git verified)"
+          },
+          {
+            "id": "release-verification",
+            "status": "passed",
+            "detail": "mac release evidence accepted"
+          }
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "prepared-release",
+      "recordedAt": "2026-09-03T09:32:07.210Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "mac",
+        "arch": "x64"
+      },
+      "distributionMode": "app-update",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "verification": {
+        "releaseBuild": "passed",
+        "signing": "passed",
+        "bundleId": "com.ideaboxapps.codedoc",
+        "notarization": "accepted",
+        "notarizationSubmissionId": "4bbcf452-5d2c-4c52-b771-2f3a80a64019",
+        "gatekeeper": "passed"
+      },
+      "confirmationToken": "codedoc@1.0.1:stable:mac:x64",
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-mac-x64.dmg",
+          "key": "codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.dmg",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.dmg",
+          "size": 118203705,
+          "sha256": "dc4d84092c335139f458978b4ca6789b7f52f2811306f4c87f2be152a56d4926"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "key": "codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.dmg.blockmap",
+          "size": 122367,
+          "sha256": "e8efb0ac3ccbcbb43b9dd73483974ca98c3577833e50f3ef5618ba7881641edb"
+        },
+        {
+          "role": "updater",
+          "publishName": "CodeDoc-1.0.1-mac-x64.zip",
+          "key": "codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.zip",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.zip",
+          "size": 116129978,
+          "sha256": "2d3ea6c35fba1c55cbff27522f0746a5afd4a90f47e7f36d1725575ab0b3c5bd",
+          "referencedByMetadata": true
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "key": "codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/x64/CodeDoc-1.0.1-mac-x64.zip.blockmap",
+          "size": 122666,
+          "sha256": "559102d0035d62dcc292e5665e352eace96ea58af40b35e0d2738e256e07047b"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "metadata",
+          "publishName": "latest-mac.yml",
+          "key": "codedoc/stable/mac/x64/latest-mac.yml",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/mac/x64/latest-mac.yml",
+          "size": 503,
+          "sha256": "1b6967f77be0140e11374f0f9da49877fafbdee66dea3605a0f6f5530897d897"
+        }
+      ],
+      "checklist": {
+        "status": "passed",
+        "checks": [
+          {
+            "id": "registered-target",
+            "status": "passed",
+            "detail": "codedoc/stable/mac/x64"
+          },
+          {
+            "id": "versioned-artifacts",
+            "status": "passed",
+            "detail": "4 immutable artifacts"
+          },
+          {
+            "id": "metadata-reference",
+            "status": "passed",
+            "detail": "1 validated metadata file(s)"
+          },
+          {
+            "id": "artifact-hashes",
+            "status": "passed",
+            "detail": "SHA-256 calculated for every file"
+          },
+          {
+            "id": "source-revision",
+            "status": "passed",
+            "detail": "CodeSucker@27780affd4a93d9f4f6d0963ae25aaf720b9cbc9 (commit-only, Git verified)"
+          },
+          {
+            "id": "release-verification",
+            "status": "passed",
+            "detail": "mac release evidence accepted"
+          }
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "prepared-release",
+      "recordedAt": "2026-09-03T09:32:29.876Z",
+      "releaseContractVersion": 1,
+      "appSlug": "codedoc",
+      "version": "1.0.1",
+      "channel": "stable",
+      "target": {
+        "platform": "win",
+        "arch": "x64"
+      },
+      "distributionMode": "internal-download",
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "27780affd4a93d9f4f6d0963ae25aaf720b9cbc9"
+      },
+      "verification": {
+        "releaseBuild": "passed",
+        "signing": "not-required-internal",
+        "distributionMode": "internal-download"
+      },
+      "confirmationToken": "codedoc@1.0.1:stable:win:x64",
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-win-x64.exe",
+          "key": "codedoc/stable/win/x64/CodeDoc-1.0.1-win-x64.exe",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/win/x64/CodeDoc-1.0.1-win-x64.exe",
+          "size": 94154649,
+          "sha256": "863a91730f6ea8ece6d1518c5691739908fe017734d04a17b2874c2828b615fd"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "key": "codedoc/stable/win/x64/CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/stable/win/x64/CodeDoc-1.0.1-win-x64.exe.blockmap",
+          "size": 100172,
+          "sha256": "ffe3461fbeb80d1e81d1f89c5b48cf445b3f4f1f60917ff08be4055a7b9bfc26"
+        }
+      ],
+      "metadata": [],
+      "checklist": {
+        "status": "passed",
+        "checks": [
+          {
+            "id": "registered-target",
+            "status": "passed",
+            "detail": "codedoc/stable/win/x64"
+          },
+          {
+            "id": "versioned-artifacts",
+            "status": "passed",
+            "detail": "2 immutable artifacts"
+          },
+          {
+            "id": "metadata-reference",
+            "status": "passed",
+            "detail": "not applicable for internal-download target"
+          },
+          {
+            "id": "artifact-hashes",
+            "status": "passed",
+            "detail": "SHA-256 calculated for every file"
+          },
+          {
+            "id": "source-revision",
+            "status": "passed",
+            "detail": "CodeSucker@27780affd4a93d9f4f6d0963ae25aaf720b9cbc9 (commit-only, Git verified)"
+          },
+          {
+            "id": "release-verification",
+            "status": "passed",
+            "detail": "win release evidence accepted"
+          }
+        ],
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -123,3 +123,60 @@ test('GitHub execute creates a draft, uploads without clobber, verifies, publish
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('GitHub execute resumes an existing draft and skips verified assets', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'codedoc-github-resume-'));
+  const installerPath = join(directory, 'CodeDoc-1.0.1-win-x64.exe');
+  const publishedPath = join(directory, 'published.json');
+  await writeFile(installerPath, 'installer');
+  const attachment = {
+    kind: 'artifact', role: 'installer', targetId: 'win-x64', name: basename(installerPath),
+    localPath: installerPath, size: 9, sha256: 'installer-sha', uploadStatus: 'verified-existing',
+    publicUrl: `https://github.com/littleben803/CodeSucker/releases/download/v1.0.1/${basename(installerPath)}`,
+  };
+  const targetPlan = {
+    target: { id: 'win-x64', platform: 'win', arch: 'x64' },
+    paths: { publishedPath },
+    record: {
+      releaseContractVersion: 1,
+      distributionMode: 'internal-download',
+      source: { repository: 'CodeSucker', commit: 'abc' },
+    },
+  };
+  const commands = [];
+  let releaseState = 'draft';
+  const inspections = [];
+  const inspectGitHub = (...args) => {
+    inspections.push(args);
+    return ({
+    repository: 'littleben803/CodeSucker', releaseState,
+    releaseInfo: {
+      prerelease: false,
+      url: 'https://github.com/littleben803/CodeSucker/releases/tag/v1.0.1',
+      assets: [{
+        name: attachment.name, size: attachment.size, digest: `sha256:${attachment.sha256}`,
+        state: 'uploaded', publicUrl: attachment.publicUrl,
+      }],
+    },
+    });
+  };
+  const runCommand = async (args) => {
+    commands.push(args);
+    if (args[1] === 'edit') releaseState = 'published';
+  };
+  const plan = {
+    config: { app: { slug: 'codedoc' } }, provider: {}, version: '1.0.1', channel: 'stable',
+    tag: 'v1.0.1', prerelease: false, sourceCommit: 'abc',
+    preflight: inspectGitHub(), attachments: [attachment], targetPlans: [targetPlan],
+    installerUrls: [{ targetId: 'win-x64', url: attachment.publicUrl }], publishedPath,
+  };
+  inspections.length = 0;
+  try {
+    await executeGitHubRelease(plan, { runCommand, inspectGitHub });
+    assert.ok(commands.some((args) => args[1] === 'edit'));
+    assert.ok(commands.every((args) => args[1] !== 'create' && args[1] !== 'upload'));
+    assert.ok(inspections.every((args) => args[3]?.skipAccessChecks === true));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
