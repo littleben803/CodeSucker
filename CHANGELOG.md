@@ -2,6 +2,18 @@
 
 本文件记录 CodeDoc 的用户可见变化，格式遵循 Keep a Changelog，版本号遵循 Semantic Versioning。
 
+## [1.0.1] - 2026-09-03
+
+### Added
+
+- 增加打包脚本，同时支持 Mac 和 Windows
+- 增加安装包发布脚本，同时支持阿里云 OSS 和 GitHub Release
+
+### Changed
+
+- 优化 macOS 版本更新逻辑和交互，支持应用内升级
+- 优化关于页面
+
 ## [1.0.0] - 2026-09-02
 
 ### Added
@@ -19,7 +31,7 @@
 - PDF / DOCX 保持宋体 10.5pt，并使用 12pt 固定行距改善页面填充
 - 正式发布渠道支持启动版本检查、手动更新入口和运行时外链能力
 - 增加维护者基线文档及自动门禁，防止失效更新渠道被重新带入运行时代码
-- 桌面构建工具链升级到 electron-vite 5、Vite 7 和 React 插件 5，并迁移到 electron-vite 5 的依赖外置配置
+- 桌面构建工具链升级到 electron-vite 5、Vite 7 和 React 插件 5
 - 本地开发、CI 与发布工具链统一到 Node.js 24.19.0（Krypton LTS），并增加仓库级版本声明
 
 ### Security

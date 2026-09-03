@@ -17,9 +17,16 @@
       "remoteCommand": "/opt/ideabox-release/bin/release-server"
     },
     "github": {
-      "enabled": false,
+      "enabled": true,
       "type": "github-release",
-      "implemented": false
+      "implemented": true,
+      "writeEnabled": true,
+      "appUpdateEnabled": false,
+      "owner": "littleben803",
+      "repo": "CodeSucker",
+      "tagPrefix": "v",
+      "transport": "github-cli",
+      "publicBaseUrl": "https://github.com/littleben803/CodeSucker/releases/download"
     }
   },
   "app": {

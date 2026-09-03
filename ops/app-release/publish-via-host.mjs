@@ -66,7 +66,7 @@ async function readJson(filePath, label) {
   }
 }
 
-function validateRecord(record, checklist) {
+export function validatePreparedRecord(record, checklist) {
   const { plan } = checklist;
   if (
     record.releaseRecordVersion !== 1
@@ -92,7 +92,7 @@ function validateRecord(record, checklist) {
   }
 }
 
-export async function buildHandoffPlan(options) {
+export async function buildValidatedTargetPlan(options) {
   const checklist = await buildChecklist(options.manifest, options.registry);
   const recordPath = resolve(options.record ?? defaultRecordPath(checklist.plan));
   const collection = await readJson(recordPath, 'release record');
@@ -104,7 +104,12 @@ export async function buildHandoffPlan(options) {
     arch: checklist.plan.arch,
   }, 'prepared-release');
   if (!record) throw new Error('Prepared release collection does not contain the manifest target');
-  validateRecord(record, checklist);
+  validatePreparedRecord(record, checklist);
+  return { checklist, record, recordPath };
+}
+
+export async function buildHandoffPlan(options) {
+  const { checklist, record, recordPath } = await buildValidatedTargetPlan(options);
 
   const { plan } = checklist;
   const remoteDirectory = [

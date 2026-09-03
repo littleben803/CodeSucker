@@ -81,3 +81,27 @@ export function setAllVersions(version) {
   }
   writeJson('package-lock.json', lock);
 }
+
+export function localDateString(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+export function ensureChangelogVersion(version, options = {}) {
+  assertSemVer(version);
+  const changelogPath = options.filePath ?? path.join(REPO_ROOT, 'CHANGELOG.md');
+  const date = options.date ?? localDateString();
+  const content = fs.readFileSync(changelogPath, 'utf8');
+  const versionPattern = new RegExp(`^#{2,6} \\[${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\](?:\\s|$)`, 'm');
+  if (versionPattern.test(content)) return { added: false, date };
+
+  const section = `## [${version}] - ${date}\n\n### Added\n\n### Changed\n\n`;
+  const firstVersionHeading = content.search(/^#{2,6} \[[^\]]+\](?:\s|$)/m);
+  if (firstVersionHeading < 0) {
+    const separator = content.endsWith('\n') ? '\n' : '\n\n';
+    fs.writeFileSync(changelogPath, `${content}${separator}${section}`, 'utf8');
+  } else {
+    fs.writeFileSync(changelogPath, `${content.slice(0, firstVersionHeading)}${section}${content.slice(firstVersionHeading)}`, 'utf8');
+  }
+  return { added: true, date };
+}

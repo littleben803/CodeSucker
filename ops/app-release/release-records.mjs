@@ -1,14 +1,22 @@
 import { mkdir, open, readFile, rename, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
-const COLLECTION_VERSION = 1;
+const COLLECTION_VERSION = 2;
+const SUPPORTED_COLLECTION_VERSIONS = new Set([1, COLLECTION_VERSION]);
 
 function collectionType(recordType) {
   return `${recordType}-collection`;
 }
 
-function targetKey(target) {
-  return `${target?.platform ?? ''}-${target?.arch ?? ''}`;
+function recordProvider(record, expectedRecordType = record?.recordType) {
+  if (expectedRecordType !== 'published-release') return '';
+  return record?.provider ?? 'oss';
+}
+
+function targetKey(record, expectedRecordType = record?.recordType) {
+  const target = record?.target;
+  const provider = recordProvider(record, expectedRecordType);
+  return `${provider ? `${provider}:` : ''}${target?.platform ?? ''}-${target?.arch ?? ''}`;
 }
 
 function assertRecord(record, expectedRecordType) {
@@ -24,6 +32,9 @@ function assertRecord(record, expectedRecordType) {
     || !record.target?.platform
     || !record.target?.arch
   ) throw new Error(`Unsupported ${expectedRecordType} target record`);
+  if (expectedRecordType === 'published-release' && record.provider !== undefined && typeof record.provider !== 'string') {
+    throw new Error('Unsupported published-release provider');
+  }
 }
 
 function assertCollection(collection, expectedRecordType) {
@@ -31,7 +42,7 @@ function assertCollection(collection, expectedRecordType) {
     !collection
     || typeof collection !== 'object'
     || Array.isArray(collection)
-    || collection.releaseCollectionVersion !== COLLECTION_VERSION
+    || !SUPPORTED_COLLECTION_VERSIONS.has(collection.releaseCollectionVersion)
     || collection.recordType !== collectionType(expectedRecordType)
     || typeof collection.appSlug !== 'string'
     || typeof collection.version !== 'string'
@@ -42,7 +53,7 @@ function assertCollection(collection, expectedRecordType) {
     assertRecord(record, expectedRecordType);
     if (!identityMatches(record, collection)) throw new Error(`${expectedRecordType} target identity mismatch`);
   }
-  const keys = collection.targets.map((record) => targetKey(record.target));
+  const keys = collection.targets.map((record) => targetKey(record, expectedRecordType));
   if (new Set(keys).size !== keys.length) throw new Error(`Duplicate target in ${expectedRecordType} collection`);
 }
 
@@ -70,13 +81,16 @@ export function selectTargetRecord(value, identity, expectedRecordType) {
     return identityMatches(value, identity)
       && value.target.platform === identity.platform
       && value.target.arch === identity.arch
+      && (expectedRecordType !== 'published-release' || recordProvider(value) === (identity.provider ?? 'oss'))
       ? value
       : null;
   }
   assertCollection(value, expectedRecordType);
   if (!identityMatches(value, identity)) throw new Error(`${expectedRecordType} collection identity mismatch`);
   return value.targets.find((record) => (
-    record.target.platform === identity.platform && record.target.arch === identity.arch
+    record.target.platform === identity.platform
+    && record.target.arch === identity.arch
+    && (expectedRecordType !== 'published-release' || recordProvider(record) === (identity.provider ?? 'oss'))
   )) ?? null;
 }
 
@@ -125,11 +139,13 @@ export async function appendTargetRecord(filePath, record, label) {
   if (!identityMatches(collection, record)) {
     throw new Error(`${label} collection identity mismatch: ${absolutePath}`);
   }
-  if (collection.targets.some((entry) => targetKey(entry.target) === targetKey(record.target))) {
-    throw new Error(`Refusing to overwrite existing ${label} target ${targetKey(record.target)}: ${absolutePath}`);
+  const key = targetKey(record);
+  if (collection.targets.some((entry) => targetKey(entry, record.recordType) === key)) {
+    throw new Error(`Refusing to overwrite existing ${label} target ${key}: ${absolutePath}`);
   }
+  collection.releaseCollectionVersion = COLLECTION_VERSION;
   collection.targets.push(record);
-  collection.targets.sort((left, right) => targetKey(left.target).localeCompare(targetKey(right.target)));
+  collection.targets.sort((left, right) => targetKey(left, record.recordType).localeCompare(targetKey(right, record.recordType)));
   await writeJsonAtomic(absolutePath, collection);
   return absolutePath;
 }

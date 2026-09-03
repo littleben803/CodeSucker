@@ -9,12 +9,18 @@ import {
   validateReleaseConfig,
 } from './release-config.mjs';
 
-test('repository release configuration selects OSS and keeps GitHub disabled', async () => {
+test('repository release configuration keeps OSS active and enables explicit GitHub publishing', async () => {
   const config = await loadReleaseConfig(DEFAULT_RELEASE_CONFIG);
   assert.equal(config.activeProvider, 'oss');
   assert.deepEqual(config.publishProviders, ['oss']);
   assert.equal(config.providers.oss.updateBaseUrl, 'https://download.ideaboxapps.com/codedoc');
-  assert.equal(config.providers.github.enabled, false);
+  assert.equal(config.providers.github.enabled, true);
+  assert.equal(config.providers.github.implemented, true);
+  assert.equal(config.providers.github.writeEnabled, true);
+  assert.equal(config.providers.github.appUpdateEnabled, false);
+  assert.equal(config.providers.github.owner, 'littleben803');
+  assert.equal(config.providers.github.repo, 'CodeSucker');
+  assert.equal(config.providers.github.publicBaseUrl, 'https://github.com/littleben803/CodeSucker/releases/download');
   const registry = normalizeReleaseRegistry(config);
   assert.equal(registry.apps.codedoc.displayName, 'CodeDoc');
   assert.equal(registry.infrastructure.bucket, 'ideabox-app-releases-cn-hangzhou');
@@ -22,6 +28,7 @@ test('repository release configuration selects OSS and keeps GitHub disabled', a
 
 test('disabled providers cannot be selected or published', async () => {
   const config = JSON.parse(await readFile(DEFAULT_RELEASE_CONFIG, 'utf8'));
+  config.providers.github.enabled = false;
   config.activeProvider = 'github';
   assert.throws(() => validateReleaseConfig(config), /Active provider is unavailable: github/);
   config.activeProvider = 'oss';
@@ -29,7 +36,20 @@ test('disabled providers cannot be selected or published', async () => {
   assert.throws(() => validateReleaseConfig(config), /Publish provider is unavailable: github/);
   config.publishProviders = ['oss'];
   config.providers.github.enabled = true;
-  assert.throws(() => validateReleaseConfig(config), /GitHub release provider is not implemented/);
+  config.providers.github.implemented = false;
+  assert.throws(() => validateReleaseConfig(config), /Enabled GitHub release provider must be implemented/);
+});
+
+test('implemented GitHub provider can publish while app updates remain gated', async () => {
+  const config = JSON.parse(await readFile(DEFAULT_RELEASE_CONFIG, 'utf8'));
+  config.providers.github.enabled = true;
+  config.providers.github.implemented = true;
+  config.publishProviders = ['oss', 'github'];
+  const validated = validateReleaseConfig(config);
+  assert.equal(validated.activeProvider, 'oss');
+  assert.deepEqual(validated.publishProviders, ['oss', 'github']);
+  config.activeProvider = 'github';
+  assert.throws(() => validateReleaseConfig(config), /not enabled for app updates/);
 });
 
 test('release configuration rejects credential-shaped fields', async () => {

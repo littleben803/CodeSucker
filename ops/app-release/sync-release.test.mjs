@@ -11,6 +11,7 @@ import {
   executeSync,
   parseSyncArgs,
   remoteStatusCommand,
+  selectProviders,
   selectTargets,
 } from './sync-release.mjs';
 
@@ -49,7 +50,18 @@ async function fixture() {
         remoteArchiveBase: '/srv/ideabox-release/archive',
         remoteCommand: '/opt/ideabox-release/bin/release-server',
       },
-      github: { enabled: false, type: 'github-release', implemented: false },
+      github: {
+        enabled: false,
+        type: 'github-release',
+        implemented: false,
+        writeEnabled: false,
+        appUpdateEnabled: false,
+        owner: 'littleben803',
+        repo: 'CodeSucker',
+        tagPrefix: 'v',
+        transport: 'github-cli',
+        publicBaseUrl: 'https://github.com/littleben803/CodeSucker/releases/download',
+      },
     },
     app: {
       slug: 'codedoc',
@@ -97,6 +109,7 @@ async function fixture() {
 
 test('sync arguments are dry-run by default and reject unsafe combinations', () => {
   assert.deepEqual(parseSyncArgs([]), {
+    provider: undefined,
     channel: undefined,
     targets: 'all',
     execute: false,
@@ -105,12 +118,72 @@ test('sync arguments are dry-run by default and reject unsafe combinations', () 
   });
   assert.throws(() => parseSyncArgs(['--confirm', 'x']), /only valid with --execute/);
   assert.throws(() => parseSyncArgs(['--channel', 'nightly']), /beta or stable/);
+  assert.throws(() => parseSyncArgs(['--provider', 's3']), /oss, github, or all/);
+  assert.equal(parseSyncArgs(['--provider', 'github']).provider, 'github');
 });
 
 test('target selection is deterministic and rejects unknown ids', () => {
   const config = { app: { targets: [{ id: 'a' }, { id: 'b' }] } };
   assert.deepEqual(selectTargets(config, 'b,a,b').map((target) => target.id), ['b', 'a']);
   assert.throws(() => selectTargets(config, 'missing'), /Unknown release target/);
+});
+
+test('provider selection follows config defaults and accepts explicit providers', () => {
+  const config = {
+    publishProviders: ['oss', 'github'],
+    providers: {
+      oss: { enabled: true },
+      github: { enabled: true, implemented: true },
+    },
+  };
+  assert.deepEqual(selectProviders(config), ['oss', 'github']);
+  assert.deepEqual(selectProviders(config, 'github'), ['github']);
+  config.providers.github.implemented = false;
+  assert.throws(() => selectProviders(config, 'github'), /not implemented/);
+});
+
+test('GitHub dry-run builds a release plan and execute remains write-gated', async () => {
+  const files = await fixture();
+  try {
+    const config = JSON.parse(await readFile(files.configPath, 'utf8'));
+    config.providers.github.enabled = true;
+    config.providers.github.implemented = true;
+    await writeFile(files.configPath, `${JSON.stringify(config, null, 2)}\n`);
+    const inspectGitHub = (_provider, tag, commit) => ({
+      repository: 'littleben803/CodeSucker',
+      permission: 'ADMIN',
+      tag,
+      commit,
+      releaseState: 'absent',
+      releaseInfo: null,
+    });
+    const runtime = {
+      releaseRoot: files.releaseRoot,
+      packagePath: files.packagePath,
+      inspectGitHub,
+    };
+    const options = { provider: 'github', channel: 'stable', targets: 'all', execute: false };
+    const plan = await buildSyncPlan(options, files.configPath, runtime);
+    assert.equal(plan.tag, 'v1.0.0');
+    assert.deepEqual(plan.attachments.map((entry) => entry.name), [
+      'CodeDoc-1.0.0-win-x64.exe', 'latest-win.yml',
+    ]);
+    assert.match(plan.attachments[1].content, /version: 1\.0\.0/);
+    assert.match(plan.attachments[1].content, /CodeDoc-1\.0\.0-win-x64\.exe/);
+    const output = await executeSync(options, files.configPath, runtime);
+    assert.match(output, /Provider: github/);
+    assert.match(output, /Installer URL preview:/);
+    await assert.rejects(
+      () => executeSync({
+        ...options,
+        execute: true,
+        confirm: 'sync:codedoc@1.0.0:stable:github',
+      }, files.configPath, runtime),
+      /writes are disabled by configuration/,
+    );
+  } finally {
+    await rm(files.root, { recursive: true, force: true });
+  }
 });
 
 test('dry-run validates local archives without invoking SSH or rsync', async () => {

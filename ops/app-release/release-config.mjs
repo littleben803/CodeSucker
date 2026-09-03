@@ -47,8 +47,24 @@ function validateProvider(name, provider) {
   assertObject(provider, `providers.${name}`);
   if (typeof provider.enabled !== 'boolean') throw new Error(`providers.${name}.enabled must be boolean`);
   assertString(provider.type, `providers.${name}.type`);
-  if (name === 'github' && (provider.enabled || provider.implemented !== false)) {
-    throw new Error('GitHub release provider is not implemented');
+  if (name === 'github') {
+    if (provider.type !== 'github-release') throw new Error('providers.github.type must be github-release');
+    if (typeof provider.implemented !== 'boolean') throw new Error('providers.github.implemented must be boolean');
+    if (typeof provider.writeEnabled !== 'boolean') throw new Error('providers.github.writeEnabled must be boolean');
+    if (typeof provider.appUpdateEnabled !== 'boolean') throw new Error('providers.github.appUpdateEnabled must be boolean');
+    assertString(provider.owner, 'providers.github.owner', /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/);
+    assertString(provider.repo, 'providers.github.repo', /^[A-Za-z0-9._-]+$/);
+    if (typeof provider.tagPrefix !== 'string' || !/^[A-Za-z0-9._-]*$/.test(provider.tagPrefix)) {
+      throw new Error('providers.github.tagPrefix is invalid');
+    }
+    if (provider.transport !== 'github-cli') throw new Error('providers.github.transport must be github-cli');
+    const expectedBaseUrl = `https://github.com/${provider.owner}/${provider.repo}/releases/download`;
+    if (assertHttpsUrl(provider.publicBaseUrl, 'providers.github.publicBaseUrl') !== expectedBaseUrl) {
+      throw new Error('providers.github.publicBaseUrl must match owner and repo');
+    }
+    if (provider.enabled && !provider.implemented) {
+      throw new Error('Enabled GitHub release provider must be implemented');
+    }
   }
   if (name === 'oss' && provider.enabled) {
     if (provider.type !== 'generic') throw new Error('providers.oss.type must be generic');
@@ -103,6 +119,12 @@ export function validateReleaseConfig(config) {
   }
   const activeProvider = assertString(config.activeProvider, 'activeProvider', SAFE_SEGMENT);
   if (!providers[activeProvider]?.enabled) throw new Error(`Active provider is unavailable: ${activeProvider}`);
+  if (providers[activeProvider]?.implemented === false) {
+    throw new Error(`Active provider is not implemented: ${activeProvider}`);
+  }
+  if (providers[activeProvider]?.appUpdateEnabled === false) {
+    throw new Error(`Active provider is not enabled for app updates: ${activeProvider}`);
+  }
   if (!Array.isArray(config.publishProviders) || config.publishProviders.length === 0) {
     throw new Error('publishProviders must not be empty');
   }
@@ -112,6 +134,7 @@ export function validateReleaseConfig(config) {
   for (const name of config.publishProviders) {
     assertString(name, 'publishProviders[]', SAFE_SEGMENT);
     if (!providers[name]?.enabled) throw new Error(`Publish provider is unavailable: ${name}`);
+    if (providers[name]?.implemented === false) throw new Error(`Publish provider is not implemented: ${name}`);
   }
   return { ...config, app, providers };
 }

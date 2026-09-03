@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { buildHandoffPlan, executeHandoff } from './publish-via-host.mjs';
+import { buildGitHubReleasePlan, executeGitHubRelease, formatGitHubReleasePlan } from './github-release.mjs';
 import { DEFAULT_RELEASE_CONFIG, loadReleaseConfig } from './release-config.mjs';
 import { appendTargetRecord, readTargetRecord } from './release-records.mjs';
 
@@ -27,8 +28,8 @@ const STATE_RANK = new Map([
 
 function usage() {
   return `Usage:
-  npm run release:sync -- [--channel beta|stable] [--targets all|<list>]
-  npm run release:sync -- --channel stable --targets all --execute
+  npm run release:sync -- [--provider oss|github|all] [--channel beta|stable] [--targets all|<list>]
+  npm run release:sync -- --provider oss --channel stable --targets all --execute
     --confirm sync:<app>@<version>:<channel>:oss
 
 The command is a dry-run unless --execute is present. It consumes existing
@@ -42,12 +43,14 @@ function valueAfter(argv, index, argument) {
 }
 
 export function parseSyncArgs(argv) {
-  const options = { channel: undefined, targets: 'all', execute: false, confirm: undefined, help: false };
+  const options = {
+    provider: undefined, channel: undefined, targets: 'all', execute: false, confirm: undefined, help: false,
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === '--execute') options.execute = true;
     else if (argument === '--help' || argument === '-h') options.help = true;
-    else if (['--channel', '--targets', '--confirm'].includes(argument)) {
+    else if (['--provider', '--channel', '--targets', '--confirm'].includes(argument)) {
       const value = valueAfter(argv, index, argument);
       options[argument.slice(2)] = value;
       index += 1;
@@ -56,8 +59,22 @@ export function parseSyncArgs(argv) {
   if (options.channel && !['beta', 'stable'].includes(options.channel)) {
     throw new Error('--channel must be beta or stable');
   }
+  if (options.provider && !['oss', 'github', 'all'].includes(options.provider)) {
+    throw new Error('--provider must be oss, github, or all');
+  }
   if (!options.execute && options.confirm) throw new Error('--confirm is only valid with --execute');
   return options;
+}
+
+export function selectProviders(config, value) {
+  const names = value === 'all' || value === undefined ? config.publishProviders : [value];
+  if (!Array.isArray(names) || names.length === 0) throw new Error('At least one publish provider is required');
+  for (const name of names) {
+    const provider = config.providers[name];
+    if (!provider?.enabled) throw new Error(`Publish provider is unavailable: ${name}`);
+    if (provider.implemented === false) throw new Error(`Publish provider is not implemented: ${name}`);
+  }
+  return [...names];
 }
 
 export function defaultChannelForVersion(version) {
@@ -114,9 +131,9 @@ function targetPaths(config, version, channel, target, releaseRoot = RELEASE_ROO
   };
 }
 
-function assertOssProvider(config) {
-  if (config.publishProviders.length !== 1 || config.publishProviders[0] !== 'oss') {
-    throw new Error(`Publish provider set is not implemented: ${config.publishProviders.join(',')}`);
+function assertOssProvider(config, providerNames) {
+  if (providerNames.length !== 1 || providerNames[0] !== 'oss') {
+    throw new Error(`Release sync adapter is not implemented for: ${providerNames.join(',')}`);
   }
   const provider = config.providers.oss;
   if (!provider?.enabled) throw new Error('OSS provider is disabled');
@@ -136,6 +153,7 @@ async function assertPublishedReceipt(path, item) {
     channel: item.channel,
     platform: item.target.platform,
     arch: item.target.arch,
+    provider: 'oss',
   }, 'published-release');
   if (!receipt) return false;
   if (
@@ -173,11 +191,26 @@ export async function buildSyncPlan(options, configPath = DEFAULT_RELEASE_CONFIG
   const releaseRoot = runtime.releaseRoot ?? RELEASE_ROOT;
   const packagePath = runtime.packagePath ?? PACKAGE_PATH;
   const [config, version] = await Promise.all([loadReleaseConfig(configPath), readVersion(packagePath)]);
-  const provider = assertOssProvider(config);
+  const providerNames = selectProviders(config, options.provider);
   const channel = options.channel ?? defaultChannelForVersion(version);
   validateChannelVersion(channel, version);
   if (!config.app.channels.includes(channel)) throw new Error(`Channel is not configured: ${channel}`);
   const targets = selectTargets(config, options.targets);
+  if (providerNames.length !== 1) {
+    throw new Error(`Multi-provider sync orchestration is not implemented yet: ${providerNames.join(',')}`);
+  }
+  if (providerNames[0] === 'github') {
+    return buildGitHubReleasePlan({
+      config,
+      version,
+      channel,
+      targets,
+      pathsForTarget: (target) => targetPaths(config, version, channel, target, releaseRoot),
+      configPath,
+      inspect: runtime.inspectGitHub,
+    });
+  }
+  const provider = assertOssProvider(config, providerNames);
   const items = [];
   for (const target of targets) {
     const paths = targetPaths(config, version, channel, target, releaseRoot);
@@ -204,6 +237,7 @@ export async function buildSyncPlan(options, configPath = DEFAULT_RELEASE_CONFIG
 }
 
 export function formatSyncPlan(plan) {
+  if (plan.providerName === 'github') return formatGitHubReleasePlan(plan);
   const lines = [
     'CodeDoc release sync plan',
     `Release: ${plan.config.app.slug}@${plan.version}`,
@@ -295,7 +329,7 @@ async function downloadReceipt(plan, item, log = () => {}) {
       temporaryReceipt,
     ]);
     const receipt = JSON.parse(await readFile(temporaryReceipt, 'utf8'));
-    await appendTargetRecord(item.paths.publishedPath, receipt, 'published release');
+    await appendTargetRecord(item.paths.publishedPath, { ...receipt, provider: 'oss' }, 'published release');
     await assertPublishedReceipt(item.paths.publishedPath, item);
     log(`[${item.target.id}] receipt SUCCESS: ${paths.receiptName} -> ${item.paths.publishedPath}`);
   } finally {
@@ -312,6 +346,7 @@ async function formatPublishedSummary(plan) {
       channel: item.channel,
       platform: item.target.platform,
       arch: item.target.arch,
+      provider: plan.providerName,
     }, 'published-release');
     if (!receipt) throw new Error(`Published receipt is missing target ${item.target.id}`);
     const installers = receipt.artifacts.filter((artifact) => artifact.role === 'installer');
@@ -329,6 +364,14 @@ export async function executeSync(options, configPath = DEFAULT_RELEASE_CONFIG, 
   if (!options.execute) return `${formatted}\n\nDRY RUN: no server or cloud writes were performed.`;
   if (options.confirm !== plan.confirmationToken) {
     throw new Error(`Release sync requires --confirm ${plan.confirmationToken}`);
+  }
+  if (plan.providerName === 'github') {
+    if (!plan.provider.writeEnabled) throw new Error('GitHub Release writes are disabled by configuration');
+    return executeGitHubRelease(plan, {
+      log,
+      runCommand: runtime.runGitHubCommand,
+      inspectGitHub: runtime.inspectGitHub,
+    });
   }
 
   log(formatted);
