@@ -2,6 +2,17 @@
 
 本文件记录 CodeDoc 的用户可见变化，格式遵循 Keep a Changelog，版本号遵循 Semantic Versioning。
 
+## [1.0.2] - 2026-09-03
+
+### Added
+
+- 增加 Publish Provider: github
+
+### Changed
+
+- 安装包托管切换到 GitHub
+- 通过 Git Release 检测版本更新
+
 ## [1.0.1] - 2026-09-03
 
 ### Added
