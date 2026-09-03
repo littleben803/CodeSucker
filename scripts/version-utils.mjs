@@ -89,7 +89,7 @@ export function localDateString(date = new Date()) {
 
 export function ensureChangelogVersion(version, options = {}) {
   assertSemVer(version);
-  const changelogPath = options.filePath ?? path.join(REPO_ROOT, 'CHANGELOG.md');
+  const changelogPath = options.filePath ?? path.join(REPO_ROOT, 'docs', 'CHANGELOG.md');
   const date = options.date ?? localDateString();
   const content = fs.readFileSync(changelogPath, 'utf8');
   const versionPattern = new RegExp(`^#{2,6} \\[${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\](?:\\s|$)`, 'm');

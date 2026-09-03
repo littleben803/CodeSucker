@@ -16,7 +16,7 @@ npm run package:release
 
 - `mac-arm64`：Developer ID 签名、公证、Stapler 与 Gatekeeper 校验，包含 DMG 和应用内更新 ZIP；
 - `mac-x64`：与 arm64 相同，但可执行文件只包含 `x86_64`；
-- `win-x64`：企业内部分发和下载的 NSIS EXE，不要求 Windows 代码签名，不发布应用内更新元数据。
+- `win-x64`：用于人工下载安装的 NSIS EXE；当前不要求 Windows 代码签名，也不启用应用内自动下载和安装。
 
 只查看计划、不执行构建：
 
@@ -40,7 +40,7 @@ npm run package:release -- --channel beta --targets win-x64 --yes
 ## 打包前准备
 
 1. 使用 Node.js `24.19.0`，依赖通过 `npm ci` 安装。
-2. 用 `npm run version:set -- <version>` 设置版本，更新 `CHANGELOG.md`，完成代码审查并提交。
+2. 用 `npm run version:set -- <version>` 设置版本，更新 `docs/CHANGELOG.md`，完成代码审查并提交。
 3. CodeSucker 工作区应保持干净。
 4. macOS 目标需要本机存在 Developer ID Application，并已保存 `ideabox-notary` Keychain profile。
 5. Gatekeeper 必须开启。
@@ -60,7 +60,7 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 - Beta：`1.2.3-beta.1`；
 - Stable：`1.2.3`。
 
-脚本不会自动改版本、提交、创建 Tag 或推送。源码以当前 Git Commit 追溯，Tag 不是必需项。
+脚本不会自动改版本、提交、创建 Tag 或推送。源码以当前 Git Commit 追溯；发布 GitHub Stable Release 前，必须先创建并推送指向该构建 Commit 的附注 Tag。只做本地构建验收时可以不创建 Tag。
 
 ## 执行顺序
 
@@ -117,7 +117,7 @@ ops/app-release/releases/
 - SSH 中转；
 - 上传 OSS；
 - 发布 `latest-mac.yml`；
-- 更新官网下载链接；
+- 修改任何外部下载页面；
 - Git commit、Tag 或 push。
 
-需要发布时，继续执行 `npm run release:sync`。日常步骤见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)，底层发布工具见 [`../ops/app-release/README.md`](../ops/app-release/README.md)。Windows 企业内部下载包只上传带版本号的 EXE，不发布 `latest.yml`，也不参与 Windows 应用内更新。
+需要发布时，继续执行 `npm run release:sync`。日常步骤见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)，底层发布工具见 [`../ops/app-release/README.md`](../ops/app-release/README.md)。Windows 发布带版本号的 EXE及配套发布资产；`latest-win.yml` 可供外部版本发现和人工下载提示使用，但当前应用本身不启用 Windows 应用内更新服务。

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="design/icon/codedoc-icon-source.png" width="110" alt="CodeDoc" />
+<img src="design/icon/codedoc-icon-source.png" width="110" alt="CodeDoc Generator" />
 
 # CodeDoc · 软著代码整理器
 
@@ -21,20 +21,28 @@
 
 申请软件著作权登记时，需要提交**源程序鉴别材料**：前后各连续 30 页、每页不少于 50 行、页眉标注软件全称+版本号……格式细节繁多，一处不合就被退回补正。手工整理一次要花几个小时，而市面上的工具要么只做简单拼接、要么依赖在线服务（代码泄露风险）。
 
-CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流水线：导入项目 → 五步向导 → 导出文档，并在导出前自动检查页数、行数、页眉和署名等风险，帮助减少手工整理错误与补正概率。
+CodeDoc Generator 把繁琐的“软件著作权源程序材料”提交规则整理成一套本地流水线：导入项目 → 五步向导 → 导出 pdf 文档，并在导出前自动检查页数、每页行数、页眉、页脚、署名等格式是否符合中国版权保护中心要求，帮助减少手工整理错误与补正风险。
 
 > [!IMPORTANT]
 > **当前发布状态**
 >
-> CodeDoc 当前处于正式发布准备阶段。开发与分发边界见 [docs/MAINTAINER_BASELINE.md](docs/MAINTAINER_BASELINE.md)。
+> 当前稳定版本为 **v1.0.2**。macOS arm64、macOS x64 和 Windows x64 安装包均已通过真实发布、公开下载和安装验收；macOS 应用内升级链路已经验证。
+>
+> GitHub Release 是当前默认发布与更新来源，阿里云 OSS 作为备选来源保留。开发与分发边界见 [docs/MAINTAINER_BASELINE.md](docs/MAINTAINER_BASELINE.md)。
 
 当前桌面安全边界及维护要求见 [docs/SECURITY.md](docs/SECURITY.md)。
 
 ## 下载
 
-当前尚未建立官方 Release 下载渠道。请勿从未知第三方来源下载安装包。
+请从 [GitHub Releases](https://github.com/littleben803/CodeSucker/releases) 获取正式版本。当前稳定版为 [v1.0.2](https://github.com/littleben803/CodeSucker/releases/tag/v1.0.2)：
 
-开发者可以在本地运行 `CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:arm64` 生成 Apple Silicon 验证用 DMG。该产物未使用 Developer ID 签名、未经 Apple 公证，不应作为最终公开分发包。
+| 平台 | 安装包 | 更新方式 |
+|---|---|---|
+| macOS Apple Silicon | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-mac-arm64.dmg) | 支持应用内检查、下载和安装更新 |
+| macOS Intel | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-mac-x64.dmg) | 支持应用内检查、下载和安装更新 |
+| Windows x64 | [下载 EXE](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-win-x64.exe) | 支持发现新版本，更新时人工下载安装包 |
+
+macOS 正式安装包已完成 Developer ID 签名、Apple 公证、staple 和 Gatekeeper 验证。Windows 安装包当前未做代码签名，安装时可能出现系统安全提示；请核对下载来源为本仓库的 GitHub Release。
 
 ## 功能特性
 
@@ -46,18 +54,19 @@ CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流
 - 📄 **规范化截取分页** — 超 3600 行自动取前 1800 + 后 1800 行；第 1 页必为模块开头、第 60 页必为模块结尾；产品按每页 60 行显式分页，不靠排版"凑页"
 - 📝 **一键导出** — PDF / docx（页眉=软件名+版本号、右上角自动页码、宋体 10.5pt、12pt 固定行距）+ txt 备查
 - ✅ **提交前风险校验** — 检查有效内容、每页行数、末页 2/3、页眉一致性、首末页边界和 `@author`/`Copyright` 署名冲突，给出「通过 / 警告 / 退回风险」三级结论
-- 🔐 **核心处理完全离线** — 扫描、清洗、排版和导出均在本机完成；macOS 正式安装版只访问受控更新源检查和下载新版本
+- 🔐 **核心处理完全离线** — 扫描、清洗、排版和导出均在本机完成；macOS 正式安装版支持应用内版本更新
 - 📌 **最近项目管理** — 常用项目可置顶，失效或不再使用的记录可单项或批量移除；移除记录不会删除磁盘项目
-- 💾 **配置与窗口持久化** — 项目选择与导出配置存入 `.codedoc.json`；应用级规则、最近项目和窗口状态安全保存在本机配置目录
+- 💾 **项目配置持久化** — 项目选择与配置信息会存入全局配置文件；应用级规则、最近打开项目和窗口状态都安全保存在本机持久化文件中
 
 ## 内置整理规则对照
 
-| 规范要求 | CodeDoc 的实现 |
+| 规范要求 | CodeDoc Generator 的实现 |
 |---|---|
 | 前、后各连续 30 页，共 60 页 | 超 3600 行自动截取前 1800 + 后 1800 行 |
 | 每页不少于 50 行 | 产品按 60 行切块 + 显式分页符，逐页保证 |
 | 页眉标注软件全称+版本号 | 导出时写入页眉，未含版本号会在校验中警告 |
-| 页码 1–60 连续 | docx PAGE 域自动编号 |
+| 页角标注著作权人名称 | 导出时写入页脚，未含著作权人名称会在校验中警告 |
+| 页码 1–60 连续 | PDF PAGE 域自动编号 |
 | 第 1 页为程序开头、第 60 页为结尾 | 截取策略从首文件首行起、至末文件末行止 |
 | 无空行、注释不凑页 | 清洗阶段删除（可关闭） |
 | 末页至少满 2/3 | 校验器检查并提示 |
@@ -70,11 +79,11 @@ CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流
 ### 开发运行
 
 ```bash
-cd /path/to/CodeDoc
+在项目根目录下运行
 npm ci
 npm run dev        # 启动桌面应用
 npm test           # core 流水线冒烟测试
-npm run verify     # 版本一致性 + 测试 + 完整构建
+npm run verify     # 版本一致性 + 测试 + 完整校验
 ```
 
 > **国内网络提示**：Electron 二进制下载失败时执行
@@ -82,7 +91,7 @@ npm run verify     # 版本一致性 + 测试 + 完整构建
 
 ### 使用流程
 
-**① 导入项目**（拖入文件夹）→ **② 文件与排序**（勾选纳入、拖拽调序，入口文件置顶）→ **③ 清洗与排版**（填写软件全称+版本号、开关清洗规则、实时前后对比）→ **④ 分页预览**（PDF 预览、页码导航）→ **⑤ 校验与导出**（风险报告 + 生成 PDF/docx/txt）
+**① 导入项目**（拖入文件夹）→ **② 文件与排序**（勾选纳入、拖拽调序，入口文件置顶）→ **③ 清洗与排版**（填写软件全称+版本号、著作权人名称、清洗规则选择、实时清洗前后对比）→ **④ 分页预览**（PDF 预览、页码导航）→ **⑤ 校验与导出**（风险报告 + 生成 PDF/docx/txt）
 
 ## 架构
 
@@ -94,8 +103,9 @@ packages/
 design/
   prototype/  Claude Design 高保真原型（UI 实现基准）
   icon/       应用与官网共用的唯一品牌图标源（PNG）
+  theme/      深色和浅色模式的高保真设计图和 UI 规范
 docs/       功能设计、技术选型与原型 prompt
-scripts/    图标生成等工具脚本
+scripts/    图标生成、打包等工具脚本
 ops/app-release/  CodeDoc 安装包归档、同步与发布记录
 ```
 
@@ -111,40 +121,23 @@ ops/app-release/  CodeDoc 安装包归档、同步与发布记录
 **Q：生成的文档能直接提交吗？**
 生成的 PDF/docx 已按应用内置规则排版，可作为源程序鉴别材料的准备稿。提交前仍应查看第 5 步报告、清零「退回风险」，并以登记机构最新要求和申请主体的实际情况为准。本工具不构成法律建议。
 
-**Q：macOS 提示无法验证开发者，怎么办？**
-当前生成的 DMG 仅用于开发验证，尚未签名与公证，也没有新的官方公开下载渠道。正式对外分发前需要完成 Developer ID 签名、Apple 公证和安装验证。
-
 **Q：我的代码会被上传吗？**
-不会。扫描、清洗、排版和导出全部在本机完成。macOS 正式安装版会访问受控更新源检查和下载新版本，但不会上传项目内容、路径或导出资料；开发版和 Windows 版不执行应用内更新检查。
+不会。扫描、清洗、排版和导出全部在本机完成，不会上传项目内容、路径或导出资料。正式安装版仅在检查和下载应用更新时访问所配置的发布来源。
 
-## 路线图
-
-- [x] **v0.1.0（MVP）**：五段流水线 · 5 步向导 · docx/txt 导出 · 多项风险校验 · 配置持久化 · macOS/Windows 安装包
-- [x] **v0.2.0**：文件类型统计与按后缀导出 · GitHub Release 更新检测 · 设置页布局优化
-- [x] **v0.3.0**：目录级文件筛选与全局反选 · 窄窗布局稳定性 · 默认路径排除配置 · 自定义扫描排除规则
-- [x] **v0.3.1**：清洗页独立滚动 · 设置页紧凑布局 · 校验详情防溢出 · 问题文件快捷定位
-- [x] **v0.3.2**：手动重扫与旧结果隔离 · 导入页独立滚动 · 分页预览自适应缩放
-- [x] **v0.4.0**：窗口状态安全恢复 · 最近项目置顶与批量管理 · 设置页最小窗布局稳定
-- [x] **v0.4.1**：分页缩略图首尾标签完整可见 · 项目文件目录树关键字快速筛选
-- [x] **v0.4.2**：应用标题栏、窗口、README 与 Windows 安装器品牌图标统一
-- [x] **v0.4.3**：安装包第三方许可证归属清单 · 依赖许可证自动审计与发布门禁
-- [x] **v0.4.4**：Windows 字体与四档缩放质量 · macOS 原生交通灯与窗口行为 · 申报文档 Word 一致性验证
-- [ ] **后续版本**：多目录导入 · 成立日期输入 · 自定义脱敏规则 · 校验项一键修复 · Linux 安装包 · macOS 签名与公证 · 应用内下载/安装更新 · CLI 版本
-- [ ] **V3**：用户手册/设计说明书模板化生成 · 例外交存模式（黑斜线覆盖）· 多申报主体管理
 
 ## 版本与发布
 
-CodeDoc 使用 Semantic Versioning。根包、桌面应用、core 包和 lockfile 的产品版本由统一脚本同步；项目配置 schema 与合规规则版本独立演进。
+CodeDoc Generator 使用 Semantic Versioning。根包、桌面应用、core 包和 lockfile 的产品版本由统一脚本同步；项目配置 schema 与合规规则版本独立演进。
 
 ```bash
 npm run version:check                    # 检查所有版本字段一致
-npm run version:set -- 0.2.0-beta.1      # 统一设置产品版本
+npm run version:set -- 1.0.3             # 统一设置下一个稳定版本
 npm run verify                           # 发布前完整校验
 npm run package:release                  # 交互构建并归档三平台发布候选包
-npm run release:sync -- --channel stable --targets all  # 只读检查同步计划
+npm run release:sync -- --provider github --channel stable --targets all            # 发布预演，不写入远端
 ```
 
-本地发布打包、签名公证检查和三目标归档见 [docs/RELEASE_PACKAGING.md](docs/RELEASE_PACKAGING.md)，OSS 同步和故障恢复见 [docs/RELEASE_SYNC.md](docs/RELEASE_SYNC.md)。完整版本规则见 [VERSIONING.md](VERSIONING.md)，用户可见变化记录在 [CHANGELOG.md](CHANGELOG.md)。
+正式同步还需要按预演输出提供 `--execute` 和完全匹配的 `--confirm` 确认字符串。本地发布打包、签名公证检查和三目标归档见 [docs/RELEASE_PACKAGING.md](docs/RELEASE_PACKAGING.md)，Provider 同步和故障恢复见 [docs/RELEASE_SYNC.md](docs/RELEASE_SYNC.md)。完整版本规则见 [docs/VERSIONING.md](docs/VERSIONING.md)，用户可见变化记录在 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
 
 ## 参与贡献
 

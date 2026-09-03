@@ -29,11 +29,11 @@ try {
     const expectedTag = `v${version}`;
     if (tag !== expectedTag) throw new Error(`Git tag ${tag} 与应用版本不一致，预期 ${expectedTag}`);
 
-    const changelog = fs.readFileSync(path.join(REPO_ROOT, 'CHANGELOG.md'), 'utf8');
+    const changelog = fs.readFileSync(path.join(REPO_ROOT, 'docs', 'CHANGELOG.md'), 'utf8');
     const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const releaseHeading = new RegExp(`^## \\[${escaped}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm');
     if (!releaseHeading.test(changelog)) {
-      throw new Error(`CHANGELOG.md 缺少已发布日期标题：## [${version}] - YYYY-MM-DD`);
+      throw new Error(`docs/CHANGELOG.md 缺少已发布日期标题：## [${version}] - YYYY-MM-DD`);
     }
   }
   console.log(`✓ 版本一致：${version}${tag ? `（${tag}）` : ''}`);

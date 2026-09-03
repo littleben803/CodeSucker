@@ -6,19 +6,19 @@
 
 ### Added
 
-- 增加 Publish Provider: github
+- 新增 GitHub Release 发布 Provider
 
 ### Changed
 
-- 安装包托管切换到 GitHub
-- 通过 Git Release 检测版本更新
+- 默认安装包托管与应用内更新源切换为 GitHub Release
+- macOS 支持通过 GitHub Release 检测、下载并安装新版本
 
 ## [1.0.1] - 2026-09-03
 
 ### Added
 
-- 增加打包脚本，同时支持 Mac 和 Windows
-- 增加安装包发布脚本，同时支持阿里云 OSS 和 GitHub Release
+- 新增安装包构建脚本，同时支持 macOS 和 Windows
+- 新增安装包发布脚本，同时支持阿里云 OSS 和 GitHub Release
 
 ### Changed
 
@@ -29,15 +29,15 @@
 
 ### Added
 
-- 导出材料新增 pdf 格式
-- macOS 增加应用内更新能力（Windows暂不支持，因为我不会 Windows 开发>_<）
-- 增加高保真主题设计（支持深色和浅色模式）
-- 增加主题管理器，统一管理 UI 元素和界面 Token 
-- 优化所有界面交互和视觉样式
+- 新增 PDF 导出格式
+- macOS 新增应用内更新能力；Windows 暂不启用应用内自动更新
+- 新增深色和浅色高保真主题设计
+- 新增主题管理器，统一管理 UI 元素和界面 Token
+- 优化各界面的交互和视觉样式
 
 ### Changed
 
-- 更改程序名，Sucker 总让人想“入”菲菲
+- 产品品牌由 CodeSucker 更新为 CodeDoc Generator（中文名：软著代码整理器）
 - 源程序材料按每页 60 行分页，前后各 30 页时截取前 1800 行与后 1800 行
 - PDF / DOCX 保持宋体 10.5pt，并使用 12pt 固定行距改善页面填充
 - 正式发布渠道支持启动版本检查、手动更新入口和运行时外链能力
@@ -57,6 +57,5 @@
 
 ### Added
 
-- 恢复 CodeSucker v0.4.4 基线（最后更新日期：2026-07-31）
-- 原项目：github.com/fanbuz/codesucker，已被作者删除不再维护
-- 原项目遵循 Apache-2.0 协议，之后的二次开发同样遵循这个协议
+- 基于 CodeSucker v0.4.4 代码基线继续维护
+- 保留并遵循原项目的 Apache-2.0 许可证及归属要求

@@ -63,7 +63,6 @@ CodeDoc 是当前正式品牌。产品保持完全离线、本地优先，并以
 - `packages/app/src/renderer/`：React Renderer。界面不得绕过 Preload 直接获得 Node.js 或文件系统能力。
 - `design/prototype/`：历史界面原型与实现参考。除非任务明确要求，不得将原型文件当作生产入口修改。
 - `docs/`：产品、品牌、安全、维护、版本和验收文档。不得存放构建产物或临时文件。
-- `handoff/`：交接材料和辅助流程。涉及品牌迁移时必须单独确认是否继续维护，不能默认视为生产应用的一部分。
 
 新增桌面或文件系统能力时，必须遵循：Renderer 类型声明 -> Preload 白名单 API -> `contextBridge` -> Main IPC handler -> 参数校验 -> Core / Worker。不得为图方便扩大 Renderer 权限。
 

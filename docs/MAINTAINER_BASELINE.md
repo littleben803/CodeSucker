@@ -39,34 +39,36 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 
 ## 已确认的产品链路
 
-在隔离用户数据目录和临时项目中，v0.4.4 已实际完成：
+当前正式版本已经完成以下产品链路验收：
 
 1. 启动桌面应用。
 2. 选择项目目录并扫描源码。
 3. 调整文件范围和排序。
 4. 填写软件名称及著作权人并执行清洗。
 5. 生成分页预览和风险校验。
-6. 导出 DOCX，并通过 ZIP 容器完整性检查。
+6. 导出 PDF、DOCX 和 TXT，并检查输出文件。
+7. 构建 macOS arm64、macOS x64 和 Windows x64 安装包。
+8. 通过 GitHub Release 发布并完成三平台公开下载和真实安装。
+9. 完成 macOS 旧版本到新版本的应用内升级。
 
 自动化验证不能替代每个正式候选版本的真实 GUI 冒烟，但日常改动至少必须保持 `npm run verify` 通过。
 
 ## 当前网络边界
 
-CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装版可在启动后延迟检查，或由用户在设置页主动检查和下载更新；Windows 不展示更新入口，也不执行启动检查，采用人工获取新版安装包的方式更新；开发版不会连接生产更新源。macOS 更新源仅允许使用 `https://download.ideaboxapps.com/codedoc/<channel>/mac/<arch>/`，渲染进程只能经 Preload 白名单调用检查、下载和安装操作，不能直接访问网络、文件系统或完整 `ipcRenderer`。
+CodeDoc 已为 macOS 接入受控的应用内更新路径：正式安装版在首屏稳定后延迟约 2～3 秒检查，也允许用户在设置页主动检查和下载；Windows 不启用应用内更新服务，采用人工获取新版安装包的方式更新；开发版不会连接正式更新源。更新 Provider 由 `ops/app-release/release.config.json` 在构建时确定，GitHub Release 是默认方案，阿里云 OSS 是备选方案。
 
 以下边界继续保持：
 
-- 不恢复旧 GitHub Release 检查或任何失效原仓库 URL；
 - 不向渲染进程开放通用外部链接 IPC；
 - 不自动下载更新，不在普通退出时静默安装；
 - 安装前必须等待扫描、处理或导出任务结束；
 - 扫描、清洗、脱敏、排版和导出保持完全离线，更新请求不携带项目内容。
 
-一键本地打包和归档详见 [`RELEASE_PACKAGING.md`](RELEASE_PACKAGING.md)，安装包同步详见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)。CodeDoc 发布工具、配置和记录统一位于本仓库 `ops/app-release/`；IdeaBoxWebsite 只维护 OSS/CDN/DNS/HTTPS 等共享基础设施事实。更新架构和发布边界见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
+一键本地打包和归档详见 [`RELEASE_PACKAGING.md`](RELEASE_PACKAGING.md)，安装包同步详见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)。CodeDoc 发布工具、配置和记录统一位于本仓库 `ops/app-release/`，不依赖其他应用仓库作为发布控制面。更新架构和发布边界见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
 
 ## 安全与依赖基线
 
-阶段 3 已完成以下收敛：
+当前安全基线包括：
 
 - Electron 渲染进程启用 sandbox，继续使用 `contextIsolation: true`、`nodeIntegration: false` 和严格 CSP；
 - preload 只通过 `contextBridge` 暴露面向具体操作的窄接口，不直接暴露 `ipcRenderer`；
@@ -77,17 +79,18 @@ CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装�
 
 安全边界、限制及回归要求详见 [`SECURITY.md`](SECURITY.md)。依赖审计依赖 npm 当前漏洞数据库；它能防止已知问题回退，但不能证明不存在未知漏洞。
 
-## 正式分发前必须确定
+## 每次正式分发必须确认
 
-以下事项不得由维护脚本猜测或自动填写：
+以下事项不得由维护脚本猜测、跳过或自动填写：
 
 1. 用户可见支持渠道。
-2. CodeDoc 新图标及其平台生成资产。
-3. 官网直接分发所需的 Developer ID Application 证书和公证凭据；当前检测到的 Apple Distribution 证书不能替代该用途。
-4. Windows 安装包仅用于小范围内部下载，不启用应用内更新，也不要求代码签名；若未来扩大公开分发范围，必须重新评估 Windows 签名方案。
+2. 版本号、CHANGELOG、源码 Commit 和 Git Tag 一致。
+3. macOS 使用有效的 Developer ID Application 身份，并完成 Hardened Runtime、Apple 公证、staple、Gatekeeper 和真实安装验证。
+4. GitHub 或 OSS 中的安装包、更新元数据、哈希和发布回执来自同一次受控构建。
+5. Windows 当前不启用应用内更新且未做代码签名；扩大公开分发范围前必须重新评估签名与系统信誉提示风险。
 
 任何密钥、证书、私钥、公证密码或 Apple 凭据都不得提交到仓库。
 
-## DMG 的含义
+## 本地开发 DMG 的边界
 
-关闭 `CSC_IDENTITY_AUTO_DISCOVERY` 生成的 DMG 只用于验证构建链。公开分发至少需要：Developer ID 签名、启用 Hardened Runtime、Apple 公证、staple 校验、干净机器安装测试和 SHA-256 发布清单。
+关闭 `CSC_IDENTITY_AUTO_DISCOVERY` 生成的 DMG 只用于验证构建链，不能替代正式发布包。正式 DMG 必须由 `package:release` 的受控流程生成并通过签名、公证、staple、Gatekeeper、真实安装和发布哈希校验。
