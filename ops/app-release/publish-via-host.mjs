@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 
 import { buildChecklist, defaultRecordPath } from './prepare-release.mjs';
 import { selectTargetRecord } from './release-records.mjs';
+import { createTerminalUi } from './terminal-ui.mjs';
 
 const DEFAULT_SERVER = 'ideabox-release@47.98.192.155';
 const DEFAULT_REMOTE_BASE = '/srv/ideabox-release/incoming';
@@ -236,13 +237,14 @@ export async function executeHandoff(options) {
 }
 
 async function main() {
+  const ui = createTerminalUi();
   try {
     const options = parseHandoffArgs(process.argv.slice(2));
-    const log = (message) => process.stdout.write(`[${new Date().toISOString()}] ${message}\n`);
+    const log = ui.timestamp;
     const result = await executeHandoff({ ...options, log });
-    process.stdout.write(`${result.output}\n`);
+    ui.success(result.output);
   } catch (error) {
-    process.stderr.write(`ERROR: ${error.message}\n`);
+    ui.error(error);
     process.exitCode = 1;
   }
 }

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "releaseContractVersion": 1,
-  "activeProvider": "oss",
-  "publishProviders": ["oss"],
+  "activeProvider": "github",
+  "publishProviders": ["github"],
   "providers": {
     "oss": {
       "enabled": true,
@@ -21,7 +21,7 @@
       "type": "github-release",
       "implemented": true,
       "writeEnabled": true,
-      "appUpdateEnabled": false,
+      "appUpdateEnabled": true,
       "owner": "littleben803",
       "repo": "CodeSucker",
       "tagPrefix": "v",

@@ -21,6 +21,7 @@ import { createInterface } from 'node:readline/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { readTargetRecord } from '../ops/app-release/release-records.mjs';
+import { createTerminalUi, colorizeStatus, terminalSupportsColor } from '../ops/app-release/terminal-ui.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(SCRIPT_DIR, '..');
@@ -243,7 +244,7 @@ export async function findVerifiedElectronArtifact({ artifactName, expectedSha25
 }
 
 function red(message) {
-  return process.stderr.isTTY ? `\u001b[31m${message}\u001b[0m` : message;
+  return colorizeStatus(`ERROR: ${message}`, terminalSupportsColor(process.stderr)).replace('ERROR: ', '');
 }
 
 export async function resolveElectronDistributions(targetIds) {
@@ -802,6 +803,7 @@ async function confirmBuild(options, plan) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
+  const ui = createTerminalUi();
   const options = parsePackageArgs(argv);
   if (options.help) {
     process.stdout.write(`${usage()}\n`);
@@ -813,7 +815,7 @@ export async function main(argv = process.argv.slice(2)) {
   const commit = gitCommit();
   const plan = { version, channel, targetIds, releaseRoot: RELEASE_ROOT, commit };
   if (!await confirmBuild(options, plan)) {
-    process.stdout.write(options.dryRun ? 'DRY RUN：未构建、未写入归档。\n' : '已取消，未执行打包。\n');
+    ui.warning(options.dryRun ? 'DRY RUN：未构建、未写入归档。' : '已取消，未执行打包。');
     return;
   }
 
@@ -826,7 +828,7 @@ export async function main(argv = process.argv.slice(2)) {
     releaseRoot: RELEASE_ROOT, channel, version, targetIds, currentCommit: commit,
   });
   if (pendingTargetIds.length === 0) {
-    process.stdout.write('\n[package] 所选目标均已有通过复核的归档，无需重复构建。\n');
+    ui.success('[package] 所选目标均已有通过复核的归档，无需重复构建。');
     return;
   }
   const electronDistributions = await resolveElectronDistributions(pendingTargetIds);
@@ -855,15 +857,13 @@ export async function main(argv = process.argv.slice(2)) {
       electronDist: electronDistributions.get(targetId),
     }));
   }
-  process.stdout.write(
-    `\n[package] 全部本地目标已完成（复用 ${completed.length}，新建 ${pendingTargetIds.length}）。未上传服务器或 OSS。\n`,
-  );
+  ui.success(`[package] 全部本地目标已完成（复用 ${completed.length}，新建 ${pendingTargetIds.length}）。未上传服务器或云端。`);
   for (const archive of archives) process.stdout.write(`- ${archive}\n`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main().catch((error) => {
-    process.stderr.write(`ERROR: ${error instanceof Error ? error.message : String(error)}\n`);
+    createTerminalUi().error(error);
     process.exitCode = 1;
   });
 }

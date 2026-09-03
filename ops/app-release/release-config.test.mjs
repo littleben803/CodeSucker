@@ -9,15 +9,15 @@ import {
   validateReleaseConfig,
 } from './release-config.mjs';
 
-test('repository release configuration keeps OSS active and enables explicit GitHub publishing', async () => {
+test('repository release configuration uses GitHub for updates and default publishing', async () => {
   const config = await loadReleaseConfig(DEFAULT_RELEASE_CONFIG);
-  assert.equal(config.activeProvider, 'oss');
-  assert.deepEqual(config.publishProviders, ['oss']);
+  assert.equal(config.activeProvider, 'github');
+  assert.deepEqual(config.publishProviders, ['github']);
   assert.equal(config.providers.oss.updateBaseUrl, 'https://download.ideaboxapps.com/codedoc');
   assert.equal(config.providers.github.enabled, true);
   assert.equal(config.providers.github.implemented, true);
   assert.equal(config.providers.github.writeEnabled, true);
-  assert.equal(config.providers.github.appUpdateEnabled, false);
+  assert.equal(config.providers.github.appUpdateEnabled, true);
   assert.equal(config.providers.github.owner, 'littleben803');
   assert.equal(config.providers.github.repo, 'CodeSucker');
   assert.equal(config.providers.github.publicBaseUrl, 'https://github.com/littleben803/CodeSucker/releases/download');
@@ -44,6 +44,8 @@ test('implemented GitHub provider can publish while app updates remain gated', a
   const config = JSON.parse(await readFile(DEFAULT_RELEASE_CONFIG, 'utf8'));
   config.providers.github.enabled = true;
   config.providers.github.implemented = true;
+  config.providers.github.appUpdateEnabled = false;
+  config.activeProvider = 'oss';
   config.publishProviders = ['oss', 'github'];
   const validated = validateReleaseConfig(config);
   assert.equal(validated.activeProvider, 'oss');

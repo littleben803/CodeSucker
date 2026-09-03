@@ -5,10 +5,20 @@ export type UpdatePlatform = 'mac';
 export type UpdateArch = 'arm64' | 'x64';
 export type UpdateProvider = 'oss' | 'github';
 
-export interface UpdateFeedConfiguration {
+export interface GenericUpdateFeedConfiguration {
   provider: 'generic';
   url: string;
 }
+
+export interface GitHubUpdateFeedConfiguration {
+  provider: 'github';
+  owner: string;
+  repo: string;
+  tagNamePrefix: string;
+  channel: 'latest' | 'beta';
+}
+
+export type UpdateFeedConfiguration = GenericUpdateFeedConfiguration | GitHubUpdateFeedConfiguration;
 
 export type UpdatePhase =
   | 'disabled'
@@ -71,10 +81,23 @@ export function updateFeedConfiguration(
   channel: UpdateChannel,
   platform: NodeJS.Platform,
   arch: string,
+  provider: UpdateProvider = UPDATE_PROVIDER,
 ): UpdateFeedConfiguration | null {
-  const url = updateFeedUrl(channel, platform, arch);
-  if (!url || UPDATE_PROVIDER !== 'oss' || !releaseConfig.providers.oss.enabled) return null;
-  return { provider: 'generic', url };
+  if (!supportsAppUpdates(platform) || !updateArch(arch)) return null;
+  if (provider === 'oss') {
+    const url = updateFeedUrl(channel, platform, arch);
+    if (!url || !releaseConfig.providers.oss.enabled) return null;
+    return { provider: 'generic', url };
+  }
+  const github = releaseConfig.providers.github;
+  if (!github.enabled || !github.implemented || !github.appUpdateEnabled) return null;
+  return {
+    provider: 'github',
+    owner: github.owner,
+    repo: github.repo,
+    tagNamePrefix: github.tagPrefix,
+    channel: channel === 'beta' ? 'beta' : 'latest',
+  };
 }
 
 export function updateChannelFromArgs(args: readonly string[], appVersion = ''): UpdateChannel {

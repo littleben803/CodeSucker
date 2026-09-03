@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildPlan } from './release.mjs';
 import { DEFAULT_RELEASE_CONFIG } from './release-config.mjs';
 import { appendTargetRecord } from './release-records.mjs';
+import { createTerminalUi } from './terminal-ui.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_REGISTRY = DEFAULT_RELEASE_CONFIG;
@@ -337,12 +338,14 @@ function formatChecklist(checklist) {
 }
 
 async function main() {
+  const ui = createTerminalUi();
   try {
     await access(DEFAULT_REGISTRY, fsConstants.R_OK);
     const options = parsePrepareArgs(process.argv.slice(2));
     if (options.command === 'stage') {
       const staged = await stageRelease(options.manifest, options.registry ?? DEFAULT_REGISTRY, options.outputDirectory);
-      process.stdout.write(`Release staged: ${staged.directory}\nStaged manifest: ${staged.manifestPath}\n`);
+      ui.success(`Release staged: ${staged.directory}`);
+      ui.status(`Staged manifest: ${staged.manifestPath}`);
       return;
     }
     const checklist = await buildChecklist(options.manifest, options.registry ?? DEFAULT_REGISTRY);
@@ -351,9 +354,9 @@ async function main() {
       return;
     }
     const output = await writeReleaseRecord(checklist, options.output);
-    process.stdout.write(`Release record created: ${output}\n`);
+    ui.success(`Release record created: ${output}`);
   } catch (error) {
-    process.stderr.write(`ERROR: ${error.message}\n`);
+    ui.error(error);
     process.exitCode = 1;
   }
 }

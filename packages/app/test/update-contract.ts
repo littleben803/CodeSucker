@@ -18,15 +18,29 @@ const workspaceRoot = path.resolve(appRoot, '../..');
 const readSource = (relativePath: string) => fs.readFileSync(path.join(appRoot, relativePath), 'utf8');
 
 assert.equal(UPDATE_BASE_URL, 'https://download.ideaboxapps.com/codedoc');
-assert.equal(UPDATE_PROVIDER, 'oss');
+assert.equal(UPDATE_PROVIDER, 'github');
 assert.equal(supportsAppUpdates('darwin'), true, 'macOS 应启用应用内更新');
 assert.equal(supportsAppUpdates('win32'), false, 'Windows 不应启用应用内更新');
 assert.equal(supportsAppUpdates('linux'), false, 'Linux 不应启用应用内更新');
 assert.equal(updateFeedUrl('stable', 'darwin', 'arm64'), `${UPDATE_BASE_URL}/stable/mac/arm64`);
 assert.equal(updateFeedUrl('beta', 'darwin', 'x64'), `${UPDATE_BASE_URL}/beta/mac/x64`);
-assert.deepEqual(updateFeedConfiguration('stable', 'darwin', 'arm64'), {
+assert.deepEqual(updateFeedConfiguration('stable', 'darwin', 'arm64', 'oss'), {
   provider: 'generic',
   url: `${UPDATE_BASE_URL}/stable/mac/arm64`,
+});
+assert.deepEqual(updateFeedConfiguration('stable', 'darwin', 'arm64'), {
+  provider: 'github',
+  owner: 'littleben803',
+  repo: 'CodeSucker',
+  tagNamePrefix: 'v',
+  channel: 'latest',
+});
+assert.deepEqual(updateFeedConfiguration('beta', 'darwin', 'x64'), {
+  provider: 'github',
+  owner: 'littleben803',
+  repo: 'CodeSucker',
+  tagNamePrefix: 'v',
+  channel: 'beta',
 });
 assert.equal(updateFeedConfiguration('stable', 'win32', 'x64'), null);
 assert.equal(updateFeedUrl('stable', 'win32', 'x64'), null, 'Windows 不应启用更新源');

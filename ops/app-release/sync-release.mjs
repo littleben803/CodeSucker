@@ -11,6 +11,7 @@ import { buildHandoffPlan, executeHandoff } from './publish-via-host.mjs';
 import { buildGitHubReleasePlan, executeGitHubRelease, formatGitHubReleasePlan } from './github-release.mjs';
 import { DEFAULT_RELEASE_CONFIG, loadReleaseConfig } from './release-config.mjs';
 import { appendTargetRecord, readTargetRecord } from './release-records.mjs';
+import { createTerminalUi } from './terminal-ui.mjs';
 
 const RELEASE_ROOT = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(RELEASE_ROOT, '..', '..');
@@ -452,18 +453,18 @@ export async function executeSync(options, configPath = DEFAULT_RELEASE_CONFIG, 
 }
 
 export async function main(argv = process.argv.slice(2)) {
+  const ui = createTerminalUi();
   const options = parseSyncArgs(argv);
   if (options.help) {
-    process.stdout.write(`${usage()}\n`);
+    ui.line(usage());
     return;
   }
-  const log = (message) => process.stdout.write(`[${new Date().toISOString()}] ${message}\n`);
-  process.stdout.write(`${await executeSync(options, DEFAULT_RELEASE_CONFIG, { log })}\n`);
+  ui.success(await executeSync(options, DEFAULT_RELEASE_CONFIG, { log: ui.timestamp }));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main().catch((error) => {
-    process.stderr.write(`ERROR: ${error instanceof Error ? error.message : String(error)}\n`);
+    createTerminalUi().error(error);
     process.exitCode = 1;
   });
 }

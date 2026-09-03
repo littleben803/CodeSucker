@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { DEFAULT_RELEASE_CONFIG, loadReleaseRegistry } from './release-config.mjs';
+import { createTerminalUi } from './terminal-ui.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_REGISTRY = DEFAULT_RELEASE_CONFIG;
@@ -400,14 +401,15 @@ export async function executeCommand(options, runtime = {}) {
 }
 
 async function main() {
+  const ui = createTerminalUi();
   try {
     await access(DEFAULT_REGISTRY, fsConstants.R_OK);
     const options = parseArgs(process.argv.slice(2));
-    const log = (message) => process.stdout.write(`[${new Date().toISOString()}] ${message}\n`);
+    const log = ui.timestamp;
     const result = await executeCommand(options, { log });
-    process.stdout.write(`${result.output}\n`);
+    ui.success(result.output);
   } catch (error) {
-    process.stderr.write(`ERROR: ${error.message}\n`);
+    ui.error(error);
     process.exitCode = 1;
   }
 }
