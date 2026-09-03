@@ -27,25 +27,25 @@ CodeDoc Generator 把繁琐的“软件著作权源程序材料”提交规则�
 
 按真实目录结构勾选需要纳入材料的文件，调整文件顺序。
 
-![文件筛选、排序与代码量统计界面](design/snapshot/step-2.jpeg)
+![文件筛选、排序与代码量统计界面](design/snapshot/step-2.jpg)
 
 ### 2. 设置清洗与排版规则
 
 填写软件全称、版本号和著作权人名称，按需设置清洗规则。
 
-![代码清洗、脱敏与排版设置界面](design/snapshot/step-3.jpeg)
+![代码清洗、脱敏与排版设置界面](design/snapshot/step-3.jpg)
 
 ### 3. 预览分页效果
 
 预览生成效果，核对页眉、页脚等信息，确认材料内容和版式符合预期。
 
-![源程序材料分页预览界面](design/snapshot/step-4.jpeg)
+![源程序材料分页预览界面](design/snapshot/step-4.jpg)
 
 ### 4. 自定义扫描规则
 
 避开依赖、构建产物和缓存目录，支持自定义规则。
 
-![扫描排除规则、隐私说明与应用信息设置界面](design/snapshot/setting.jpeg)
+![扫描排除规则、隐私说明与应用信息设置界面](design/snapshot/setting.jpg)
 
 > CodeDoc 的扫描、清洗、脱敏、排版与导出都在本机完成，不会上传你的项目源码。导出结果是提交前的材料准备稿，最终仍需按照登记机构的最新要求复核。
 
