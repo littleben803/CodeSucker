@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "releaseContractVersion": 1,
+  "activeProvider": "oss",
+  "publishProviders": ["oss"],
+  "providers": {
+    "oss": {
+      "enabled": true,
+      "type": "generic",
+      "bucket": "ideabox-app-releases-cn-hangzhou",
+      "publicBaseUrl": "https://download.ideaboxapps.com",
+      "updateBaseUrl": "https://download.ideaboxapps.com/codedoc",
+      "transport": "release-host",
+      "server": "ideabox-release@47.98.192.155",
+      "remoteIncomingBase": "/srv/ideabox-release/incoming",
+      "remoteArchiveBase": "/srv/ideabox-release/archive",
+      "remoteCommand": "/opt/ideabox-release/bin/release-server"
+    },
+    "github": {
+      "enabled": false,
+      "type": "github-release",
+      "implemented": false
+    }
+  },
+  "app": {
+    "slug": "codedoc",
+    "displayName": "CodeDoc",
+    "channels": ["beta", "stable"],
+    "targets": [
+      {
+        "id": "mac-arm64",
+        "platform": "mac",
+        "arch": "arm64",
+        "distributionMode": "app-update",
+        "metadataNames": ["latest-mac.yml"],
+        "requiredArtifactRoles": ["installer", "updater", "blockmap"],
+        "requireUpdaterBlockmap": true
+      },
+      {
+        "id": "mac-x64",
+        "platform": "mac",
+        "arch": "x64",
+        "distributionMode": "app-update",
+        "metadataNames": ["latest-mac.yml"],
+        "requiredArtifactRoles": ["installer", "updater", "blockmap"],
+        "requireUpdaterBlockmap": true
+      },
+      {
+        "id": "win-x64",
+        "platform": "win",
+        "arch": "x64",
+        "distributionMode": "internal-download",
+        "metadataNames": [],
+        "requiredArtifactRoles": ["installer"],
+        "requireUpdaterBlockmap": false
+      }
+    ]
+  }
+}

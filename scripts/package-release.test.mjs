@@ -47,6 +47,15 @@ test('non-interactive arguments select a channel and all targets', () => {
   assert.deepEqual(parseTargetSelection(options.targets), ['mac-arm64', 'mac-x64', 'win-x64']);
 });
 
+test('packaging no longer accepts an external website workspace', () => {
+  const options = parsePackageArgs(['--channel', 'stable', '--targets', 'all', '--yes']);
+  assert.equal('websiteRoot' in options, false);
+  assert.throws(
+    () => parsePackageArgs(['--website-root', '../IdeaBoxWebsite']),
+    /不支持的参数：--website-root/,
+  );
+});
+
 test('target selection is deterministic and rejects unknown targets', () => {
   assert.deepEqual(parseTargetSelection('mac-x64,mac-arm64,mac-x64'), ['mac-x64', 'mac-arm64']);
   assert.throws(() => parseTargetSelection('linux-x64'), /未知构建目标/);

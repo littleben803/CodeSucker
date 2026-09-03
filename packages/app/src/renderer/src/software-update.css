@@ -4,6 +4,20 @@
   gap: 8px;
 }
 
+.update-available-dot {
+  background: var(--red);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 14%, transparent);
+  display: inline-block;
+  flex: none;
+  height: 7px;
+  width: 7px;
+}
+
+.sidebar-update-available-dot {
+  margin-left: -4px;
+}
+
 .software-update__channel {
   border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   border-radius: 999px;
@@ -18,11 +32,6 @@
 
 .software-update__channel--beta {
   color: #a85d00;
-}
-
-.software-update__meta {
-  color: var(--text-tertiary, #7b8492);
-  font-size: 12px;
 }
 
 .software-update__progress {

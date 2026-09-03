@@ -1,0 +1,49 @@
+{
+  "releaseContractVersion": 1,
+  "appSlug": "codedoc",
+  "version": "1.0.1",
+  "channel": "beta",
+  "target": {
+    "platform": "mac",
+    "arch": "arm64"
+  },
+  "source": {
+    "repository": "CodeSucker",
+    "repositoryPath": "../..",
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "tag": "v1.0.1"
+  },
+  "verification": {
+    "releaseBuild": "passed",
+    "bundleId": "com.ideaboxapps.codedoc",
+    "signing": "passed",
+    "notarization": "accepted",
+    "notarizationSubmissionId": "00000000-0000-0000-0000-000000000000",
+    "gatekeeper": "passed"
+  },
+  "artifacts": [
+    {
+      "path": "../../packages/app/release/CodeDoc-1.0.1-mac-arm64.dmg",
+      "role": "installer"
+    },
+    {
+      "path": "../../packages/app/release/CodeDoc-1.0.1-mac-arm64.dmg.blockmap",
+      "role": "blockmap"
+    },
+    {
+      "path": "../../packages/app/release/CodeDoc-1.0.1-mac-arm64.zip",
+      "role": "updater",
+      "referencedByMetadata": true
+    },
+    {
+      "path": "../../packages/app/release/CodeDoc-1.0.1-mac-arm64.zip.blockmap",
+      "role": "blockmap"
+    }
+  ],
+  "metadata": [
+    {
+      "path": "../../packages/app/release/latest-mac.yml",
+      "publishName": "latest-mac.yml"
+    }
+  ]
+}

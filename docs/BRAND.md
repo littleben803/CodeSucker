@@ -76,9 +76,10 @@ CodeDoc 是一款本地优先的桌面工具，用于把用户主动选择的软
 
 ## 当前迁移状态
 
-截至 2026-08-31，应用层、技术标识和仓库内品牌资产已经统一：
+截至 2026-09-03，应用层、技术标识和仓库内品牌资产已经统一：
 
-- Electron 应用名与安装包名使用 `CodeDoc`。
+- macOS 与 Windows 安装后的用户可见名称使用“软著代码整理器”。
+- Electron `productName`、可执行文件、应用包和安装包文件名继续使用 `CodeDoc`，用于维持升级兼容和发布脚本稳定。
 - App ID 使用 `com.ideaboxapps.codedoc`。
 - npm workspace 使用 `@codedoc/app` 和 `@codedoc/core`。
 - 项目配置文件使用 `.codedoc.json`。

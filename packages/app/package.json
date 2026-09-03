@@ -49,6 +49,9 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "notarize": true,
+      "extendInfo": {
+        "CFBundleDisplayName": "软著代码整理器"
+      },
       "target": [
         "dmg",
         "zip"
@@ -69,6 +72,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
+      "shortcutName": "软著代码整理器",
+      "uninstallDisplayName": "软著代码整理器",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
     }

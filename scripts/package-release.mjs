@@ -20,13 +20,15 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { readTargetRecord } from '../ops/app-release/release-records.mjs';
+
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(SCRIPT_DIR, '..');
 const APP_ROOT = join(REPO_ROOT, 'packages', 'app');
 const APP_PACKAGE_PATH = join(APP_ROOT, 'package.json');
 const ELECTRON_PACKAGE_PATH = join(REPO_ROOT, 'node_modules', 'electron', 'package.json');
 const ELECTRON_CHECKSUMS_PATH = join(REPO_ROOT, 'node_modules', 'electron', 'checksums.json');
-const DEFAULT_WEBSITE_ROOT = resolve(REPO_ROOT, '..', 'IdeaBoxWebsite');
+const RELEASE_ROOT = join(REPO_ROOT, 'ops', 'app-release');
 const DEFAULT_NOTARY_PROFILE = 'ideabox-notary';
 const APP_SLUG = 'codedoc';
 const APP_NAME = 'CodeDoc';
@@ -69,7 +71,6 @@ function usage() {
 Options:
   --channel <beta|stable>       Release channel. Prompted when omitted.
   --targets <all|list>          Comma-separated target ids; defaults to all three.
-  --website-root <directory>    IdeaBoxWebsite checkout; defaults to the sibling repository.
   --notary-profile <name>       notarytool Keychain profile; defaults to ideabox-notary.
   --yes                         Skip the final local y/n confirmation.
   --dry-run                     Print the plan without building or writing archives.
@@ -88,7 +89,6 @@ export function parsePackageArgs(argv) {
   const options = {
     channel: undefined,
     targets: undefined,
-    websiteRoot: DEFAULT_WEBSITE_ROOT,
     notaryProfile: DEFAULT_NOTARY_PROFILE,
     yes: false,
     dryRun: false,
@@ -99,11 +99,10 @@ export function parsePackageArgs(argv) {
     if (argument === '--yes') options.yes = true;
     else if (argument === '--dry-run') options.dryRun = true;
     else if (argument === '--help' || argument === '-h') options.help = true;
-    else if (['--channel', '--targets', '--website-root', '--notary-profile'].includes(argument)) {
+    else if (['--channel', '--targets', '--notary-profile'].includes(argument)) {
       const value = valueAfter(argv, index, argument);
       if (argument === '--channel') options.channel = value;
       else if (argument === '--targets') options.targets = value;
-      else if (argument === '--website-root') options.websiteRoot = resolve(value);
       else options.notaryProfile = value;
       index += 1;
     } else {
@@ -395,18 +394,15 @@ export function classifyArchivePresence(archiveExists, recordExists) {
   return 'inconsistent';
 }
 
-function targetArchivePaths(websiteRoot, channel, version, target) {
+function targetArchivePaths(releaseRoot, channel, version, target) {
   const archiveDirectory = join(
-    websiteRoot, 'ops', 'app-release', '.release-work', APP_SLUG, channel,
+    releaseRoot, '.release-work', APP_SLUG, channel,
     target.platform, target.arch, version,
   );
   return {
     archiveDirectory,
     manifestPath: join(archiveDirectory, 'release-manifest.json'),
-    recordPath: join(
-      websiteRoot, 'ops', 'app-release', 'releases', APP_SLUG, channel, version,
-      `${target.platform}-${target.arch}.prepared.json`,
-    ),
+    recordPath: join(releaseRoot, 'releases', APP_SLUG, channel, version, 'prepared.json'),
   };
 }
 
@@ -423,16 +419,23 @@ function assertReusableBuildInputs(sourceCommit, currentCommit) {
   }
 }
 
-export async function resolveResumableTargets({ websiteRoot, channel, version, targetIds, currentCommit }) {
-  const prepareScript = join(websiteRoot, 'ops', 'app-release', 'prepare-release.mjs');
+export async function resolveResumableTargets({ releaseRoot, channel, version, targetIds, currentCommit }) {
+  const prepareScript = join(releaseRoot, 'prepare-release.mjs');
   const pendingTargetIds = [];
   const completed = [];
   for (const targetId of targetIds) {
     const target = TARGETS[targetId];
-    const paths = targetArchivePaths(websiteRoot, channel, version, target);
+    const paths = targetArchivePaths(releaseRoot, channel, version, target);
+    const record = await readTargetRecord(paths.recordPath, {
+      appSlug: APP_SLUG,
+      version,
+      channel,
+      platform: target.platform,
+      arch: target.arch,
+    }, 'prepared-release');
     const state = classifyArchivePresence(
       await pathExists(paths.archiveDirectory),
-      await pathExists(paths.recordPath),
+      record !== null,
     );
     if (state === 'pending') {
       pendingTargetIds.push(targetId);
@@ -442,7 +445,6 @@ export async function resolveResumableTargets({ websiteRoot, channel, version, t
       throw new Error(`已有目标状态不完整，拒绝覆盖：${targetId} ${version}（归档与 prepared 记录必须同时存在）`);
     }
 
-    const record = JSON.parse(await readFile(paths.recordPath, 'utf8'));
     const manifest = JSON.parse(await readFile(paths.manifestPath, 'utf8'));
     const identityMatches = record.recordType === 'prepared-release'
       && record.appSlug === APP_SLUG
@@ -454,7 +456,7 @@ export async function resolveResumableTargets({ websiteRoot, channel, version, t
     if (!record.source?.commit || manifest.source?.commit !== record.source.commit) {
       throw new Error(`已有归档与 prepared 记录的源码 Commit 不一致：${targetId} ${version}`);
     }
-    runCapture(process.execPath, [prepareScript, 'checklist', '--manifest', paths.manifestPath], { cwd: websiteRoot });
+    runCapture(process.execPath, [prepareScript, 'checklist', '--manifest', paths.manifestPath], { cwd: REPO_ROOT });
     assertReusableBuildInputs(record.source.commit, currentCommit);
     completed.push({ targetId, sourceCommit: record.source.commit, archiveDirectory: paths.archiveDirectory });
     process.stdout.write(
@@ -638,19 +640,19 @@ async function writeChecksums(filesDirectory, outputPath) {
   await writeFile(outputPath, `${lines.join('\n')}\n`);
 }
 
-async function archiveTarget({ websiteRoot, target, version, channel, commit, result, sessionDirectory, buildCommand }) {
-  const prepareScript = join(websiteRoot, 'ops', 'app-release', 'prepare-release.mjs');
+async function archiveTarget({ releaseRoot, target, version, channel, commit, result, sessionDirectory, buildCommand }) {
+  const prepareScript = join(releaseRoot, 'prepare-release.mjs');
   const sourceManifest = join(sessionDirectory, `${target.id}-release-manifest.json`);
   const manifest = createReleaseManifest({
     target, version, channel, commit, repositoryPath: REPO_ROOT, result,
   });
   await writeFile(sourceManifest, `${JSON.stringify(manifest, null, 2)}\n`);
   const archiveDirectory = join(
-    websiteRoot, 'ops', 'app-release', '.release-work', APP_SLUG, channel,
+    releaseRoot, '.release-work', APP_SLUG, channel,
     target.platform, target.arch, version,
   );
   runCapture(process.execPath, [prepareScript, 'stage', '--manifest', sourceManifest, '--output-dir', archiveDirectory], {
-    cwd: websiteRoot,
+    cwd: REPO_ROOT,
   });
   const stagedManifest = join(archiveDirectory, 'release-manifest.json');
   const verificationDirectory = join(archiveDirectory, 'verification');
@@ -679,7 +681,7 @@ async function archiveTarget({ websiteRoot, target, version, channel, commit, re
     cloudUploadPerformed: false,
   };
   await writeFile(join(archiveDirectory, 'build-report.json'), `${JSON.stringify(report, null, 2)}\n`);
-  runCapture(process.execPath, [prepareScript, 'record', '--manifest', stagedManifest], { cwd: websiteRoot });
+  runCapture(process.execPath, [prepareScript, 'record', '--manifest', stagedManifest], { cwd: REPO_ROOT });
   return archiveDirectory;
 }
 
@@ -705,7 +707,7 @@ export function builderCommand(target, outputDirectory, electronDist) {
   };
 }
 
-async function buildTarget({ target, version, channel, commit, websiteRoot, notaryProfile, sessionDirectory, electronDist }) {
+async function buildTarget({ target, version, channel, commit, releaseRoot, notaryProfile, sessionDirectory, electronDist }) {
   const targetDirectory = join(sessionDirectory, target.id);
   const outputDirectory = join(targetDirectory, 'output');
   await mkdir(outputDirectory, { recursive: true });
@@ -727,7 +729,7 @@ async function buildTarget({ target, version, channel, commit, websiteRoot, nota
     ? await verifyMacArtifacts({ target, version, files, outputDirectory: targetDirectory, notaryProfile, previousNotaryIds })
     : await verifyWindowsArtifacts({ target, version, files, outputDirectory: targetDirectory });
   const archiveDirectory = await archiveTarget({
-    websiteRoot,
+    releaseRoot,
     target,
     version,
     channel,
@@ -740,7 +742,7 @@ async function buildTarget({ target, version, channel, commit, websiteRoot, nota
   return archiveDirectory;
 }
 
-function formatPlan({ version, channel, targetIds, websiteRoot, commit }) {
+function formatPlan({ version, channel, targetIds, releaseRoot, commit }) {
   return [
     '',
     'CodeDoc 本地发布打包计划',
@@ -748,7 +750,7 @@ function formatPlan({ version, channel, targetIds, websiteRoot, commit }) {
     `通道：${channel}`,
     `源码：${commit}`,
     `目标：${targetIds.map((id) => TARGETS[id].label).join('、')}`,
-    `归档仓库：${websiteRoot}`,
+    `本地归档：${releaseRoot}`,
     '云端操作：无',
     '',
   ].join('\n');
@@ -809,20 +811,19 @@ export async function main(argv = process.argv.slice(2)) {
   const { channel, targetIds } = await resolveInteractiveOptions(options, version);
   validateChannelVersion(channel, version);
   const commit = gitCommit();
-  const plan = { version, channel, targetIds, websiteRoot: options.websiteRoot, commit };
+  const plan = { version, channel, targetIds, releaseRoot: RELEASE_ROOT, commit };
   if (!await confirmBuild(options, plan)) {
     process.stdout.write(options.dryRun ? 'DRY RUN：未构建、未写入归档。\n' : '已取消，未执行打包。\n');
     return;
   }
 
-  const prepareScript = join(options.websiteRoot, 'ops', 'app-release', 'prepare-release.mjs');
-  const registry = join(options.websiteRoot, 'ops', 'app-release', 'apps.json');
+  const prepareScript = join(RELEASE_ROOT, 'prepare-release.mjs');
+  const registry = join(RELEASE_ROOT, 'release.config.json');
   await access(prepareScript);
   await access(registry);
   assertCleanRepository(REPO_ROOT, 'CodeSucker');
-  assertCleanRepository(options.websiteRoot, 'IdeaBoxWebsite');
   const { pendingTargetIds, completed } = await resolveResumableTargets({
-    websiteRoot: options.websiteRoot, channel, version, targetIds, currentCommit: commit,
+    releaseRoot: RELEASE_ROOT, channel, version, targetIds, currentCommit: commit,
   });
   if (pendingTargetIds.length === 0) {
     process.stdout.write('\n[package] 所选目标均已有通过复核的归档，无需重复构建。\n');
@@ -848,7 +849,7 @@ export async function main(argv = process.argv.slice(2)) {
       version,
       channel,
       commit,
-      websiteRoot: options.websiteRoot,
+      releaseRoot: RELEASE_ROOT,
       notaryProfile: options.notaryProfile,
       sessionDirectory,
       electronDist: electronDistributions.get(targetId),

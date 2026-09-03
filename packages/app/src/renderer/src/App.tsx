@@ -10,7 +10,9 @@ import { canStartScan } from './scan-guard';
 import { canVisitStep } from './wizard-progress';
 import { APP_ICON_URL } from './brand-icons';
 import AppAlert from './components/AppAlert';
+import UpdateAvailableDot from './components/UpdateAvailableDot';
 import { applyTheme } from './theme-controller';
+import { hasAvailableUpdate, supportsAppUpdates, type UpdateState } from '../../shared/update';
 
 type NavigationIconName = 'organize' | 'import' | 'files' | 'clean' | 'preview' | 'export' | 'settings' | 'offline' | 'private' | 'readonly';
 
@@ -67,6 +69,9 @@ function ThemeToggleIcon({ target }: { target: 'light' | 'dark' }) {
 export default function App() {
   const s = useStore();
   const [rescanConfirmOpen, setRescanConfirmOpen] = useState(false);
+  const [updateState, setUpdateState] = useState<UpdateState | null>(null);
+  const updatesEnabled = supportsAppUpdates(window.codedoc.platform);
+  const updateAvailable = hasAvailableUpdate(updateState);
   const rescanEnabled = !!s.root && s.loaded && canStartScan(s);
   const nextTheme = s.theme === 'light' ? 'dark' : 'light';
   const themeLabel = nextTheme === 'dark' ? '切换到深色模式' : '切换到浅色模式';
@@ -79,6 +84,21 @@ export default function App() {
     void refreshRecent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!updatesEnabled) return undefined;
+    let active = true;
+    void window.codedoc.getUpdateState()
+      .then((state) => { if (active) setUpdateState(state); })
+      .catch(() => { if (active) setUpdateState(null); });
+    const unsubscribe = window.codedoc.onUpdateState((state) => {
+      if (active) setUpdateState(state);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [updatesEnabled]);
 
   useEffect(() => {
     window.codedoc.onProgress((progress) => {
@@ -174,6 +194,7 @@ export default function App() {
               onClick={() => s.set({ view: 'settings' })}>
               <span className="sidebar-nav-icon"><NavigationIcon name="settings" /></span>
               <span>设置</span>
+              {updateAvailable && <UpdateAvailableDot className="sidebar-update-available-dot" />}
               <span className="sidebar-primary__indicator" aria-hidden="true" />
             </button>
           </nav>
@@ -199,7 +220,7 @@ export default function App() {
                   </div>
                 </header>
                 <div className="route-content">
-                  <Settings />
+                  <Settings updateState={updateState} onUpdateStateChange={setUpdateState} />
                 </div>
               </>
             ) : (

@@ -1,6 +1,8 @@
 # CodeDoc 本地发布打包
 
-本文说明如何在不依赖 AI、不上传服务器且不修改 Git 历史的情况下，从已提交的 CodeDoc 源码生成并归档发布候选产物。
+本文说明如何在不依赖 AI、不上传服务器且不修改 Git 历史的情况下，从已提交的 CodeDoc 源码生成并在本仓库归档发布候选产物。
+
+macOS 与 Windows 安装后的用户可见名称统一为“软著代码整理器”；应用包、可执行文件和 `CodeDoc-<version>-<platform>-<arch>` 发布产物继续使用 `CodeDoc` 技术名，避免破坏升级兼容和同步脚本。
 
 ## 一条命令
 
@@ -39,7 +41,7 @@ npm run package:release -- --channel beta --targets win-x64 --yes
 
 1. 使用 Node.js `24.19.0`，依赖通过 `npm ci` 安装。
 2. 用 `npm run version:set -- <version>` 设置版本，更新 `CHANGELOG.md`，完成代码审查并提交。
-3. CodeSucker 和 IdeaBoxWebsite 工作区都应保持干净。
+3. CodeSucker 工作区应保持干净。
 4. macOS 目标需要本机存在 Developer ID Application，并已保存 `ideabox-notary` Keychain profile。
 5. Gatekeeper 必须开启。
 
@@ -62,7 +64,7 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 
 ## 执行顺序
 
-脚本在真正构建前显示版本、通道、Commit、目标和归档仓库，并提示 `开始本地打包与归档？[Y/n]`。直接回车或输入 `y` 继续，输入 `n` 取消；默认选择 `y`。确认后执行：
+脚本在真正构建前显示版本、通道、Commit、目标和本地归档目录，并提示 `开始本地打包与归档？[Y/n]`。直接回车或输入 `y` 继续，输入 `n` 取消；默认选择 `y`。确认后执行：
 
 1. 检查源码与归档状态；完整且仍兼容当前构建输入的已有目标会复核后跳过；
 2. 查找并校验全部所选目标的 Electron 本地缓存；选择 Windows 时同时校验 NSIS 3.12 unified bundle；
@@ -71,12 +73,12 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 5. 在互相隔离的临时目录依次构建三个目标；
 6. macOS 校验 Bundle ID、版本、单架构、深层签名、公证票据和系统分发策略；
 7. Windows 校验 EXE 体积和 MZ/PE 文件头；
-8. 调用 IdeaBoxWebsite 的发布 checklist；
+8. 调用本仓库 `ops/app-release/` 的发布 checklist；
 9. 写入二进制归档、SHA-256、构建日志、验证日志与 Git-safe prepared 记录。
 
 任何目标失败都会停止后续目标，并保留临时目录和已完成目标，方便审计。重新执行时，脚本支持断点续打：
 
-- 归档目录与 `*.prepared.json` 同时存在时，重新运行 checklist 并校验源码兼容性；
+- 归档目录与 `prepared.json` 中对应平台记录同时存在时，重新运行 checklist 并校验源码兼容性；
 - 从原构建 Commit 到当前 Commit 只修改打包脚本或文档时，已有目标会自动跳过；
 - `packages/app`、`packages/core`、根 `package.json`、`package-lock.json` 或随包许可证发生变化时，拒绝复用旧包；
 - 只有归档或只有 prepared 记录属于不完整状态，脚本会停止，不会覆盖历史；
@@ -87,7 +89,7 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 二进制和本机验证资料不会进入 Git：
 
 ```text
-../IdeaBoxWebsite/ops/app-release/.release-work/
+ops/app-release/.release-work/
 └── codedoc/<channel>/<platform>/<arch>/<version>/
     ├── files/
     ├── release-manifest.json
@@ -102,9 +104,11 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 可进入 Git 的小型发布记录位于：
 
 ```text
-../IdeaBoxWebsite/ops/app-release/releases/
-└── codedoc/<channel>/<version>/<platform>-<arch>.prepared.json
+ops/app-release/releases/
+└── codedoc/<channel>/<version>/prepared.json
 ```
+
+`prepared.json` 的 `targets` 数组聚合该版本已完成归档的平台；已存在的平台记录不可覆盖，新平台以原子方式追加。
 
 ## 上传边界
 
@@ -116,4 +120,4 @@ Windows NSIS 辅助工具不属于 Electron Runtime。选择 Windows 目标时�
 - 更新官网下载链接；
 - Git commit、Tag 或 push。
 
-需要发布时，继续按 IdeaBoxWebsite 的 `ops/app-release/README.md` 执行服务器中转和分阶段发布。Windows 企业内部下载包只上传带版本号的 EXE，不发布 `latest.yml`，也不参与 Windows 应用内更新。
+需要发布时，继续执行 `npm run release:sync`。日常步骤见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)，底层发布工具见 [`../ops/app-release/README.md`](../ops/app-release/README.md)。Windows 企业内部下载包只上传带版本号的 EXE，不发布 `latest.yml`，也不参与 Windows 应用内更新。

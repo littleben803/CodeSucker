@@ -29,7 +29,9 @@
     "version:set": "node scripts/set-version.mjs",
     "package:release": "node scripts/package-release.mjs",
     "package:release:test": "node --test scripts/package-release.test.mjs",
-    "verify": "npm run version:check && npm run lockfile:check && npm run maintenance:check && npm run icons:check && npm run licenses:check && npm run package:release:test && npm test && npm run build && npm run test:integration"
+    "release:sync": "node ops/app-release/sync-release.mjs",
+    "release:tools:test": "node --test ops/app-release/*.test.mjs ops/app-release/server/*.test.mjs",
+    "verify": "npm run version:check && npm run lockfile:check && npm run maintenance:check && npm run icons:check && npm run licenses:check && npm run package:release:test && npm run release:tools:test && npm test && npm run build && npm run test:integration"
   },
   "engines": {
     "node": ">=24.19.0 <25"

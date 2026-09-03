@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+import {
+  DEFAULT_RELEASE_CONFIG,
+  loadReleaseConfig,
+  normalizeReleaseRegistry,
+  validateReleaseConfig,
+} from './release-config.mjs';
+
+test('repository release configuration selects OSS and keeps GitHub disabled', async () => {
+  const config = await loadReleaseConfig(DEFAULT_RELEASE_CONFIG);
+  assert.equal(config.activeProvider, 'oss');
+  assert.deepEqual(config.publishProviders, ['oss']);
+  assert.equal(config.providers.oss.updateBaseUrl, 'https://download.ideaboxapps.com/codedoc');
+  assert.equal(config.providers.github.enabled, false);
+  const registry = normalizeReleaseRegistry(config);
+  assert.equal(registry.apps.codedoc.displayName, 'CodeDoc');
+  assert.equal(registry.infrastructure.bucket, 'ideabox-app-releases-cn-hangzhou');
+});
+
+test('disabled providers cannot be selected or published', async () => {
+  const config = JSON.parse(await readFile(DEFAULT_RELEASE_CONFIG, 'utf8'));
+  config.activeProvider = 'github';
+  assert.throws(() => validateReleaseConfig(config), /Active provider is unavailable: github/);
+  config.activeProvider = 'oss';
+  config.publishProviders = ['oss', 'github'];
+  assert.throws(() => validateReleaseConfig(config), /Publish provider is unavailable: github/);
+  config.publishProviders = ['oss'];
+  config.providers.github.enabled = true;
+  assert.throws(() => validateReleaseConfig(config), /GitHub release provider is not implemented/);
+});
+
+test('release configuration rejects credential-shaped fields', async () => {
+  const config = JSON.parse(await readFile(DEFAULT_RELEASE_CONFIG, 'utf8'));
+  config.providers.oss.accessKeySecret = 'must-not-exist';
+  assert.throws(() => validateReleaseConfig(config), /forbidden in release configuration/);
+});

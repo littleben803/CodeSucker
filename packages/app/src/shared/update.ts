@@ -1,6 +1,14 @@
+import releaseConfig from '../../../../ops/app-release/release.config.json';
+
 export type UpdateChannel = 'stable' | 'beta';
 export type UpdatePlatform = 'mac';
 export type UpdateArch = 'arm64' | 'x64';
+export type UpdateProvider = 'oss' | 'github';
+
+export interface UpdateFeedConfiguration {
+  provider: 'generic';
+  url: string;
+}
 
 export type UpdatePhase =
   | 'disabled'
@@ -32,7 +40,12 @@ export interface UpdateState {
   errorCode?: 'check-failed' | 'download-failed' | 'pipeline-busy' | 'unsupported';
 }
 
-export const UPDATE_BASE_URL = 'https://download.ideaboxapps.com/codedoc';
+export function hasAvailableUpdate(state: UpdateState | null): boolean {
+  return Boolean(state?.supported && state.targetVersion && state.phase !== 'up-to-date');
+}
+
+export const UPDATE_PROVIDER = releaseConfig.activeProvider as UpdateProvider;
+export const UPDATE_BASE_URL = releaseConfig.providers.oss.updateBaseUrl;
 
 export function supportsAppUpdates(platform: NodeJS.Platform): boolean {
   return platform === 'darwin';
@@ -52,6 +65,16 @@ export function updateFeedUrl(channel: UpdateChannel, platform: NodeJS.Platform,
   const targetArch = updateArch(arch);
   if (!targetPlatform || !targetArch) return null;
   return `${UPDATE_BASE_URL}/${channel}/${targetPlatform}/${targetArch}`;
+}
+
+export function updateFeedConfiguration(
+  channel: UpdateChannel,
+  platform: NodeJS.Platform,
+  arch: string,
+): UpdateFeedConfiguration | null {
+  const url = updateFeedUrl(channel, platform, arch);
+  if (!url || UPDATE_PROVIDER !== 'oss' || !releaseConfig.providers.oss.enabled) return null;
+  return { provider: 'generic', url };
 }
 
 export function updateChannelFromArgs(args: readonly string[], appVersion = ''): UpdateChannel {

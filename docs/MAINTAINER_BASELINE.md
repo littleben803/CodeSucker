@@ -7,7 +7,7 @@
 ## 产品与工程基线
 
 - 产品版本：由根目录及两个 workspace 的 `package.json` 统一声明，并由 `npm run version:check` 校验
-- 产品名称：`CodeDoc`
+- 用户可见安装名称：`软著代码整理器`；技术产品名、可执行文件和发布产物名：`CodeDoc`
 - App ID：`com.ideaboxapps.codedoc`
 - npm workspace：`@codedoc/app`、`@codedoc/core`
 - 项目配置：`.codedoc.json`
@@ -29,12 +29,13 @@ npm run audit:runtime
 npm run audit:all
 npm run verify
 npm run package:release
+npm run release:sync -- --channel stable --targets all
 npm run perf
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:arm64
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64
 ```
 
-`npm run verify` 包含版本、锁文件源、图标、许可证、核心/桌面端测试、生产构建和 worker 集成测试。
+`npm run verify` 包含版本、锁文件源、图标、许可证、发布工具、核心/桌面端测试、生产构建和 worker 集成测试。
 
 ## 已确认的产品链路
 
@@ -61,7 +62,7 @@ CodeDoc 已为 macOS 接入受控的应用内更新路径：macOS 正式安装�
 - 安装前必须等待扫描、处理或导出任务结束；
 - 扫描、清洗、脱敏、排版和导出保持完全离线，更新请求不携带项目内容。
 
-一键本地打包和归档详见 [`RELEASE_PACKAGING.md`](RELEASE_PACKAGING.md)。更新架构、OSS/CDN 路径、发布顺序和证书续期方案详见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
+一键本地打包和归档详见 [`RELEASE_PACKAGING.md`](RELEASE_PACKAGING.md)，安装包同步详见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)。CodeDoc 发布工具、配置和记录统一位于本仓库 `ops/app-release/`；IdeaBoxWebsite 只维护 OSS/CDN/DNS/HTTPS 等共享基础设施事实。更新架构和发布边界见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)。
 
 ## 安全与依赖基线
 

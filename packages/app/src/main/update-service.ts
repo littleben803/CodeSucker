@@ -3,7 +3,8 @@ import {
   autoUpdater, type AppUpdater, type ProgressInfo, type UpdateInfo,
 } from 'electron-updater';
 import {
-  updateChannelFromArgs, updateFeedUrl, type UpdateChannel, type UpdateState,
+  updateChannelFromArgs, updateFeedConfiguration, type UpdateChannel,
+  type UpdateFeedConfiguration, type UpdateState,
 } from '../shared/update';
 
 type StateListener = (state: UpdateState) => void;
@@ -44,7 +45,7 @@ export class UpdateService {
   private readonly updater: AppUpdater;
   private readonly options: UpdateServiceOptions;
   private readonly channel: UpdateChannel;
-  private readonly feedUrl: string | null;
+  private readonly feed: UpdateFeedConfiguration | null;
   private automaticCheckScheduled = false;
   private currentOperation: 'check' | 'download' | null = null;
   private state: UpdateState;
@@ -53,8 +54,8 @@ export class UpdateService {
     this.options = options;
     this.updater = options.updater ?? autoUpdater;
     this.channel = updateChannelFromArgs(options.argv ?? process.argv, options.appVersion);
-    this.feedUrl = updateFeedUrl(this.channel, options.platform ?? process.platform, options.arch ?? process.arch);
-    const supported = options.isPackaged && this.feedUrl !== null;
+    this.feed = updateFeedConfiguration(this.channel, options.platform ?? process.platform, options.arch ?? process.arch);
+    const supported = options.isPackaged && this.feed !== null;
     this.state = {
       phase: supported ? 'idle' : 'disabled',
       supported,
@@ -63,14 +64,14 @@ export class UpdateService {
       message: supported ? '已准备好检查更新。' : '仅 macOS 正式安装版支持应用内更新。',
     };
 
-    if (!supported || !this.feedUrl) return;
+    if (!supported || !this.feed) return;
     this.updater.autoDownload = false;
     this.updater.autoInstallOnAppQuit = false;
     this.updater.autoRunAppAfterInstall = true;
     this.updater.allowPrerelease = this.channel === 'beta';
     this.updater.allowDowngrade = false;
     this.updater.logger = null;
-    this.updater.setFeedURL({ provider: 'generic', url: this.feedUrl });
+    this.updater.setFeedURL(this.feed);
     this.registerUpdaterEvents();
   }
 
@@ -127,7 +128,7 @@ export class UpdateService {
     return this.getState();
   }
 
-  scheduleAutomaticCheck(delayMs = 12_000, jitterMs = 6_000): void {
+  scheduleAutomaticCheck(delayMs = 2_000, jitterMs = 1_000): void {
     if (!this.state.supported || this.automaticCheckScheduled) return;
     this.automaticCheckScheduled = true;
     const jitter = jitterMs > 0 ? Math.floor(Math.random() * jitterMs) : 0;

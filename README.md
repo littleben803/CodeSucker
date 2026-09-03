@@ -46,7 +46,7 @@ CodeDoc 把常见的软件著作权源程序材料规则整理成一套本地流
 - 📄 **规范化截取分页** — 超 3600 行自动取前 1800 + 后 1800 行；第 1 页必为模块开头、第 60 页必为模块结尾；产品按每页 60 行显式分页，不靠排版"凑页"
 - 📝 **一键导出** — PDF / docx（页眉=软件名+版本号、右上角自动页码、宋体 10.5pt、12pt 固定行距）+ txt 备查
 - ✅ **提交前风险校验** — 检查有效内容、每页行数、末页 2/3、页眉一致性、首末页边界和 `@author`/`Copyright` 署名冲突，给出「通过 / 警告 / 退回风险」三级结论
-- 🔐 **产品功能完全离线** — 扫描、清洗、排版和导出均在本机完成；维护迁移期间版本检测已关闭，产品功能不发起网络请求
+- 🔐 **核心处理完全离线** — 扫描、清洗、排版和导出均在本机完成；macOS 正式安装版只访问受控更新源检查和下载新版本
 - 📌 **最近项目管理** — 常用项目可置顶，失效或不再使用的记录可单项或批量移除；移除记录不会删除磁盘项目
 - 💾 **配置与窗口持久化** — 项目选择与导出配置存入 `.codedoc.json`；应用级规则、最近项目和窗口状态安全保存在本机配置目录
 
@@ -96,6 +96,7 @@ design/
   icon/       应用与官网共用的唯一品牌图标源（PNG）
 docs/       功能设计、技术选型与原型 prompt
 scripts/    图标生成等工具脚本
+ops/app-release/  CodeDoc 安装包归档、同步与发布记录
 ```
 
 关键技术决策（详见 [docs/01-功能设计与技术选型.md](docs/01-功能设计与技术选型.md)）：
@@ -114,7 +115,7 @@ scripts/    图标生成等工具脚本
 当前生成的 DMG 仅用于开发验证，尚未签名与公证，也没有新的官方公开下载渠道。正式对外分发前需要完成 Developer ID 签名、Apple 公证和安装验证。
 
 **Q：我的代码会被上传吗？**
-不会。扫描、清洗、排版和导出全部在本机完成；当前维护基线已关闭版本检测和应用内外链入口。
+不会。扫描、清洗、排版和导出全部在本机完成。macOS 正式安装版会访问受控更新源检查和下载新版本，但不会上传项目内容、路径或导出资料；开发版和 Windows 版不执行应用内更新检查。
 
 ## 路线图
 
@@ -140,9 +141,10 @@ npm run version:check                    # 检查所有版本字段一致
 npm run version:set -- 0.2.0-beta.1      # 统一设置产品版本
 npm run verify                           # 发布前完整校验
 npm run package:release                  # 交互构建并归档三平台发布候选包
+npm run release:sync -- --channel stable --targets all  # 只读检查同步计划
 ```
 
-本地发布打包、签名公证检查、三目标归档和安全边界见 [docs/RELEASE_PACKAGING.md](docs/RELEASE_PACKAGING.md)。完整版本规则见 [VERSIONING.md](VERSIONING.md)，用户可见变化记录在 [CHANGELOG.md](CHANGELOG.md)。
+本地发布打包、签名公证检查和三目标归档见 [docs/RELEASE_PACKAGING.md](docs/RELEASE_PACKAGING.md)，OSS 同步和故障恢复见 [docs/RELEASE_SYNC.md](docs/RELEASE_SYNC.md)。完整版本规则见 [VERSIONING.md](VERSIONING.md)，用户可见变化记录在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 参与贡献
 

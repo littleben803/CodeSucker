@@ -1,0 +1,86 @@
+{
+  "releaseCollectionVersion": 1,
+  "recordType": "published-release-collection",
+  "appSlug": "codedoc",
+  "version": "1.0.1-beta.2",
+  "channel": "beta",
+  "targets": [
+    {
+      "releaseRecordVersion": 1,
+      "recordType": "published-release",
+      "publishedAt": "2026-09-02T07:20:41.795Z",
+      "appSlug": "codedoc",
+      "version": "1.0.1-beta.2",
+      "channel": "beta",
+      "target": {
+        "platform": "mac",
+        "arch": "arm64"
+      },
+      "source": {
+        "repository": "CodeSucker",
+        "commit": "70c8522f29b15aa62e68a7ce91265e92044c521c",
+        "tag": "v1.0.1-beta.2"
+      },
+      "verification": {
+        "releaseBuild": "passed",
+        "signing": "passed",
+        "bundleId": "com.ideaboxapps.codedoc",
+        "notarization": "accepted",
+        "notarizationSubmissionId": "b63966fe-8f83-4870-aa60-3f973b3c3088",
+        "gatekeeper": "disabled-warning"
+      },
+      "confirmationToken": "codedoc@1.0.1-beta.2:beta:mac:arm64",
+      "artifacts": [
+        {
+          "role": "installer",
+          "publishName": "CodeDoc-1.0.1-beta.2-mac-arm64.dmg",
+          "key": "codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.dmg",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.dmg",
+          "size": 125748768,
+          "sha256": "5e1ca8dc9b689d9487bba042cbb81ef486f4951f71a2f5bd20f5a9ec74166b32"
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-beta.2-mac-arm64.dmg.blockmap",
+          "key": "codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.dmg.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.dmg.blockmap",
+          "size": 131899,
+          "sha256": "471e70bcb6b3fc277bf8b7112e06c1f895042119d64a14a4c77c2b2a64501e62"
+        },
+        {
+          "role": "updater",
+          "publishName": "CodeDoc-1.0.1-beta.2-mac-arm64.zip",
+          "key": "codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.zip",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.zip",
+          "size": 123439130,
+          "sha256": "4f2328ef76496a6443cf9666d27b99bdc0d8ef3d8e344dcf6b2b3568d7275114",
+          "referencedByMetadata": true
+        },
+        {
+          "role": "blockmap",
+          "publishName": "CodeDoc-1.0.1-beta.2-mac-arm64.zip.blockmap",
+          "key": "codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.zip.blockmap",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/beta/mac/arm64/CodeDoc-1.0.1-beta.2-mac-arm64.zip.blockmap",
+          "size": 131375,
+          "sha256": "8c1cb785085b569af52106886acd3202a42ab4ba750bcf028fdef2b73a34fba7"
+        }
+      ],
+      "metadata": [
+        {
+          "role": "metadata",
+          "publishName": "latest-mac.yml",
+          "key": "codedoc/beta/mac/arm64/latest-mac.yml",
+          "publicUrl": "https://download.ideaboxapps.com/codedoc/beta/mac/arm64/latest-mac.yml",
+          "size": 537,
+          "sha256": "6b5b076f5eca7b83cd340718d4d04916bdb75cf955ef0ffc3512d99e12bb8a9d"
+        }
+      ],
+      "serverChecks": [
+        "incoming-hash",
+        "oss-read-back-hash",
+        "cdn-full-hash",
+        "cdn-range"
+      ]
+    }
+  ]
+}

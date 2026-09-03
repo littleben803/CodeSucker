@@ -6,7 +6,8 @@ import {
 } from '../scan-exclude-rules';
 import { getBuiltInScanExcludeRuleHelp } from '../scan-exclude-rule-help';
 import { toast } from '../store';
-import { supportsAppUpdates, type UpdateState } from '../../../shared/update';
+import { hasAvailableUpdate, supportsAppUpdates, type UpdateState } from '../../../shared/update';
+import UpdateAvailableDot from '../components/UpdateAvailableDot';
 import '../software-update.css';
 
 interface SettingsCardHeaderProps {
@@ -16,14 +17,18 @@ interface SettingsCardHeaderProps {
   subtitle?: ReactNode;
   action?: ReactNode;
   actionInline?: boolean;
+  showUpdateAvailable?: boolean;
 }
 
-function SettingsCardHeader({ icon, title, titleId, subtitle, action, actionInline = false }: SettingsCardHeaderProps) {
+function SettingsCardHeader({
+  icon, title, titleId, subtitle, action, actionInline = false, showUpdateAvailable = false,
+}: SettingsCardHeaderProps) {
   return (
     <div className="settings-card__header">
       <div className="settings-card__header-main">
         <span className="settings-card__header-icon" aria-hidden="true">{icon}</span>
         <h2 id={titleId} className="settings-card__header-title">{title}</h2>
+        {showUpdateAvailable && <UpdateAvailableDot />}
         {action && <div className={`settings-card__header-action${actionInline ? ' settings-card__header-action--inline' : ''}`}>{action}</div>}
       </div>
       {subtitle && <div className="settings-card__header-subtitle">{subtitle}</div>}
@@ -108,24 +113,29 @@ function updateActionLabel(state: UpdateState | null): string {
   if (state.phase === 'downloading') return '正在下载…';
   if (state.phase === 'downloaded') return '重启并安装';
   if (state.phase === 'available' || (state.phase === 'error' && state.errorCode === 'download-failed' && state.targetVersion)) {
-    return '下载更新';
+    return '立即更新';
   }
   return '检查更新';
 }
 
-function updateStatusTitle(state: UpdateState | null): string {
-  if (!state) return '正在读取更新状态';
-  if (!state.supported) return '开发版不检查更新';
-  if (state.phase === 'up-to-date') return '当前已是最新版本';
-  if (state.phase === 'available') return `发现新版本 v${state.targetVersion}`;
-  if (state.phase === 'downloading') return `正在下载 v${state.targetVersion ?? ''}`.trim();
-  if (state.phase === 'downloaded') return `v${state.targetVersion} 已准备好安装`;
-  if (state.phase === 'installing') return '正在重启并安装';
-  if (state.phase === 'error') return '更新操作未完成';
-  return '软件更新';
+function updateStatusText(state: UpdateState | null): string {
+  const currentVersion = state?.currentVersion ?? __APP_VERSION__;
+  if (!state) return `当前版本 v${currentVersion}，正在读取更新状态`;
+  if (!state.supported) return `当前版本 v${currentVersion}，开发版本不支持应用内更新`;
+  if (hasAvailableUpdate(state)) return `当前版本 v${currentVersion}，最新版本 v${state.targetVersion}`;
+  if (state.phase === 'up-to-date') return `当前版本 v${currentVersion}，已经是最新版本`;
+  if (state.phase === 'checking') return `当前版本 v${currentVersion}，正在检查最新版本`;
+  if (state.phase === 'installing') return `当前版本 v${currentVersion}，正在重启并安装`;
+  if (state.phase === 'error') return `当前版本 v${currentVersion}，更新检查未完成`;
+  return `当前版本 v${currentVersion}，可检查最新版本`;
 }
 
-export default function Settings() {
+interface SettingsProps {
+  updateState: UpdateState | null;
+  onUpdateStateChange: (state: UpdateState) => void;
+}
+
+export default function Settings({ updateState, onUpdateStateChange }: SettingsProps) {
   const updatesEnabled = supportsAppUpdates(window.codedoc.platform);
   const [rules, setRules] = useState<string[]>([]);
   const [savedRules, setSavedRules] = useState<string[]>([]);
@@ -138,7 +148,6 @@ export default function Settings() {
   const [newRuleError, setNewRuleError] = useState<string | null>(null);
   const [focusedRuleIndex, setFocusedRuleIndex] = useState<number | null>(null);
   const [ruleHelpOpen, setRuleHelpOpen] = useState(false);
-  const [updateState, setUpdateState] = useState<UpdateState | null>(null);
   const [updateActionPending, setUpdateActionPending] = useState(false);
   const ruleHelpButtonRef = useRef<HTMLButtonElement>(null);
   const ruleHelpDialogRef = useRef<HTMLDivElement>(null);
@@ -167,21 +176,6 @@ export default function Settings() {
   };
 
   useEffect(() => { void loadRules(); }, []);
-
-  useEffect(() => {
-    if (!updatesEnabled) return undefined;
-    let active = true;
-    void window.codedoc.getUpdateState()
-      .then((state) => { if (active) setUpdateState(state); })
-      .catch(() => { if (active) setUpdateState(null); });
-    const unsubscribe = window.codedoc.onUpdateState((state) => {
-      if (active) setUpdateState(state);
-    });
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [updatesEnabled]);
 
   useEffect(() => {
     if (!ruleHelpOpen) return;
@@ -254,7 +248,7 @@ export default function Settings() {
       } else {
         nextState = await window.codedoc.checkForUpdates();
       }
-      setUpdateState(nextState);
+      onUpdateStateChange(nextState);
       if (nextState.errorCode === 'pipeline-busy') toast(nextState.message);
     } catch (error) {
       toast(`更新操作失败：${error instanceof Error ? error.message : String(error)}`);
@@ -394,20 +388,17 @@ export default function Settings() {
             <aside className="settings-info-stack" aria-label="应用设置与信息">
               {updatesEnabled && (
                 <section className="settings-card" aria-labelledby="software-update-title">
-                  <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title" />
+                  <SettingsCardHeader icon={<UpdateIcon />} title="软件更新" titleId="software-update-title"
+                    showUpdateAvailable={hasAvailableUpdate(updateState)} />
                   <div className="settings-card__content settings-card__content--compact">
                     <div className="settings-update-state" aria-live="polite">
                       <div className="software-update__heading">
-                        <strong>{updateStatusTitle(updateState)}</strong>
+                        <strong>{updateStatusText(updateState)}</strong>
                         <span className={`software-update__channel software-update__channel--${updateState?.channel ?? 'stable'}`}>
                           {updateState?.channel === 'beta' ? 'Beta' : 'Stable'}
                         </span>
                       </div>
-                      <span>{updateState?.message ?? '正在读取正式更新渠道…'}</span>
-                      <span className="software-update__meta">
-                        当前 v{updateState?.currentVersion ?? __APP_VERSION__}
-                        {updateState?.targetVersion ? ` · 最新 v${updateState.targetVersion}` : ''}
-                      </span>
+                      {updateState?.phase === 'error' && <span>{updateState.message}</span>}
                       {updateState?.phase === 'downloading' && updateState.progress && (
                         <div className="software-update__progress" aria-label={`更新下载进度 ${updateState.progress.percent}%`}>
                           <div className="software-update__progress-track">
@@ -435,7 +426,7 @@ export default function Settings() {
               <section className="settings-card" aria-labelledby="privacy-settings-title">
                 <SettingsCardHeader icon={<PrivacyIcon />} title="隐私说明" titleId="privacy-settings-title" />
                 <div className="settings-card__content settings-card__content--compact settings-privacy-copy">
-                  CodeDoc 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>，不会同步任何项目内容到远端。
+                  CodeDoc Generator 的扫描、清洗、脱敏、排版与导出全部在本机完成，您的源代码<strong>永远不会离开这台电脑</strong>，不会同步任何项目内容到远端。
                 </div>
               </section>
 
