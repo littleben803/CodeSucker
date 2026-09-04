@@ -6,7 +6,9 @@ import {
 } from '../scan-exclude-rules';
 import { getBuiltInScanExcludeRuleHelp } from '../scan-exclude-rule-help';
 import { toast } from '../store';
-import { hasAvailableUpdate, supportsAppUpdates, type UpdateState } from '../../../shared/update';
+import {
+  hasAvailableUpdate, isDownloadUpdateError, supportsAppUpdates, type UpdateState,
+} from '../../../shared/update';
 import UpdateAvailableDot from '../components/UpdateAvailableDot';
 import '../software-update.css';
 
@@ -112,7 +114,7 @@ function updateActionLabel(state: UpdateState | null): string {
   if (state.phase === 'checking') return '正在检查…';
   if (state.phase === 'downloading') return '正在下载…';
   if (state.phase === 'downloaded') return '重启并安装';
-  if (state.phase === 'available' || (state.phase === 'error' && state.errorCode === 'download-failed' && state.targetVersion)) {
+  if (state.phase === 'available' || (state.phase === 'error' && isDownloadUpdateError(state.errorCode) && state.targetVersion)) {
     return '立即更新';
   }
   return '检查更新';
@@ -243,7 +245,7 @@ export default function Settings({ updateState, onUpdateStateChange }: SettingsP
       if (updateState.phase === 'downloaded') {
         nextState = await window.codedoc.installUpdate();
       } else if (updateState.phase === 'available'
-        || (updateState.phase === 'error' && updateState.errorCode === 'download-failed' && updateState.targetVersion)) {
+        || (updateState.phase === 'error' && isDownloadUpdateError(updateState.errorCode) && updateState.targetVersion)) {
         nextState = await window.codedoc.downloadUpdate();
       } else {
         nextState = await window.codedoc.checkForUpdates();
@@ -406,6 +408,7 @@ export default function Settings({ updateState, onUpdateStateChange }: SettingsP
                           </div>
                           <span>
                             {updateState.progress.percent}% · {formatBytes(updateState.progress.transferred)} / {formatBytes(updateState.progress.total)}
+                            {updateState.progress.percent >= 100 ? ' · 正在校验更新…' : ''}
                           </span>
                         </div>
                       )}
@@ -416,7 +419,7 @@ export default function Settings({ updateState, onUpdateStateChange }: SettingsP
                           || updateState.phase === 'checking' || updateState.phase === 'downloading' || updateState.phase === 'installing'}
                         onClick={() => void handleUpdateAction()}
                       >
-                        {updateActionPending ? '处理中…' : updateActionLabel(updateState)}
+                        {updateActionPending ? '更新中…' : updateActionLabel(updateState)}
                       </button>
                     </div>
                   </div>

@@ -1,13 +1,22 @@
 import { ipcMain, type WebContents } from 'electron';
+import { appendFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import {
   autoUpdater, type AppUpdater, type ProgressInfo, type UpdateInfo,
 } from 'electron-updater';
 import {
-  updateChannelFromArgs, updateFeedConfiguration, type UpdateChannel,
+  isDownloadUpdateError, safeUpdateError, updateChannelFromArgs, updateFeedConfiguration, type UpdateChannel,
   type UpdateFeedConfiguration, type UpdateState,
 } from '../shared/update';
 
 type StateListener = (state: UpdateState) => void;
+
+interface UpdaterLogger {
+  debug: (message: unknown) => void;
+  info: (message: unknown) => void;
+  warn: (message: unknown) => void;
+  error: (message: unknown) => void;
+}
 
 export interface UpdateServiceOptions {
   appVersion: string;
@@ -16,6 +25,7 @@ export interface UpdateServiceOptions {
   arch?: string;
   argv?: readonly string[];
   updater?: AppUpdater;
+  logFile?: string;
   canInstall: () => boolean;
   broadcast: StateListener;
 }
@@ -25,19 +35,32 @@ function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value * 10) / 10));
 }
 
-function safeUpdateError(error: unknown, operation: 'check' | 'download'): Pick<UpdateState, 'phase' | 'message' | 'errorCode'> {
-  const message = error instanceof Error ? error.message.toLowerCase() : '';
-  if (message.includes('net::') || message.includes('timeout') || message.includes('network')) {
-    return {
-      phase: 'error',
-      errorCode: operation === 'check' ? 'check-failed' : 'download-failed',
-      message: '网络连接失败，请稍后重试。',
-    };
-  }
+function redactUpdaterLog(message: unknown): string {
+  const text = message instanceof Error ? (message.stack ?? message.message) : String(message);
+  const withoutUrlQueries = text.replace(/(https?:\/\/[^\s?]+)\?[^\s]+/gi, '$1?[redacted]');
+  const withoutCredentials = withoutUrlQueries.replace(
+    /\b(authorization|token|password|secret|accesskey(?:id|secret)?)\s*[:=]\s*[^\s,;]+/gi,
+    '$1=[redacted]',
+  );
+  const home = process.env.HOME;
+  return home ? withoutCredentials.split(home).join('$HOME') : withoutCredentials;
+}
+
+function createUpdaterLogger(logFile: string | undefined): UpdaterLogger {
+  const write = (level: string, message: unknown) => {
+    if (!logFile) return;
+    try {
+      mkdirSync(dirname(logFile), { recursive: true });
+      appendFileSync(logFile, `[${new Date().toISOString()}] [${level}] ${redactUpdaterLog(message)}\n`, 'utf8');
+    } catch {
+      // 更新日志不可写时不能阻断检查、下载或安装。
+    }
+  };
   return {
-    phase: 'error',
-    errorCode: operation === 'check' ? 'check-failed' : 'download-failed',
-    message: operation === 'check' ? '检查更新失败，请稍后重试。' : '下载更新失败，请稍后重试。',
+    debug: (message) => write('DEBUG', message),
+    info: (message) => write('INFO', message),
+    warn: (message) => write('WARN', message),
+    error: (message) => write('ERROR', message),
   };
 }
 
@@ -46,6 +69,7 @@ export class UpdateService {
   private readonly options: UpdateServiceOptions;
   private readonly channel: UpdateChannel;
   private readonly feed: UpdateFeedConfiguration | null;
+  private readonly logger: UpdaterLogger;
   private automaticCheckScheduled = false;
   private currentOperation: 'check' | 'download' | null = null;
   private state: UpdateState;
@@ -53,6 +77,7 @@ export class UpdateService {
   constructor(options: UpdateServiceOptions) {
     this.options = options;
     this.updater = options.updater ?? autoUpdater;
+    this.logger = createUpdaterLogger(options.logFile);
     this.channel = updateChannelFromArgs(options.argv ?? process.argv, options.appVersion);
     this.feed = updateFeedConfiguration(this.channel, options.platform ?? process.platform, options.arch ?? process.arch);
     const supported = options.isPackaged && this.feed !== null;
@@ -67,10 +92,11 @@ export class UpdateService {
     if (!supported || !this.feed) return;
     this.updater.autoDownload = false;
     this.updater.autoInstallOnAppQuit = false;
+    this.updater.disableDifferentialDownload = true;
     this.updater.autoRunAppAfterInstall = true;
     this.updater.allowPrerelease = this.channel === 'beta';
     this.updater.allowDowngrade = false;
-    this.updater.logger = null;
+    this.updater.logger = this.logger;
     this.updater.setFeedURL(this.feed);
     this.registerUpdaterEvents();
   }
@@ -89,6 +115,7 @@ export class UpdateService {
     try {
       await this.updater.checkForUpdates();
     } catch (error) {
+      this.logger.error(error);
       this.setState(safeUpdateError(error, 'check'));
     } finally {
       this.currentOperation = null;
@@ -98,7 +125,7 @@ export class UpdateService {
 
   async download(): Promise<UpdateState> {
     const canRetry = this.state.phase === 'error'
-      && this.state.errorCode === 'download-failed'
+      && isDownloadUpdateError(this.state.errorCode)
       && Boolean(this.state.targetVersion);
     if ((this.state.phase !== 'available' && !canRetry) || this.currentOperation) return this.getState();
     this.currentOperation = 'download';
@@ -106,6 +133,7 @@ export class UpdateService {
     try {
       await this.updater.downloadUpdate();
     } catch (error) {
+      this.logger.error(error);
       this.setState(safeUpdateError(error, 'download'));
     } finally {
       this.currentOperation = null;
@@ -169,7 +197,7 @@ export class UpdateService {
           transferred: progress.transferred,
           total: progress.total,
         },
-        message: `正在下载更新… ${percent}%`,
+        message: percent >= 100 ? '更新包已下载，正在校验…' : `正在下载更新… ${percent}%`,
       });
     });
     this.updater.on('update-downloaded', (info: UpdateInfo) => {
@@ -183,6 +211,7 @@ export class UpdateService {
       });
     });
     this.updater.on('error', (error: Error) => {
+      this.logger.error(error);
       this.setState(safeUpdateError(error, this.currentOperation === 'download' ? 'download' : 'check'));
     });
   }

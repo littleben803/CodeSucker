@@ -57,6 +57,7 @@ app.whenReady().then(() => {
   updateService = new UpdateService({
     appVersion: app.getVersion(),
     isPackaged: app.isPackaged,
+    logFile: path.join(app.getPath('logs'), 'updater.log'),
     canInstall: () => !isPipelineBusy(),
     broadcast: (state) => {
       if (win && !win.isDestroyed()) win.webContents.send('update:state', state);

@@ -6,6 +6,8 @@ import {
   UPDATE_BASE_URL,
   UPDATE_PROVIDER,
   hasAvailableUpdate,
+  isDownloadUpdateError,
+  safeUpdateError,
   supportsAppUpdates,
   updateChannelFromArgs,
   updateFeedConfiguration,
@@ -79,6 +81,21 @@ assert.equal(hasAvailableUpdate({ ...availableState, phase: 'downloading' }), tr
 assert.equal(hasAvailableUpdate({ ...availableState, phase: 'downloaded' }), true, '等待安装时必须保留更新提示');
 assert.equal(hasAvailableUpdate({ ...availableState, phase: 'up-to-date', targetVersion: undefined }), false);
 assert.equal(hasAvailableUpdate(null), false);
+assert.equal(isDownloadUpdateError('download-failed'), true);
+assert.equal(isDownloadUpdateError('download-network-failed'), true);
+assert.equal(isDownloadUpdateError('update-service-failed'), true);
+assert.equal(isDownloadUpdateError('check-failed'), false);
+assert.deepEqual(safeUpdateError(new Error('sha512 checksum mismatch'), 'download'), {
+  phase: 'error',
+  errorCode: 'download-integrity-failed',
+  message: '更新包完整性校验失败，请重新下载。',
+});
+assert.equal(safeUpdateError(new Error('net::ERR_CONNECTION_RESET'), 'download').errorCode, 'download-network-failed');
+assert.equal(safeUpdateError(new Error('ENOSPC: no space left'), 'download').errorCode, 'download-storage-failed');
+assert.equal(safeUpdateError(new Error('Code signature invalid'), 'download').errorCode, 'download-signature-failed');
+assert.equal(safeUpdateError(new Error('Squirrel proxy server failed'), 'download').errorCode, 'update-service-failed');
+assert.equal(safeUpdateError(new Error('unexpected failure'), 'download').errorCode, 'download-failed');
+assert.equal(safeUpdateError(new Error('request timeout'), 'check').errorCode, 'check-failed');
 
 const updateServiceSource = readSource('src/main/update-service.ts');
 const mainSource = readSource('src/main/index.ts');
@@ -107,6 +124,9 @@ const packageJson = JSON.parse(readSource('package.json')) as {
 
 assert.match(updateServiceSource, /autoDownload = false/, '不得在用户确认前自动下载安装包');
 assert.match(updateServiceSource, /autoInstallOnAppQuit = false/, '不得在普通退出时静默安装');
+assert.match(updateServiceSource, /disableDifferentialDownload = true/, 'macOS 必须下载完整更新包，不得使用差分缓存');
+assert.match(mainSource, /app\.getPath\('logs'\)/, '更新器必须写入应用日志目录');
+assert.match(updateServiceSource, /正在校验/, '完整包下载后必须显示校验阶段');
 assert.match(updateServiceSource, /scheduleAutomaticCheck\(delayMs = 2_000, jitterMs = 1_000\)/, '首屏稳定后应在 2–3 秒内检查更新');
 assert.match(updateServiceSource, /仅 macOS 正式安装版支持应用内更新/, '禁用状态必须准确说明平台范围');
 assert.match(updateServiceSource, /canInstall\(\)/, '安装前必须检查当前流水线任务');
@@ -127,6 +147,7 @@ assert.match(settingsSource, /当前版本 v\$\{currentVersion\}，已经是最�
 assert.match(settingsSource, /当前版本 v\$\{currentVersion\}，最新版本 v\$\{state\.targetVersion\}/, '新版本状态必须合并为单行版本说明');
 assert.match(settingsSource, /立即更新/, '发现新版本后按钮必须切换为立即更新');
 assert.match(settingsSource, /重启并安装/, '设置页必须由用户主动确认安装');
+assert.match(settingsSource, /更新中…/, '更新执行期间不得显示含义模糊的“处理中”');
 
 assert.equal(packageJson.dependencies['electron-updater'], '6.8.9', 'electron-updater 必须固定确切版本');
 assert.deepEqual(packageJson.build.mac.target, ['dmg', 'zip'], 'macOS 更新必须同时产出 DMG 与 ZIP');

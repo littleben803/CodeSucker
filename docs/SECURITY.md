@@ -45,12 +45,14 @@ npm run verify
 - 只有已打包的 macOS arm64 和 x64 应用启用应用内更新；开发版和 Windows 版不连接应用内更新源。
 - 主窗口 `ready-to-show` 后延迟约 2～3 秒检查版本。检查只读取发布元数据，不自动下载安装包。
 - 发现新版本后，必须由用户在设置页主动开始下载；下载完成后，仍需用户主动确认重启安装。
+- macOS 始终下载并校验完整更新 ZIP，不使用本机历史 ZIP 和 blockmap 执行差分重建，避免缓存版本不一致导致更新失败。
 - `autoDownload` 和 `autoInstallOnAppQuit` 均保持关闭，普通退出不得静默安装更新。
 - 扫描、处理或导出任务进行中时拒绝安装，避免更新退出破坏正在执行的本地任务。
 - 更新 IPC 与其他 IPC 一样，只接受当前主窗口发送的请求；Preload 不暴露 `autoUpdater` 实例或通用网络能力。
 - GitHub Release 是当前默认发布与更新 Provider，阿里云 OSS 是已验证的备选 Provider。`activeProvider` 属于构建时配置，切换后必须重新打包，不能在已安装应用中动态改写。
 - 更新通道只接受 stable 或 beta；正式版本使用 stable，预发布版本依据版本号或受控启动参数进入 beta。
 - 更新错误只向 Renderer 返回归一化提示，不应把凭据、内部命令或敏感路径暴露给界面和日志。
+- electron-updater 诊断信息写入应用日志目录的 `updater.log`；URL 查询参数、凭据字段和用户主目录必须脱敏，日志写入失败不得阻断更新。
 
 应用更新与发布架构详见 [`04-通用应用内更新技术方案.md`](04-通用应用内更新技术方案.md)，日常同步与验收流程见 [`RELEASE_SYNC.md`](RELEASE_SYNC.md)。
 

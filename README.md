@@ -17,9 +17,9 @@
 
 ---
 
-## 10 秒了解 CodeDoc
+## 10 秒了解 CodeDoc Generator
 
-CodeDoc Generator 把繁琐的“软件著作权源程序材料”提交规则整理成一套本地流水线：导入项目 → 五步向导 → 导出 pdf 文档。
+CodeDoc Generator 把繁琐的“软件著作权源程序材料”提交规则整理成一套本地流水线。
 
 > **使用流程：** 导入本地项目 → 筛选并排序代码文件 → 清洗与规范化排版 → 分页预览 → 校验并导出
 
@@ -148,9 +148,56 @@ scripts/      图标生成、打包等工具脚本
 **Q：我的代码会被上传吗？**
 不会。扫描、清洗、排版和导出全部在本机完成，不会上传项目内容、路径或导出资料。正式安装版仅在检查和下载应用更新时访问所配置的发布来源。
 
-## 参与贡献
 
-欢迎 Issue 与 PR。提交前请确保 `npm run verify` 通过；提交信息请说明动机而不止是改动内容。
+## Support / 请小虎喝杯☕️ / 给猫猫加个🍗
+
+如果这个工具帮你跳出了“复制代码 → 数行数 → 调页眉 → 重新分页”的循环，欢迎给项目点个 Star、分享给需要的人，或者提交 Issue / PR。提交前请确保 `npm run verify` 通过，提交信息请说明动机而不止是改动内容。
+
+如果它真的帮你省下了一点时间，也可以请小虎同学喝一杯 ¥9.9 的瑞幸，让下一个 bug 至少是在咖啡因充足的情况下被修掉。
+
+家里还有两位不写代码、但坚持参加需求评审的同事：年年和芭比。你也可以投喂一个猫罐头🐱🥩🥫，给他们加个餐。毕竟开源可以靠爱发电，猫粮暂时还不支持 `npm install`。🐱
+
+<p align="center">
+  <img src="design/support/cats-together-card.jpg" width="720" alt="年年和芭比的合照" />
+</p>
+
+<p align="center"><strong>年年 × 芭比</strong><br />负责需求评审、键盘踩测，以及提醒维护者按时开罐头。</p>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="design/support/niannian-card.jpg" width="320" alt="年年" />
+    </td>
+    <td align="center" width="50%">
+      <img src="design/support/barbie-card.jpg" width="320" alt="芭比" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>年年</strong> · 负责需求评审</td>
+    <td align="center"><strong>芭比</strong> · 负责键盘踩测</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="design/support/wechat-qr.png">
+        <img src="design/support/wechat-support-card.png" width="320" alt="微信赞赏码：给年年和芭比加个餐" />
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <a href="design/support/alipay-qr.png">
+        <img src="design/support/alipay-support-card.png" width="320" alt="支付宝收钱码：请小虎喝杯 9.9 瑞幸" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">微信赞赏 · 给猫猫加餐</td>
+    <td align="center">支付宝 · 请小虎喝杯瑞幸</td>
+  </tr>
+</table>
+
+> 完全自愿，不会解锁额外功能，也不会影响 CodeDoc Generator 的免费开源使用😜 点击卡片可查看原始二维码，感谢兄弟们的支持。
 
 ## 许可证
 

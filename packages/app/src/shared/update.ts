@@ -38,6 +38,17 @@ export interface UpdateProgress {
   total: number;
 }
 
+export type UpdateErrorCode =
+  | 'check-failed'
+  | 'download-failed'
+  | 'download-network-failed'
+  | 'download-integrity-failed'
+  | 'download-signature-failed'
+  | 'download-storage-failed'
+  | 'update-service-failed'
+  | 'pipeline-busy'
+  | 'unsupported';
+
 export interface UpdateState {
   phase: UpdatePhase;
   supported: boolean;
@@ -47,7 +58,71 @@ export interface UpdateState {
   releaseDate?: string;
   progress?: UpdateProgress;
   message: string;
-  errorCode?: 'check-failed' | 'download-failed' | 'pipeline-busy' | 'unsupported';
+  errorCode?: UpdateErrorCode;
+}
+
+export function isDownloadUpdateError(errorCode: UpdateErrorCode | undefined): boolean {
+  return errorCode?.startsWith('download-') === true || errorCode === 'update-service-failed';
+}
+
+export function safeUpdateError(
+  error: unknown,
+  operation: 'check' | 'download',
+): Pick<UpdateState, 'phase' | 'message' | 'errorCode'> {
+  const errno = error && typeof error === 'object' && 'code' in error
+    ? String((error as { code?: unknown }).code ?? '')
+    : '';
+  const description = `${error instanceof Error ? `${error.name} ${error.message}` : String(error)} ${errno}`.toLowerCase();
+
+  if (operation === 'check') {
+    const networkFailure = /net::err_|\betimedout\b|\beconnreset\b|\beconnrefused\b|\benotfound\b|\beai_again\b|network|timeout/.test(description);
+    return {
+      phase: 'error',
+      errorCode: 'check-failed',
+      message: networkFailure ? '无法连接更新服务，请检查网络后重试。' : '检查更新失败，请稍后重试。',
+    };
+  }
+
+  if (/sha-?512|checksum|digest|integrity|hash mismatch|blockmap|differential/.test(description)) {
+    return {
+      phase: 'error',
+      errorCode: 'download-integrity-failed',
+      message: '更新包完整性校验失败，请重新下载。',
+    };
+  }
+  if (/signature|code ?sign|codesign|not signed|could not be verified/.test(description)) {
+    return {
+      phase: 'error',
+      errorCode: 'download-signature-failed',
+      message: '更新包签名验证失败，请暂时不要安装并联系维护人员。',
+    };
+  }
+  if (/\benospc\b|no space|\beacces\b|\beperm\b|permission denied|read-only/.test(description)) {
+    return {
+      phase: 'error',
+      errorCode: 'download-storage-failed',
+      message: '无法保存更新包，请检查磁盘空间和文件权限后重试。',
+    };
+  }
+  if (/squirrel|shipit|proxy server|127\.0\.0\.1|\beaddrinuse\b/.test(description)) {
+    return {
+      phase: 'error',
+      errorCode: 'update-service-failed',
+      message: '更新服务启动失败，请重新打开应用后重试。',
+    };
+  }
+  if (/net::err_|\betimedout\b|\beconnreset\b|\beconnrefused\b|\benotfound\b|\beai_again\b|network|timeout/.test(description)) {
+    return {
+      phase: 'error',
+      errorCode: 'download-network-failed',
+      message: '更新包下载失败，请检查网络后重试。',
+    };
+  }
+  return {
+    phase: 'error',
+    errorCode: 'download-failed',
+    message: '更新失败，请重新打开应用后重试。',
+  };
 }
 
 export function hasAvailableUpdate(state: UpdateState | null): boolean {
