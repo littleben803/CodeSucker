@@ -8,3 +8,4 @@ out/
 packages/app/dist-electron/
 packages/app/release/
 /ops/app-release/.release-work/
+/docs/soft_articles/
