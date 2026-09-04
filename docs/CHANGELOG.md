@@ -2,6 +2,16 @@
 
 本文件记录 CodeDoc 的用户可见变化，格式遵循 Keep a Changelog，版本号遵循 Semantic Versioning。
 
+## [1.0.3] - 2026-09-04
+
+### Added
+
+- 增加若干图片资源
+
+### Changed
+
+- 优化应用内更新流程，使用全量安装包更新
+
 ## [1.0.2] - 2026-09-03
 
 ### Added
