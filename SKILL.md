@@ -55,7 +55,7 @@ CodeDoc Generator（简称 CodeDoc，中文名：软著代码整理器）是本�
 
 当前工程状态：
 
-- 产品版本基线：`1.0.2`。
+- 产品版本基线：`1.0.3`。
 - 平台：macOS arm64、macOS x64、Windows x64。
 - 导出：PDF、DOCX 和 TXT。
 - macOS 正式包已完成 Developer ID 签名、公证、staple 与 Gatekeeper 验证。

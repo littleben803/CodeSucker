@@ -6,7 +6,7 @@
 
 | 类型 | 当前示例 | 用途 | 来源 |
 |---|---|---|---|
-| 产品版本 | `1.0.2` | 应用、安装包和 Release 对外版本 | 根目录及两个 workspace 的 `package.json` |
+| 产品版本 | `1.0.3` | 应用、安装包和 Release 对外版本 | 根目录及两个 workspace 的 `package.json` |
 | 构建来源 | Git SHA | 确认安装包对应的源码提交 | Git 与发布回执 |
 | 项目配置版本 | `1` | 迁移 `.codedoc.json` | `CONFIG_SCHEMA_VERSION` |
 | 合规规则版本 | `2026.08.1` | 记录导出采用的规则口径 | `RULES_VERSION` |
@@ -60,7 +60,7 @@ npm run audit:all
 所有用户可见变化写入 `docs/CHANGELOG.md`。`version:set` 会在顶部生成：
 
 ```markdown
-## [1.0.3] - 2026-09-03
+## [1.0.3] - 2026-09-04
 
 ### Added
 
@@ -76,7 +76,7 @@ npm run audit:all
 ```json
 {
   "schemaVersion": 1,
-  "appVersion": "1.0.2",
+  "appVersion": "1.0.3",
   "rulesVersion": "2026.08.1"
 }
 ```
@@ -186,9 +186,9 @@ GitHub 发布采用 Draft、上传、资产校验、公开 Release 的顺序。�
 
 ## 十、当前基线
 
-截至 2026-09-03：
+截至 2026-09-04：
 
-- 源码产品版本：`1.0.2`。
+- 源码产品版本：`1.0.3`。
 - 配置结构版本：`1`。
 - 合规规则版本：`2026.08.1`。
 - 默认托管与应用内更新 Provider：GitHub Release。

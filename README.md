@@ -60,19 +60,19 @@ CodeDoc Generator 就是把这些繁琐的流程收敛到软件内部，帮助�
 > [!IMPORTANT]
 > **当前版本发布状态**
 >
-> 当前稳定版本为 **v1.0.2**。macOS arm64、macOS x64 和 Windows x64 安装包均已通过真实发布、公开下载和安装验收。
+> 当前稳定版本为 **v1.0.3**。GitHub Release 已完成正式发布，macOS arm64、macOS x64 和 Windows x64 安装包均可公开下载。
 >
 > GitHub Release 是当前默认发布与更新来源。
 
 ## 下载
 
-请从 [GitHub Releases](https://github.com/littleben803/CodeSucker/releases) 获取正式版本。当前稳定版为 [v1.0.2](https://github.com/littleben803/CodeSucker/releases/tag/v1.0.2)：
+请从 [GitHub Releases](https://github.com/littleben803/CodeSucker/releases) 获取正式版本。当前稳定版为 [v1.0.3](https://github.com/littleben803/CodeSucker/releases/tag/v1.0.3)：
 
 | 平台 | 安装包 | 更新方式 |
 |---|---|---|
-| macOS Apple Silicon | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-mac-arm64.dmg) | 支持应用内检查、下载和安装更新 |
-| macOS Intel | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-mac-x64.dmg) | 支持应用内检查、下载和安装更新 |
-| Windows x64 | [下载 EXE](https://github.com/littleben803/CodeSucker/releases/download/v1.0.2/CodeDoc-1.0.2-win-x64.exe) | 支持发现新版本，更新时人工下载安装包 |
+| macOS Apple Silicon | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.3/CodeDoc-1.0.3-mac-arm64.dmg) | 支持应用内检查、下载和安装更新 |
+| macOS Intel | [下载 DMG](https://github.com/littleben803/CodeSucker/releases/download/v1.0.3/CodeDoc-1.0.3-mac-x64.dmg) | 支持应用内检查、下载和安装更新 |
+| Windows x64 | [下载 EXE](https://github.com/littleben803/CodeSucker/releases/download/v1.0.3/CodeDoc-1.0.3-win-x64.exe) | 支持发现新版本，更新时人工下载安装包 |
 
 macOS 正式安装包已完成 Developer ID 签名、Apple 公证、staple 和 Gatekeeper 验证。Windows 安装包当前未做代码签名，安装时可能出现系统安全提示；请核对下载来源为本仓库的 GitHub Release。
 
