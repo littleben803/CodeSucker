@@ -11,6 +11,7 @@ export interface ScanRequest {
   jobId: string;
   scanSessionId: string;
   root: string;
+  customExtensions?: string[];
 }
 
 export interface ProcessPayload {
@@ -67,6 +68,19 @@ function requiredText(value: unknown, label: string): string {
   const text = optionalText(value, label);
   if (text === undefined || text.trim().length === 0) throw new Error(`${label} 不能为空`);
   return text;
+}
+
+export function parseCustomExtensions(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 100) throw new Error('自定义文件后缀无效');
+  const extensions = new Set<string>();
+  for (const extension of value) {
+    if (typeof extension !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/.test(extension)) {
+      throw new Error('自定义文件后缀无效');
+    }
+    extensions.add(extension.toLowerCase());
+  }
+  return [...extensions];
 }
 
 function presentText(value: unknown, label: string): string {
@@ -129,6 +143,9 @@ export function parseScanRequest(value: unknown): ScanRequest {
     jobId: identifier(value.jobId, 'jobId'),
     scanSessionId: identifier(value.scanSessionId, 'scanSessionId'),
     root: absolutePath(value.root, '项目目录'),
+    customExtensions: value.customExtensions === undefined
+      ? undefined
+      : parseCustomExtensions(value.customExtensions),
   };
 }
 

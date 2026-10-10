@@ -48,7 +48,7 @@ declare global {
       getScanExcludes: () => Promise<ScanExcludesState>;
       saveScanExcludes: (rules: string[]) => Promise<ScanExcludesState>;
       resetScanExcludes: () => Promise<ScanExcludesState>;
-      scan: (root: string, jobId: string, scanSessionId: string) => Promise<unknown>;
+      scan: (root: string, jobId: string, scanSessionId: string, customExtensions?: string[]) => Promise<unknown>;
       process: (payload: unknown, jobId: string) => Promise<unknown>;
       previewPdf: (documentKey: string, scanSessionId: string) => Promise<{ documentKey: string; data: Uint8Array }>;
       export: (payload: unknown, jobId: string) => Promise<unknown>;

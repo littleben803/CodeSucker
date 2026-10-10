@@ -234,6 +234,15 @@ body.dark .step1-recent__empty-copy span{color:var(--text2)}
 .file-tree-search button{display:flex;width:18px;height:18px;flex:none;align-items:center;justify-content:center;padding:0;border:0;border-radius:4px;background:transparent;color:var(--text3);font-size:15px;line-height:1;cursor:pointer}
 .file-tree-search button:not(:disabled):hover{background:var(--border2);color:var(--text)}
 .file-tree-search__status{min-height:14px;overflow:hidden;color:var(--text3);font-size:11px;line-height:14px;text-overflow:ellipsis;white-space:nowrap}
+.file-extension-settings{display:flex;flex:none;flex-direction:column;gap:5px}
+.file-extension-settings>label{color:var(--text2);font-size:11px;font-weight:600}
+.file-extension-settings__controls{display:flex;gap:5px}
+.file-extension-settings__controls input{width:0;min-width:0;flex:1;padding:0 7px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--text);font:11px var(--mono)}
+.file-extension-settings__controls button{flex:none;padding:0 7px;border:1px solid var(--accent-line);border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:10px;cursor:pointer}
+.file-extension-settings__controls button:disabled{opacity:.55;cursor:default}
+.file-extension-settings__hint,.file-extension-settings__error{font-size:10px;line-height:13px}
+.file-extension-settings__hint{color:var(--text3)}
+.file-extension-settings__error{color:var(--orange)}
 .file-tree-toolbar__actions button:focus-visible,.file-tree-search button:focus-visible,.file-tree-checkbox:focus-visible,.file-tree-disclosure:focus-visible,.file-tree-row__directory-name:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .file-tree-scroll{flex:1;min-width:0;min-height:0;overflow-x:hidden;overflow-y:auto;padding:6px 7px 10px;scrollbar-gutter:stable}
 .file-tree-empty{display:flex;min-height:150px;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:20px;color:var(--text3);text-align:center}

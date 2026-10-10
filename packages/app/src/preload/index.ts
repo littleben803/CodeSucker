@@ -28,7 +28,8 @@ const api = {
   getScanExcludes: () => ipcRenderer.invoke('settings:scanExcludes:get'),
   saveScanExcludes: (rules: string[]) => ipcRenderer.invoke('settings:scanExcludes:save', rules),
   resetScanExcludes: () => ipcRenderer.invoke('settings:scanExcludes:reset'),
-  scan: (root: string, jobId: string, scanSessionId: string) => ipcRenderer.invoke('project:scan', { root, jobId, scanSessionId }),
+  scan: (root: string, jobId: string, scanSessionId: string, customExtensions?: string[]) =>
+    ipcRenderer.invoke('project:scan', { root, jobId, scanSessionId, customExtensions }),
   process: (payload: unknown, jobId: string) => ipcRenderer.invoke('project:process', { payload, jobId }),
   previewPdf: (documentKey: string, scanSessionId: string): Promise<{ documentKey: string; data: Uint8Array }> =>
     ipcRenderer.invoke('project:previewPdf', { documentKey, scanSessionId }),

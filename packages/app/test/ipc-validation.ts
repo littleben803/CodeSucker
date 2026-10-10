@@ -23,8 +23,11 @@ const payload = {
 };
 
 assert.deepEqual(parseScanRequest({ jobId: 'scan-123', scanSessionId: 'session-123', root }), {
-  jobId: 'scan-123', scanSessionId: 'session-123', root,
+  jobId: 'scan-123', scanSessionId: 'session-123', root, customExtensions: undefined,
 });
+assert.deepEqual(parseScanRequest({
+  jobId: 'scan-custom', scanSessionId: 'session-custom', root, customExtensions: ['ui', 'PRO', 'ui'],
+}).customExtensions, ['ui', 'pro']);
 assert.equal(parseProcessRequest({ jobId: 'process-123', payload }).payload.title, payload.title);
 assert.equal(parseExportRequest({
   jobId: 'export-123',
@@ -42,6 +45,9 @@ for (const invalid of [null, {}, { jobId: '../bad', scanSessionId: 'session', ro
   assert.throws(() => parseScanRequest(invalid));
 }
 assert.throws(() => parseScanRequest({ jobId: 'scan-1', scanSessionId: 'session-1', root: 'relative' }), /项目目录/);
+assert.throws(() => parseScanRequest({
+  jobId: 'scan-bad-ext', scanSessionId: 'session-bad-ext', root, customExtensions: ['../secret'],
+}), /自定义文件后缀/);
 assert.throws(() => parseProcessRequest({ jobId: 'process-1', payload: { ...payload, orderedRelPaths: ['../secret'] } }), /相对路径/);
 assert.throws(() => parseProcessRequest({ jobId: 'process-1', payload: { ...payload, orderedRelPaths: ['src/a.ts', 'src/a.ts'] } }), /重复/);
 assert.equal(parseProcessRequest({ jobId: 'process-1', payload: { ...payload, title: '' } }).payload.title, '');

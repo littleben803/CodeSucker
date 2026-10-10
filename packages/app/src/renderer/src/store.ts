@@ -57,12 +57,14 @@ interface ScanResult {
   errors: FileTaskError[];
   workerCount: number;
   langCounts: Record<string, number>;
+  customExtensions: string[];
   entryOrder: string[];
   mtimeOrder: string[];
   savedConfigWarning?: string | null;
   savedConfig: null | {
     schemaVersion?: number; appVersion?: string; rulesVersion?: string;
     title?: string; owner?: string; sortMode?: 'entry' | 'mtime' | 'manual';
+    customExtensions?: string[];
     order?: string[]; excludedRelPaths?: string[];
     clean?: CleanToggles;
     fmtPdf?: boolean; fmtDocx?: boolean; fmtTxt?: boolean; outDir?: string;
@@ -94,6 +96,7 @@ interface State {
   recent: RecentProject[];
   pathSeparator: '/' | '\\';
   files: FileRow[];
+  customExtensions: string[];
   entryOrder: string[];
   mtimeOrder: string[];
   order: string[];
@@ -133,6 +136,7 @@ export const useStore = create<State>((set) => ({
   recent: [],
   pathSeparator: '/',
   files: [],
+  customExtensions: [],
   entryOrder: [],
   mtimeOrder: [],
   order: [],
@@ -231,12 +235,18 @@ function projectName(root: string): string {
   return root.split(/[\\/]+/).filter(Boolean).at(-1) ?? root;
 }
 
-export async function scanProject(root: string, intent: ScanIntent): Promise<void> {
+export async function scanProject(
+  root: string,
+  intent: ScanIntent,
+  requestedCustomExtensions?: string[],
+): Promise<void> {
   const previous = useStore.getState();
   if (!canStartScan(previous)) return;
   const jobId = createJobId('scan');
   const scanSessionId = crypto.randomUUID();
   const preserveCurrentConfig = intent === 'rescan' && previous.root === root;
+  const customExtensions = requestedCustomExtensions
+    ?? (preserveCurrentConfig ? previous.customExtensions : undefined);
 
   previous.set({
     scanPhase: 'scanning',
@@ -260,7 +270,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
   });
 
   try {
-    const result = (await window.codedoc.scan(root, jobId, scanSessionId)) as ScanResult;
+    const result = (await window.codedoc.scan(root, jobId, scanSessionId, customExtensions)) as ScanResult;
     const current = useStore.getState();
     if (current.activeJobId !== jobId || result.scanSessionId !== scanSessionId) return;
     if (result.files.length === 0) {
@@ -270,6 +280,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
           ? `扫描失败 ${result.errors.length} 个文件，未发现可用源码`
           : '未发现可用源代码文件',
         scanErrors: result.errors,
+        customExtensions: result.customExtensions,
         activeJobId: null,
         jobProgress: null,
       });
@@ -334,6 +345,7 @@ export async function scanProject(root: string, intent: ScanIntent): Promise<voi
       jobProgress: null,
       pathSeparator: result.pathSeparator,
       files,
+      customExtensions: result.customExtensions,
       entryOrder: result.entryOrder,
       mtimeOrder: result.mtimeOrder,
       order,

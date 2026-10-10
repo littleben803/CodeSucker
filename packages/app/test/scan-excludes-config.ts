@@ -56,6 +56,18 @@ assert.deepEqual(
   ['node_modules/included.ts'],
   '用户保存的空规则应覆盖内置默认值，而不是被默认值回填',
 );
+const customExtensionRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codedoc-custom-extensions-'));
+fs.mkdirSync(path.join(customExtensionRoot, 'build'), { recursive: true });
+fs.writeFileSync(path.join(customExtensionRoot, 'mainwindow.ui'), '<ui/>\n');
+fs.writeFileSync(path.join(customExtensionRoot, 'ColumnCraft.pro'), 'QT += widgets\n');
+fs.writeFileSync(path.join(customExtensionRoot, 'ignored.txt'), 'not scanned\n');
+fs.writeFileSync(path.join(customExtensionRoot, 'build', 'generated.ui'), '<ui/>\n');
+assert.deepEqual(
+  discover(customExtensionRoot, [...DEFAULT_EXTENSIONS, 'ui', 'pro'], DEFAULT_EXCLUDES)
+    .map((file) => file.relPath),
+  ['ColumnCraft.pro', 'mainwindow.ui'],
+  '自定义后缀应纳入扫描，同时仍由默认排除规则过滤构建目录',
+);
 assert.deepEqual(resetScanExcludes(configFile), { rules: defaults, source: 'default', warning: null });
 assert.equal(fs.existsSync(configFile), false);
 assert.deepEqual(resetScanExcludes(configFile), { rules: defaults, source: 'default', warning: null });

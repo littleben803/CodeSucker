@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { completeFileOrder, orderedIncluded, reorderIncludedPaths, useStore, type FileRow } from '../store';
+import { completeFileOrder, orderedIncluded, reorderIncludedPaths, scanProject, toast, useStore, type FileRow } from '../store';
+import { parseCustomExtensions } from '../custom-extensions';
 import { unlockStep } from '../wizard-progress';
 import {
   aggregateStats, compositionCells, rankExtensionStats,
@@ -105,6 +106,9 @@ export default function Step2Files() {
   const [statScope, setStatScope] = useState<StatScope>('included');
   const [statMetric, setStatMetric] = useState<StatMetric>('rawLines');
   const [showAllTypes, setShowAllTypes] = useState(false);
+  const [customExtensionInput, setCustomExtensionInput] = useState(s.customExtensions.join(', '));
+  const [customExtensionError, setCustomExtensionError] = useState<string | null>(null);
+  const [savingCustomExtensions, setSavingCustomExtensions] = useState(false);
   const [expandedDirectories, setExpandedDirectories] = useState<Set<string>>(() => new Set());
   const [fileTreeSearchInput, setFileTreeSearchInput] = useState('');
   const [fileTreeSearchQuery, setFileTreeSearchQuery] = useState('');
@@ -113,6 +117,10 @@ export default function Step2Files() {
     values: ReadonlyMap<string, boolean>;
   }>(() => ({ query: '', values: new Map() }));
   const [isFilteringFileTree, startFileTreeTransition] = useTransition();
+
+  useEffect(() => {
+    setCustomExtensionInput(s.customExtensions.join(', '));
+  }, [s.customExtensions]);
 
   const byRel = useMemo(() => new Map(s.files.map((f) => [f.relPath, f])), [s.files]);
   const included = orderedIncluded(s);
@@ -222,6 +230,27 @@ export default function Step2Files() {
   const setEveryFile = (includedState: boolean) => updateFiles(setAllIncluded(s.files, includedState));
   const invertEveryFile = () => updateFiles(invertAllIncluded(s.files));
 
+  const saveAndRescanWithCustomExtensions = async () => {
+    if (!s.root || savingCustomExtensions) return;
+    let customExtensions: string[];
+    try {
+      customExtensions = parseCustomExtensions(customExtensionInput);
+    } catch (error) {
+      setCustomExtensionError(error instanceof Error ? error.message : String(error));
+      return;
+    }
+    setCustomExtensionError(null);
+    setSavingCustomExtensions(true);
+    try {
+      await window.codedoc.saveConfig(s.root, { customExtensions });
+      await scanProject(s.root, 'rescan', customExtensions);
+    } catch (error) {
+      toast(`保存自定义后缀失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setSavingCustomExtensions(false);
+    }
+  };
+
   const toggleExtension = (stat: ExtensionStat) => {
     updateFiles(setExtensionIncluded(s.files, stat.extension, !stat.fullyIncluded));
   };
@@ -281,6 +310,23 @@ export default function Step2Files() {
                 : isFileTreeSearchActive
                   ? `匹配 ${treeSearchResult.matchedNodes} 项 · 显示 ${treeSearchResult.visibleFiles} 个文件`
                   : '支持目录、文件名和相对路径'}
+            </div>
+            <div className="file-extension-settings">
+              <label htmlFor="custom-file-extensions">自定义扫描后缀</label>
+              <div className="file-extension-settings__controls">
+                <input id="custom-file-extensions" type="text" value={customExtensionInput}
+                  placeholder=".ui, .pro" aria-label="自定义扫描后缀，逗号分隔"
+                  onChange={(event) => {
+                    setCustomExtensionInput(event.target.value);
+                    setCustomExtensionError(null);
+                  }} />
+                <button type="button" disabled={savingCustomExtensions || s.scanPhase !== 'idle' || s.processing || s.exporting}
+                  onClick={() => void saveAndRescanWithCustomExtensions()}>
+                  {savingCustomExtensions ? '扫描中…' : '保存并重扫'}
+                </button>
+              </div>
+              <span className="file-extension-settings__hint">例如 .ui、.pro；多个后缀用逗号分隔</span>
+              {customExtensionError && <span className="file-extension-settings__error" role="alert">{customExtensionError}</span>}
             </div>
           </div>
           <div className="file-tree-scroll" aria-label="项目文件树">

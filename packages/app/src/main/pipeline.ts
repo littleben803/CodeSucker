@@ -12,7 +12,7 @@ import { JobController, type JobHandle, type JobKind } from './job-controller';
 import { assertExportableSelection } from './export-guard';
 import { validateDroppedDirectory } from './drop-path';
 import {
-  boundedConfigRecord, parseExportRequest, parseJobId, parsePdfPreviewRequest, parseProcessRequest, parseScanRequest,
+  boundedConfigRecord, parseCustomExtensions, parseExportRequest, parseJobId, parsePdfPreviewRequest, parseProcessRequest, parseScanRequest,
   type ExportPayload, type JobRequest, type ProcessPayload, type ScanRequest,
 } from './ipc-validation';
 import {
@@ -246,8 +246,12 @@ async function scanWithWorkers(
   // 每次扫描只读取一次规则快照，运行中的设置修改留到下次扫描生效。
   const excludeRules = loadScanExcludeSnapshot(scanExcludesFile());
   try {
+    const saved = loadProjectConfig(request.root);
+    const customExtensions = request.customExtensions
+      ?? parseCustomExtensions(saved.config?.customExtensions);
     const rootSnapshot = captureProjectRoot(request.root);
-    const result = await discoverAsync(request.root, DEFAULT_EXTENSIONS, excludeRules, {
+    const extensions = [...new Set([...DEFAULT_EXTENSIONS, ...customExtensions])];
+    const result = await discoverAsync(request.root, extensions, excludeRules, {
       concurrency: workerResources.workerCount * 2,
       signal: job.signal,
       onProgress: report,
@@ -265,7 +269,6 @@ async function scanWithWorkers(
     const entryOrder = sortFiles(result.files, 'entry').map((file) => file.relPath);
     const mtimeOrder = sortFiles(result.files, 'mtime').map((file) => file.relPath);
     if (result.files.length > 0) touchRecent({ name: path.basename(request.root), root: request.root });
-    const saved = loadProjectConfig(request.root);
     const langCounts: Record<string, number> = {};
     for (const file of result.files) langCounts[file.lang] = (langCounts[file.lang] ?? 0) + 1;
     return {
@@ -280,6 +283,7 @@ async function scanWithWorkers(
       languageStats: summarizeLanguages(result.files),
       entryOrder,
       mtimeOrder,
+      customExtensions,
       savedConfig: saved.config,
       savedConfigWarning: saved.warning,
     };
@@ -512,13 +516,18 @@ export function registerPipelineIpc(isTrustedSender: (sender: WebContents) => bo
 
   trustedIpc.handle('project:saveConfig', (_event, root, config) => {
     const values = boundedConfigRecord(config);
+    if (values.customExtensions !== undefined) {
+      values.customExtensions = parseCustomExtensions(values.customExtensions);
+    }
+    const configFile = resolveProjectConfigFile(scanSessions.peek()?.rootSnapshot ?? null, root);
+    const existing = loadProjectConfig(path.dirname(configFile)).config ?? {};
     const persisted = {
+      ...existing,
       ...values,
       schemaVersion: CONFIG_SCHEMA_VERSION,
       appVersion: app.getVersion(),
       rulesVersion: RULES_VERSION,
     };
-    const configFile = resolveProjectConfigFile(scanSessions.peek()?.rootSnapshot ?? null, root);
     fs.writeFileSync(configFile, `${JSON.stringify(persisted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
     return true;
   });

@@ -112,6 +112,7 @@ export default function App() {
     if (!s.root) { toast('请先导入项目'); return; }
     await window.codedoc.saveConfig(s.root, {
       title: s.swName, owner: s.owner, sortMode: s.sortMode,
+      customExtensions: s.customExtensions,
       order: s.order, excludedRelPaths: s.files.filter((f) => !f.included).map((f) => f.relPath),
       clean: s.clean, fmtPdf: s.fmtPdf, fmtDocx: s.fmtDocx, fmtTxt: s.fmtTxt, outDir: s.outDir,
     });
